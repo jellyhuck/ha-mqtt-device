@@ -12,10 +12,47 @@ A thin Python library for creating and maintaining [Home Assistant](https://www.
 
 - Python 3.14+
 - [uv](https://docs.astral.sh/uv/) for development and dependency management
+- [`aiomqtt`](https://aiomqtt.deroet.com/) for the MQTT provider (`pip install "ha-mqtt-device[mqtt]"`)
 
 ## Usage
 
-TODO: add examples.
+### MQTT provider
+
+The library communicates over MQTT through an [`MqttProvider`](src/ha_mqtt_device/provider.py).
+The default implementation, [`AioMqttProvider`](src/ha_mqtt_device/aio_provider.py), is
+backed by `aiomqtt` and installed with the `mqtt` extra:
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider
+
+async def on_command(message) -> None:
+    print(f"{message.topic}: {message.payload!r}")
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883, username="user", password="pass")
+
+    # Messages are delivered to the callback as Message(topic, payload) objects.
+    await provider.subscribe("home/device/set", on_command)
+
+    # Publish works standalone or while run() is active.
+    await provider.publish("home/device/state", '{"state": "ON"}')
+
+    # run() connects, subscribes, and processes messages until stop() is called.
+    run_task = asyncio.create_task(provider.run())
+    try:
+        await run_task
+    finally:
+        await provider.stop()
+
+asyncio.run(main())
+```
+
+### Planned: devices and entities
+
+Device discovery payloads and entity management (sensors, switches, etc.) are
+the next layer on top of the MQTT provider.
 
 ## Development
 
