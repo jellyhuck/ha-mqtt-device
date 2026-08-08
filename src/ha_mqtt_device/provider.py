@@ -54,8 +54,12 @@ class MqttProvider(Protocol):
         """
         ...
 
-    async def run(self) -> None:
-        """Connect and process incoming messages until :meth:`stop` is called.
+    def run(self) -> Awaitable[None]:
+        """Start the message loop in the background and return without awaiting.
+
+        The returned awaitable completes once the loop has shut down; call
+        :meth:`stop` to shut it down. Callers that want to block until the
+        loop ends may await the returned awaitable directly.
 
         Raises:
             Exception: If the client could not be started.
