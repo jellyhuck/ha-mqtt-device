@@ -97,7 +97,7 @@ via `to_json()` / `from_json()`.
 ### Entities
 
 Entities (sensors, binary sensors, numbers, switches, buttons, event entities,
-etc.) are attached
+images, etc.) are attached
 to a device by passing them to the `Device` constructor. Each entity needs a
 globally unique `unique_id`; entity topics follow the convention
 `~/<unique_id>/<topic>`, so a binary sensor with `unique_id="is_led_on"`
@@ -313,6 +313,38 @@ async def main() -> None:
         await doorbell.set_event("doorbell_pressed")
         await asyncio.sleep(1)
         await doorbell.set_event("doorbell_long_press")
+
+    await device.remove()
+
+asyncio.run(main())
+```
+
+Images publish image data — for example a camera snapshot — from the device to
+Home Assistant. Like sensors they are read-only: there is no command topic and
+no `on_event()` callback. `set_image()` publishes the payload verbatim to
+`~/<unique_id>/image`; with the default `encoding` (`"b64"`) Home Assistant
+base64-decodes it, so pass base64-encoded bytes (or set `encoding` to a
+non-`"b64"` value and publish raw image bytes). `content_type` (`cont_t`) and
+`encoding` (`enc`) are omitted from the discovery config when they match the
+defaults:
+
+```python
+import asyncio
+import base64
+
+from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Image
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    camera = Image(unique_id="camera", name="Camera")
+    device = Device(provider, info, entities=[camera])
+
+    async with device:
+        # Publishes base64-encoded bytes to ~/camera/image.
+        await camera.set_image(base64.b64encode(b"...jpeg data..."))
+        await asyncio.sleep(10)
 
     await device.remove()
 
