@@ -32,6 +32,12 @@ _OBJECT_ID_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 #: Placeholder inside the default topic prefix, replaced by the device id.
 _DEVICE_ID_PLACEHOLDER = "<device_id>"
 
+#: Home Assistant MQTT discovery default for ``payload_available``.
+DEFAULT_PAYLOAD_AVAILABLE = "online"
+
+#: Home Assistant MQTT discovery default for ``payload_not_available``.
+DEFAULT_PAYLOAD_NOT_AVAILABLE = "offline"
+
 
 @dataclass(frozen=True, slots=True)
 class DeviceInfo:
@@ -89,8 +95,8 @@ class DeviceInfo:
     identifiers: list[str] | None = None
     topic_prefix: str | None = None
     availability_topic: str | None = None
-    availability_payload_available: str = "online"
-    availability_payload_unavailable: str = "offline"
+    availability_payload_available: str = DEFAULT_PAYLOAD_AVAILABLE
+    availability_payload_unavailable: str = DEFAULT_PAYLOAD_NOT_AVAILABLE
     origin_name: str = "ha-mqtt-device"
     origin_sw: str | None = None
     origin_url: str | None = None
@@ -219,16 +225,20 @@ class DeviceInfo:
         if self.origin_url is not None:
             origin["url"] = self.origin_url
 
+        availability: dict[str, Any] = {
+            "topic": self.shorthand_topic(self.availability_topic),
+        }
+        if self.availability_payload_available != DEFAULT_PAYLOAD_AVAILABLE:
+            availability["payload_available"] = self.availability_payload_available
+        if self.availability_payload_unavailable != DEFAULT_PAYLOAD_NOT_AVAILABLE:
+            availability["payload_not_available"] = (
+                self.availability_payload_unavailable
+            )
+
         return {
             "dev": dev,
             "o": origin,
-            "avty": [
-                {
-                    "topic": self.shorthand_topic(self.availability_topic),
-                    "payload_available": self.availability_payload_available,
-                    "payload_not_available": self.availability_payload_unavailable,
-                }
-            ],
+            "avty": [availability],
             "~": self.topic_prefix,
         }
 

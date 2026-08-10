@@ -26,13 +26,9 @@ def test_default_discovery_payload() -> None:
     assert payload["dev"] == {"ids": ["my_device_id"], "name": "My device"}
     assert payload["o"] == {"name": "ha-mqtt-device"}
     assert payload["~"] == "homeassistant/device/my_device_id"
-    assert payload["avty"] == [
-        {
-            "topic": "~/status",
-            "payload_available": "online",
-            "payload_not_available": "offline",
-        }
-    ]
+    # payload_available/payload_not_available are omitted because they match
+    # the discovery defaults.
+    assert payload["avty"] == [{"topic": "~/status"}]
     assert "cmps" not in payload
 
 
@@ -239,3 +235,16 @@ def test_custom_availability_config_appears_in_payload() -> None:
         }
     ]
     assert info.discovery_payload()["~"] == "home/dev"
+
+
+def test_availability_payload_omits_only_default_values() -> None:
+    info = DeviceInfo(
+        device_id="dev-1",
+        name="Device",
+        availability_payload_available="up",
+    )
+
+    # payload_not_available still matches the discovery default and is omitted.
+    assert info.discovery_payload()["avty"] == [
+        {"topic": "~/status", "payload_available": "up"}
+    ]

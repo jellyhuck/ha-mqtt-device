@@ -8,6 +8,12 @@ from ha_mqtt_device.entity import Entity
 
 __all__ = ["BinarySensor"]
 
+#: Home Assistant MQTT discovery default for ``payload_on``.
+DEFAULT_PAYLOAD_ON = "ON"
+
+#: Home Assistant MQTT discovery default for ``payload_off``.
+DEFAULT_PAYLOAD_OFF = "OFF"
+
 
 @dataclass
 class BinarySensor(Entity):
@@ -38,8 +44,8 @@ class BinarySensor(Entity):
     component = "binary_sensor"
 
     device_class: str | None = None
-    payload_on: str = "ON"
-    payload_off: str = "OFF"
+    payload_on: str = DEFAULT_PAYLOAD_ON
+    payload_off: str = DEFAULT_PAYLOAD_OFF
 
     async def set_state(self, state: bool) -> None:
         """Publish the sensor's state.
@@ -59,8 +65,10 @@ class BinarySensor(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this sensor's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
-        config["pl_on"] = self.payload_on
-        config["pl_off"] = self.payload_off
+        if self.payload_on != DEFAULT_PAYLOAD_ON:
+            config["pl_on"] = self.payload_on
+        if self.payload_off != DEFAULT_PAYLOAD_OFF:
+            config["pl_off"] = self.payload_off
         if self.device_class is not None:
             config["dev_cla"] = self.device_class
         return config

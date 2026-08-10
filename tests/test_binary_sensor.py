@@ -83,11 +83,10 @@ async def test_set_state_requires_binding() -> None:
 async def test_discovery_config_defaults() -> None:
     _, sensor = make_bound(RecordingProvider(), unique_id="is_led_on")
 
+    # pl_on/pl_off are omitted because they match the discovery defaults.
     assert sensor.discovery_config() == {
         "uniq_id": "is_led_on",
         "p": "~/is_led_on/state",
-        "pl_on": "ON",
-        "pl_off": "OFF",
     }
 
 
@@ -103,9 +102,38 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
         "uniq_id": "door",
         "p": "~/door/state",
         "name": "Front door",
-        "pl_on": "ON",
-        "pl_off": "OFF",
         "dev_cla": "door",
+    }
+
+
+async def test_discovery_config_includes_custom_payloads() -> None:
+    _, sensor = make_bound(
+        RecordingProvider(),
+        unique_id="motion",
+        payload_on="1",
+        payload_off="0",
+    )
+
+    assert sensor.discovery_config() == {
+        "uniq_id": "motion",
+        "p": "~/motion/state",
+        "pl_on": "1",
+        "pl_off": "0",
+    }
+
+
+async def test_discovery_config_omits_only_default_payloads() -> None:
+    _, sensor = make_bound(
+        RecordingProvider(),
+        unique_id="motion",
+        payload_on="1",
+    )
+
+    # pl_off still matches the discovery default and is omitted.
+    assert sensor.discovery_config() == {
+        "uniq_id": "motion",
+        "p": "~/motion/state",
+        "pl_on": "1",
     }
 
 
