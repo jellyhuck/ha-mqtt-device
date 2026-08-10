@@ -1,20 +1,18 @@
-"""Full example: create a Home Assistant device and configure it via MQTT discovery.
+"""Example: a device with a single switch.
 
-This script walks through the complete lifecycle of a device:
+This script walks through the lifecycle of a device that has one
+:class:`~ha_mqtt_device.Switch`:
 
 1. Connect an :class:`~ha_mqtt_device.AioMqttProvider` to an MQTT broker,
    with ``--host``, ``--port``, ``--username``, and ``--password`` read from
    the command line.
 2. Describe the device with a :class:`~ha_mqtt_device.DeviceInfo`.
-3. Build a :class:`~ha_mqtt_device.BinarySensor` and a
-   :class:`~ha_mqtt_device.Switch`, and attach them to a
-   :class:`~ha_mqtt_device.Device`.
+3. Build a :class:`~ha_mqtt_device.Switch`, attach it to a
+   :class:`~ha_mqtt_device.Device`, and register a command handler with
+   :meth:`~ha_mqtt_device.Switch.on_event`.
 4. Use the device as an async context manager: entering the block publishes
-   the discovery config (including each entity's ``cmps`` entry) and announces
+   the discovery config (including the switch's ``cmps`` entry) and announces
    the device as available, and leaving the block announces it as unavailable.
-   Inside the block, the sensor's state is published with
-   :meth:`~ha_mqtt_device.BinarySensor.set_state` and the switch's command
-   handler is registered with :meth:`~ha_mqtt_device.Switch.on_event`.
 5. Simulate Home Assistant turning the switch on: an ``ON`` command is
    published to the switch's command topic, and the example waits for the
    :meth:`~ha_mqtt_device.Switch.on_event` callback to acknowledge it by
@@ -24,8 +22,8 @@ This script walks through the complete lifecycle of a device:
 
 Run it from the repository root::
 
-    uv run python examples/device_example.py
-    uv run python examples/device_example.py --host mqtt.example.com --port 1883 \
+    uv run python examples/switch.py
+    uv run python examples/switch.py --host mqtt.example.com --port 1883 \
         --username user --password secret
 """
 
@@ -35,14 +33,7 @@ import argparse
 import asyncio
 import logging
 
-from ha_mqtt_device import (
-    AioMqttProvider,
-    BinarySensor,
-    Device,
-    DeviceInfo,
-    Event,
-    Switch,
-)
+from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, Switch
 
 logger = logging.getLogger(__name__)
 
@@ -105,9 +96,8 @@ async def main() -> None:
     )
 
     info = build_device_info()
-    led = BinarySensor(unique_id="is_led_on", name="LED state", device_class="light")
     relay = Switch(unique_id="relay_1", name="Relay", device_class="outlet")
-    device = Device(provider, info, entities=[led, relay])
+    device = Device(provider, info, entities=[relay])
 
     # Set by the relay's on_event callback once a command has been processed,
     # so the example can wait until the switch has acknowledged the command.
@@ -137,13 +127,6 @@ async def main() -> None:
         async with device:
             logger.info("Publishing discovery config to %s", info.discovery_topic())
 
-            # Publish the sensor's state: "ON" to ~/is_led_on/state, then back
-            # to "OFF". Home Assistant reflects these changes immediately.
-            await led.set_state(True)
-            logger.info("Published LED state: ON")
-            await led.set_state(False)
-            logger.info("Published LED state: OFF")
-
             # The relay listens for commands from Home Assistant on
             # ~/relay_1/command. Register its handler, then simulate Home
             # Assistant turning the relay on by publishing "ON" to that topic.
@@ -161,13 +144,6 @@ async def main() -> None:
                 logger.warning(
                     "Timed out waiting for the relay command to be acknowledged"
                 )
-
-            # Keep running until interrupted (Ctrl-C). This is where a real
-            # application would wait for commands arriving on subscribed topics.
-            # try:
-            #     await asyncio.Event().wait()
-            # except asyncio.CancelledError:
-            #     pass
 
         # Leaving the device context announced "offline". To also make Home
         # Assistant forget the device, remove() publishes an empty config.
