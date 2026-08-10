@@ -166,6 +166,40 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
+Buttons work in the opposite direction: Home Assistant shows the button and,
+when pressed, publishes `payload_press` (default `"PRESS"`) to
+`~/<unique_id>/command`. The device never publishes anything for a button —
+there is no state topic. Registering a callback with `on_event()` delivers
+each press as an [`Event`](src/ha_mqtt_device/event.py):
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, Button, Device, DeviceInfo, Event
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    restart = Button(unique_id="restart", name="Restart", device_class="restart")
+    device = Device(provider, info, entities=[restart])
+
+    async def on_press(event: Event) -> None:
+        # event.state is "press" (None for unknown payloads).
+        print(f"{event.topic_type}: {event.message!r} -> {event.state}")
+        # ... trigger the action the button represents ...
+
+    async with device:
+        # Subscribes to ~/restart/command; presses from Home Assistant
+        # are delivered to on_press.
+        await restart.on_event(on_press)
+        await asyncio.sleep(10)
+
+    await device.remove()
+
+asyncio.run(main())
+```
+
 ## Development
 
 This project is managed with `uv`. Common commands:

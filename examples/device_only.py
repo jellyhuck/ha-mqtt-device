@@ -107,7 +107,6 @@ async def main() -> None:
             logger.info("Publishing discovery config to %s", info.discovery_topic())
             logger.info("Device is available")
 
-
         # Leaving the device context announced "offline". To also make Home
         # Assistant forget the device, remove() publishes an empty config.
         logger.info("Removing the device from Home Assistant")
