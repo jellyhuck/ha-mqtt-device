@@ -96,14 +96,14 @@ via `to_json()` / `from_json()`.
 
 ### Entities
 
-Entities (binary sensors, sensors, switches, etc.) are attached to a device by
-passing them to the `Device` constructor. Each entity needs a globally unique
-`unique_id`; entity topics follow the convention `~/<unique_id>/<topic>`, so a
-binary sensor with `unique_id="is_led_on"` publishes its state to
-`homeassistant/device/<device_id>/is_led_on/state`. The device's `configure()`
-publishes the entities as `cmps` entries in the discovery payload, and they
-inherit the device-level availability — no per-entity availability config is
-needed.
+Entities (binary sensors, switches, buttons, event entities, etc.) are attached
+to a device by passing them to the `Device` constructor. Each entity needs a
+globally unique `unique_id`; entity topics follow the convention
+`~/<unique_id>/<topic>`, so a binary sensor with `unique_id="is_led_on"`
+publishes its state to `homeassistant/device/<device_id>/is_led_on/state`. The
+device's `configure()` publishes the entities as `cmps` entries in the
+discovery payload, and they inherit the device-level availability — no
+per-entity availability config is needed.
 
 ```python
 import asyncio
@@ -194,6 +194,42 @@ async def main() -> None:
         # are delivered to on_press.
         await restart.on_event(on_press)
         await asyncio.sleep(10)
+
+    await device.remove()
+
+asyncio.run(main())
+```
+
+Event entities publish transient events to Home Assistant — for example a
+doorbell that fires `doorbell_pressed`. Unlike switches and buttons there is
+no command topic: events flow from the device to Home Assistant only, so the
+entity has no `on_event()` callback. The `event_types` list is required —
+Home Assistant only fires events whose type is declared — and `set_event()`
+publishes a type to `~/<unique_id>/state`, which Home Assistant turns into an
+HA event that automations can trigger on:
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, EventEntity
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    doorbell = EventEntity(
+        unique_id="doorbell",
+        name="Doorbell",
+        device_class="doorbell",
+        event_types=["doorbell_pressed", "doorbell_long_press"],
+    )
+    device = Device(provider, info, entities=[doorbell])
+
+    async with device:
+        # Fires an HA event "doorbell_pressed" on ~/doorbell/state.
+        await doorbell.set_event("doorbell_pressed")
+        await asyncio.sleep(1)
+        await doorbell.set_event("doorbell_long_press")
 
     await device.remove()
 
