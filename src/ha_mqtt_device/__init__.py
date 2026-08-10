@@ -11,6 +11,7 @@ from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.event_entity import EventEntity
 from ha_mqtt_device.provider import Message, MqttMessageCallback, MqttProvider
+from ha_mqtt_device.sensor import Sensor
 from ha_mqtt_device.switch import Switch
 
 __all__ = [
@@ -26,6 +27,7 @@ __all__ = [
     "Message",
     "MqttMessageCallback",
     "MqttProvider",
+    "Sensor",
     "Switch",
 ]
 

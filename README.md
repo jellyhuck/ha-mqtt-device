@@ -96,7 +96,8 @@ via `to_json()` / `from_json()`.
 
 ### Entities
 
-Entities (binary sensors, switches, buttons, event entities, etc.) are attached
+Entities (sensors, binary sensors, switches, buttons, event entities, etc.) are
+attached
 to a device by passing them to the `Device` constructor. Each entity needs a
 globally unique `unique_id`; entity topics follow the convention
 `~/<unique_id>/<topic>`, so a binary sensor with `unique_id="is_led_on"`
@@ -125,6 +126,41 @@ async def main() -> None:
         await led.set_state(True)   # publishes "ON" to ~/is_led_on/state
         await asyncio.sleep(1)
         await led.set_state(False)  # publishes "OFF"
+
+    await device.remove()
+
+asyncio.run(main())
+```
+
+Sensors are read-only like binary sensors, but report a text or numeric value
+instead of a boolean. `set_state()` accepts `str`, `int`, or `float` and
+publishes the stringified value to `~/<unique_id>/state`. Optional fields
+describe the reading: `unit_of_measurement` (`unit_of_meas`), `state_class`
+(`stat_cla`), `device_class` (`dev_cla`), `expire_after` (`exp_aft`),
+`force_update` (`frc_upd`), and `suggested_display_precision` (`sug_dsp_prc`):
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Sensor
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    temperature = Sensor(
+        unique_id="temperature",
+        name="Temperature",
+        device_class="temperature",
+        unit_of_measurement="°C",
+        state_class="measurement",
+    )
+    device = Device(provider, info, entities=[temperature])
+
+    async with device:
+        await temperature.set_state(21.5)  # publishes "21.5" to ~/temperature/state
+        await asyncio.sleep(1)
+        await temperature.set_state(21.7)
 
     await device.remove()
 
