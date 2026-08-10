@@ -96,8 +96,8 @@ via `to_json()` / `from_json()`.
 
 ### Entities
 
-Entities (sensors, binary sensors, switches, buttons, event entities, etc.) are
-attached
+Entities (sensors, binary sensors, numbers, switches, buttons, event entities,
+etc.) are attached
 to a device by passing them to the `Device` constructor. Each entity needs a
 globally unique `unique_id`; entity topics follow the convention
 `~/<unique_id>/<topic>`, so a binary sensor with `unique_id="is_led_on"`
@@ -195,6 +195,53 @@ async def main() -> None:
         # are delivered to on_command.
         await relay.on_event(on_command)
         await relay.set_state(True)  # publishes "ON" to ~/relay_1/state
+        await asyncio.sleep(10)
+
+    await device.remove()
+
+asyncio.run(main())
+```
+
+Numbers combine a numeric state topic with a command topic, like a switch for
+values. The device publishes the current value with `set_state()`, and Home
+Assistant commands are delivered as [`Event`](src/ha_mqtt_device/event.py)
+objects to the async callback registered with `on_event()` — `event.state` is
+the raw payload when it parses as a number (for example `"75"`) and `None`
+otherwise. Bounds, step, and mode are advertised in the discovery config
+(`min`, `max`, `step`, `mode`) and omitted when they match the defaults:
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, Number
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    dimmer = Number(
+        unique_id="dimmer",
+        name="Dimmer",
+        min_value=0,
+        max_value=100,
+        step=1,
+        mode="box",
+        unit_of_measurement="%",
+    )
+    device = Device(provider, info, entities=[dimmer])
+
+    async def on_command(event: Event) -> None:
+        # event.state is the payload when it parses as a number
+        # (e.g. "75"), None for unknown payloads.
+        print(f"{event.topic_type}: {event.message!r} -> {event.state}")
+        if event.state is not None:
+            await dimmer.set_state(float(event.state))
+
+    async with device:
+        # Subscribes to ~/dimmer/command; values from Home Assistant
+        # are delivered to on_command.
+        await dimmer.on_event(on_command)
+        await dimmer.set_state(75.0)  # publishes "75.0" to ~/dimmer/state
         await asyncio.sleep(10)
 
     await device.remove()
