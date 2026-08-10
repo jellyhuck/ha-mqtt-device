@@ -6,6 +6,7 @@ A thin Python library for creating and maintaining [Home Assistant](https://www.
 
 - **Device discovery**: publish the discovery payload Home Assistant needs to automatically pick up your device over MQTT.
 - **Entity management**: add and maintain multiple entities (sensors, switches, binary sensors, etc.) that belong to a device.
+- **Event subscriptions**: entities can subscribe to MQTT topics and deliver updates — for example switch commands from Home Assistant — to your async callbacks as `Event` objects.
 - **Thin and focused**: no heavy framework — just the abstractions needed to model a device and its entities.
 
 ## Requirements
@@ -124,6 +125,41 @@ async def main() -> None:
         await led.set_state(True)   # publishes "ON" to ~/is_led_on/state
         await asyncio.sleep(1)
         await led.set_state(False)  # publishes "OFF"
+
+    await device.remove()
+
+asyncio.run(main())
+```
+
+Switches add a command topic on top of the state topic. The device publishes
+its state with `set_state()`, and Home Assistant commands are delivered as
+[`Event`](src/ha_mqtt_device/event.py) objects to the async callback registered
+with `on_event()` — the callback is invoked for every command received on
+`~/<unique_id>/command`, and `set_state()` does not trigger it:
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, Switch
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    relay = Switch(unique_id="relay_1", name="Relay")
+    device = Device(provider, info, entities=[relay])
+
+    async def on_command(event: Event) -> None:
+        # event.state is "on" or "off" (None for unknown payloads).
+        print(f"{event.topic_type}: {event.message!r} -> {event.state}")
+        await relay.set_state(event.state == "on")
+
+    async with device:
+        # Subscribes to ~/relay_1/command; commands from Home Assistant
+        # are delivered to on_command.
+        await relay.on_event(on_command)
+        await relay.set_state(True)  # publishes "ON" to ~/relay_1/state
+        await asyncio.sleep(10)
 
     await device.remove()
 

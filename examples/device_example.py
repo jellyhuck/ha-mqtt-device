@@ -6,14 +6,20 @@ This script walks through the complete lifecycle of a device:
    with ``--host``, ``--port``, ``--username``, and ``--password`` read from
    the command line.
 2. Describe the device with a :class:`~ha_mqtt_device.DeviceInfo`.
-3. Build a :class:`~ha_mqtt_device.BinarySensor` and attach it to a
+3. Build a :class:`~ha_mqtt_device.BinarySensor` and a
+   :class:`~ha_mqtt_device.Switch`, and attach them to a
    :class:`~ha_mqtt_device.Device`.
 4. Use the device as an async context manager: entering the block publishes
-   the discovery config (including the sensor's ``cmps`` entry) and announces
+   the discovery config (including each entity's ``cmps`` entry) and announces
    the device as available, and leaving the block announces it as unavailable.
    Inside the block, the sensor's state is published with
-   :meth:`~ha_mqtt_device.BinarySensor.set_state`.
-5. Keep the provider running until interrupted, then remove the device with
+   :meth:`~ha_mqtt_device.BinarySensor.set_state` and the switch's command
+   handler is registered with :meth:`~ha_mqtt_device.Switch.on_event`.
+5. Simulate Home Assistant turning the switch on: an ``ON`` command is
+   published to the switch's command topic, and the example waits for the
+   :meth:`~ha_mqtt_device.Switch.on_event` callback to acknowledge it by
+   publishing the new state with :meth:`~ha_mqtt_device.Switch.set_state`.
+6. Keep the provider running until interrupted, then remove the device with
    :meth:`~ha_mqtt_device.Device.remove`.
 
 Run it from the repository root::
@@ -29,7 +35,14 @@ import argparse
 import asyncio
 import logging
 
-from ha_mqtt_device import AioMqttProvider, BinarySensor, Device, DeviceInfo
+from ha_mqtt_device import (
+    AioMqttProvider,
+    BinarySensor,
+    Device,
+    DeviceInfo,
+    Event,
+    Switch,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +106,25 @@ async def main() -> None:
 
     info = build_device_info()
     led = BinarySensor(unique_id="is_led_on", name="LED state", device_class="light")
-    device = Device(provider, info, entities=[led])
+    relay = Switch(unique_id="relay_1", name="Relay", device_class="outlet")
+    device = Device(provider, info, entities=[led, relay])
+
+    # Set by the relay's on_event callback once a command has been processed,
+    # so the example can wait until the switch has acknowledged the command.
+    relay_command_received = asyncio.Event()
+
+    async def on_relay_command(event: Event) -> None:
+        """Handle a command published to the relay's command topic."""
+        logger.info("Relay received command %r (state=%s)", event.message, event.state)
+        if event.state == "on":
+            # Acknowledge the command by publishing the switch's new state,
+            # so Home Assistant sees ON on ~/relay_1/state.
+            await relay.set_state(True)
+            logger.info("Relay state updated: ON")
+        elif event.state == "off":
+            await relay.set_state(False)
+            logger.info("Relay state updated: OFF")
+        relay_command_received.set()
 
     # Entering the block starts the provider's message loop (provider.run());
     # leaving it shuts the loop down and drains any in-flight work
@@ -112,6 +143,24 @@ async def main() -> None:
             logger.info("Published LED state: ON")
             await led.set_state(False)
             logger.info("Published LED state: OFF")
+
+            # The relay listens for commands from Home Assistant on
+            # ~/relay_1/command. Register its handler, then simulate Home
+            # Assistant turning the relay on by publishing "ON" to that topic.
+            await relay.on_event(on_relay_command)
+
+            command_topic = info.resolve_topic(relay.command_topic)
+            logger.info("Publishing ON command to %s", command_topic)
+            await provider.publish(command_topic, relay.payload_on)
+
+            # Wait until the on_event callback has processed the command and
+            # acknowledged it with set_state(True).
+            try:
+                await asyncio.wait_for(relay_command_received.wait(), timeout=10)
+            except TimeoutError:
+                logger.warning(
+                    "Timed out waiting for the relay command to be acknowledged"
+                )
 
             # Keep running until interrupted (Ctrl-C). This is where a real
             # application would wait for commands arriving on subscribed topics.
