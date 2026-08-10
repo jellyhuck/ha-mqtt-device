@@ -93,8 +93,42 @@ and individual topics use `~` shorthand, so the availability topic defaults to
 the device publishes its state. `DeviceInfo` also serializes to and from JSON
 via `to_json()` / `from_json()`.
 
-Individual entities (sensors, switches, etc.) will be added to the same
-discovery topic as `cmps` entries in a later layer.
+### Entities
+
+Entities (binary sensors, sensors, switches, etc.) are attached to a device by
+passing them to the `Device` constructor. Each entity needs a globally unique
+`unique_id`; entity topics follow the convention `~/<unique_id>/<topic>`, so a
+binary sensor with `unique_id="is_led_on"` publishes its state to
+`homeassistant/device/<device_id>/is_led_on/state`. The device's `configure()`
+publishes the entities as `cmps` entries in the discovery payload, and they
+inherit the device-level availability — no per-entity availability config is
+needed.
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, BinarySensor, Device, DeviceInfo
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    led = BinarySensor(
+        unique_id="is_led_on",
+        name="LED state",
+        device_class="light",
+    )
+    device = Device(provider, info, entities=[led])
+
+    async with device:
+        await led.set_state(True)   # publishes "ON" to ~/is_led_on/state
+        await asyncio.sleep(1)
+        await led.set_state(False)  # publishes "OFF"
+
+    await device.remove()
+
+asyncio.run(main())
+```
 
 ## Development
 

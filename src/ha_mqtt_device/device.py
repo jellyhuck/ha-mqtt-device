@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 import logging
 from types import TracebackType
-from typing import Self
+from typing import Any, Self
 
 from ha_mqtt_device.device_info import DeviceInfo
+from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.provider import MqttProvider
 
 __all__ = ["Device"]
@@ -26,9 +27,26 @@ class Device:
     :meth:`set_availability`, :meth:`remove`, and :meth:`close`.
     """
 
-    def __init__(self, provider: MqttProvider, info: DeviceInfo) -> None:
+    def __init__(
+        self,
+        provider: MqttProvider,
+        info: DeviceInfo,
+        entities: list[Entity] | None = None,
+    ) -> None:
         self.provider = provider
         self.info = info
+        self.entities: tuple[Entity, ...] = tuple(entities or [])
+        seen: set[tuple[str, str]] = set()
+        for entity in self.entities:
+            key = (entity.component, entity.unique_id)
+            if key in seen:
+                raise ValueError(
+                    f"duplicate entity component/unique_id: "
+                    f"{entity.component}/{entity.unique_id}"
+                )
+            seen.add(key)
+        for entity in self.entities:
+            entity.bind(self)
 
     async def __aenter__(self) -> Self:
         """Publish the discovery config and announce the device as available.
@@ -65,8 +83,15 @@ class Device:
         Raises:
             Exception: If the message could not be published.
         """
-        payload = json.dumps(self.info.discovery_payload())
-        await self.provider.publish(self.info.discovery_topic(), payload)
+        payload = self.info.discovery_payload()
+        if self.entities:
+            cmps: dict[str, dict[str, dict[str, Any]]] = {}
+            for entity in self.entities:
+                cmps.setdefault(entity.component, {})[entity.unique_id] = (
+                    entity.discovery_config()
+                )
+            payload["cmps"] = cmps
+        await self.provider.publish(self.info.discovery_topic(), json.dumps(payload))
 
     async def set_availability(self, available: bool) -> None:
         """Publish the device's availability state.

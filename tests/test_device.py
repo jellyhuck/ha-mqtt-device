@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 
+from ha_mqtt_device.binary_sensor import BinarySensor
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.provider import MqttMessageCallback
@@ -209,3 +210,73 @@ async def test_constructor_does_not_publish() -> None:
     make_device(provider)
 
     assert provider.published == []
+
+
+async def test_configure_includes_cmps_for_entities() -> None:
+    provider = RecordingProvider()
+    sensor = BinarySensor(unique_id="is_led_on", name="LED state")
+    device = Device(
+        provider,
+        DeviceInfo(device_id="dev-1", name="Device"),
+        entities=[sensor],
+    )
+
+    await device.configure()
+
+    payload = json.loads(provider.published[0][1])
+    assert payload["cmps"] == {
+        "binary_sensor": {"is_led_on": sensor.discovery_config()}
+    }
+
+
+async def test_configure_without_entities_has_no_cmps() -> None:
+    provider = RecordingProvider()
+    device = make_device(provider)
+
+    await device.configure()
+
+    payload = json.loads(provider.published[0][1])
+    assert "cmps" not in payload
+
+
+async def test_constructor_binds_entities() -> None:
+    provider = RecordingProvider()
+    sensor = BinarySensor(unique_id="is_led_on")
+    Device(
+        provider,
+        DeviceInfo(device_id="dev-1", name="Device"),
+        entities=[sensor],
+    )
+
+    await sensor.set_state(True)
+
+    assert provider.published == [("homeassistant/device/dev-1/is_led_on/state", "ON")]
+
+
+async def test_constructor_rejects_duplicate_entity_keys() -> None:
+    provider = RecordingProvider()
+    first = BinarySensor(unique_id="is_led_on")
+    second = BinarySensor(unique_id="is_led_on", name="Duplicate")
+
+    with pytest.raises(ValueError, match="duplicate entity"):
+        Device(
+            provider,
+            DeviceInfo(device_id="dev-1", name="Device"),
+            entities=[first, second],
+        )
+
+    # Neither entity was bound.
+    assert first.device is None
+    assert second.device is None
+
+
+async def test_constructor_rejects_binding_same_entity_twice() -> None:
+    provider = RecordingProvider()
+    sensor = BinarySensor(unique_id="is_led_on")
+
+    with pytest.raises(ValueError, match="duplicate entity"):
+        Device(
+            provider,
+            DeviceInfo(device_id="dev-1", name="Device"),
+            entities=[sensor, sensor],
+        )

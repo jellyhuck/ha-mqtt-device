@@ -6,10 +6,14 @@ This script walks through the complete lifecycle of a device:
    with ``--host``, ``--port``, ``--username``, and ``--password`` read from
    the command line.
 2. Describe the device with a :class:`~ha_mqtt_device.DeviceInfo`.
-3. Build a :class:`~ha_mqtt_device.Device` and use it as an async context
-   manager: entering the block publishes the discovery config and announces
+3. Build a :class:`~ha_mqtt_device.BinarySensor` and attach it to a
+   :class:`~ha_mqtt_device.Device`.
+4. Use the device as an async context manager: entering the block publishes
+   the discovery config (including the sensor's ``cmps`` entry) and announces
    the device as available, and leaving the block announces it as unavailable.
-4. Keep the provider running until interrupted, then remove the device with
+   Inside the block, the sensor's state is published with
+   :meth:`~ha_mqtt_device.BinarySensor.set_state`.
+5. Keep the provider running until interrupted, then remove the device with
    :meth:`~ha_mqtt_device.Device.remove`.
 
 Run it from the repository root::
@@ -23,10 +27,9 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import json
 import logging
 
-from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo
+from ha_mqtt_device import AioMqttProvider, BinarySensor, Device, DeviceInfo
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +92,8 @@ async def main() -> None:
     )
 
     info = build_device_info()
-    device = Device(provider, info)
+    led = BinarySensor(unique_id="is_led_on", name="LED state", device_class="light")
+    device = Device(provider, info, entities=[led])
 
     # Entering the block starts the provider's message loop (provider.run());
     # leaving it shuts the loop down and drains any in-flight work
@@ -101,10 +105,13 @@ async def main() -> None:
         # as "offline" — even when the body raises.
         async with device:
             logger.info("Publishing discovery config to %s", info.discovery_topic())
-            logger.info(
-                "Payload:\n%s",
-                json.dumps(info.discovery_payload(), indent=2, sort_keys=True),
-            )
+
+            # Publish the sensor's state: "ON" to ~/is_led_on/state, then back
+            # to "OFF". Home Assistant reflects these changes immediately.
+            await led.set_state(True)
+            logger.info("Published LED state: ON")
+            await led.set_state(False)
+            logger.info("Published LED state: OFF")
 
             # Keep running until interrupted (Ctrl-C). This is where a real
             # application would wait for commands arriving on subscribed topics.
