@@ -249,6 +249,61 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
+Covers are bidirectional like switches and numbers, with two incoming and two
+outgoing topics. The device publishes the cover's state — one of `"open"`,
+`"opening"`, `"closed"`, `"closing"`, or `"stopped"` — with `set_state()` to
+`~/<unique_id>/state`, and its position (0–100) with `set_position()` to
+`~/<unique_id>/position`. Home Assistant commands are delivered as
+[`Event`](src/ha_mqtt_device/event.py) objects to the async callback
+registered with `on_event()`:
+- on the command topic `~/<unique_id>/command`, `event.event_type` is
+  `"command"` and `event.state` is `"open"`, `"close"`, or `"stop"` (`None`
+  for unknown payloads);
+- on the set-position topic `~/<unique_id>/set_position`, `event.event_type`
+  is `"set_position"` and `event.state` is the payload when it parses as a
+  number (`None` otherwise).
+
+The discovery config advertises the four topics as `sta_t`, `cmd_t`, `pos_t`,
+and `set_pos_t` — note that the cover's state topic key is `sta_t`, not the
+base `p` — and omits `pl_open`/`pl_cls`/`pl_stop`, the lowercase state
+payloads, and `pos_open`/`pos_clsd` (100/0) when they match the defaults:
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, Cover, Device, DeviceInfo, Event
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    blinds = Cover(unique_id="blinds", name="Blinds", device_class="blind")
+    device = Device(provider, info, entities=[blinds])
+
+    async def on_cover_event(event: Event) -> None:
+        if event.event_type == "command":
+            # event.state is "open", "close", or "stop" (None for unknown).
+            print(f"{event.topic_type}: {event.message!r} -> {event.state}")
+            if event.state == "open":
+                await blinds.set_state("open")
+                await blinds.set_position(100)
+        elif event.state is not None:
+            # A position command; event.state is the payload (e.g. "50").
+            await blinds.set_position(int(event.state))
+
+    async with device:
+        # Subscribes to ~/blinds/command and ~/blinds/set_position; commands
+        # from Home Assistant are delivered to on_cover_event.
+        await blinds.on_event(on_cover_event)
+        await blinds.set_state("closed")  # publishes "closed" to ~/blinds/state
+        await blinds.set_position(0)      # publishes "0" to ~/blinds/position
+        await asyncio.sleep(10)
+
+    await device.remove()
+
+asyncio.run(main())
+```
+
 Buttons work in the opposite direction: Home Assistant shows the button and,
 when pressed, publishes `payload_press` (default `"PRESS"`) to
 `~/<unique_id>/command`. The device never publishes anything for a button —
