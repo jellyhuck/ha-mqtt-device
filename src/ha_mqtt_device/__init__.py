@@ -6,6 +6,7 @@ from ha_mqtt_device.aio_provider import AioMqttProvider
 from ha_mqtt_device.binary_sensor import BinarySensor
 from ha_mqtt_device.button import Button
 from ha_mqtt_device.camera import Camera
+from ha_mqtt_device.climate import Climate
 from ha_mqtt_device.cover import Cover
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
@@ -23,6 +24,7 @@ __all__ = [
     "BinarySensor",
     "Button",
     "Camera",
+    "Climate",
     "Cover",
     "Device",
     "DeviceInfo",

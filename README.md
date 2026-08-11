@@ -304,6 +304,71 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
+Climate entities model a thermostat/HVAC: the device publishes the current
+temperature with `set_current_temperature()` to
+`~/<unique_id>/current_temperature`, the target temperature with
+`set_target_temperature()` to `~/<unique_id>/temperature`, the HVAC mode with
+`set_mode()` to `~/<unique_id>/mode`, and the current action (for example
+`"heating"` or `"cooling"`) with `set_action()` to `~/<unique_id>/action`.
+Home Assistant commands are delivered as
+[`Event`](src/ha_mqtt_device/event.py) objects to the async callback
+registered with `on_event()`:
+- on the temperature command topic `~/<unique_id>/temperature_command`,
+  `event.event_type` is `"temperature"` and `event.state` is the payload when
+  it parses as a number (for example `"21.5"`, `None` otherwise);
+- on the mode command topic `~/<unique_id>/mode_command`, `event.event_type`
+  is `"mode"` and `event.state` is the payload verbatim (the requested mode).
+
+`set_mode()` rejects modes not in the optional `modes` list. The discovery
+config advertises the six topics as `curr_temp_t`, `temp_stat_t`, `temp_cmd_t`,
+`mode_stat_t`, `mode_cmd_t`, and `act_t` (there is no single state topic, so no
+`p`), and omits `modes`, `temp_unit`, `min_temp`, `max_temp`, `temp_step`,
+`prec`, `init`, `mode_opt`, and `temp_opt` when they are unset:
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, Climate, Device, DeviceInfo, Event
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    thermostat = Climate(
+        unique_id="thermostat",
+        name="Thermostat",
+        modes=["off", "heat", "cool", "auto"],
+        temperature_unit="C",
+        min_temp=10,
+        max_temp=30,
+        temp_step=0.5,
+    )
+    device = Device(provider, info, entities=[thermostat])
+
+    async def on_climate_event(event: Event) -> None:
+        if event.event_type == "temperature" and event.state is not None:
+            # event.state is the requested temperature (e.g. "21.5").
+            await thermostat.set_target_temperature(float(event.state))
+        elif event.event_type == "mode":
+            # event.state is the requested mode (e.g. "heat").
+            await thermostat.set_mode(event.state)
+
+    async with device:
+        # Subscribes to ~/thermostat/temperature_command and
+        # ~/thermostat/mode_command; commands from Home Assistant are
+        # delivered to on_climate_event.
+        await thermostat.on_event(on_climate_event)
+        await thermostat.set_current_temperature(21.0)  # ~/thermostat/current_temperature
+        await thermostat.set_target_temperature(21.5)   # ~/thermostat/temperature
+        await thermostat.set_mode("heat")               # ~/thermostat/mode
+        await thermostat.set_action("heating")          # ~/thermostat/action
+        await asyncio.sleep(10)
+
+    await device.remove()
+
+asyncio.run(main())
+```
+
 Buttons work in the opposite direction: Home Assistant shows the button and,
 when pressed, publishes `payload_press` (default `"PRESS"`) to
 `~/<unique_id>/command`. The device never publishes anything for a button —
