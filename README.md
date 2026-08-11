@@ -5,7 +5,7 @@ A thin Python library for creating and maintaining [Home Assistant](https://www.
 ## Features
 
 - **Device discovery**: publish the discovery payload Home Assistant needs to automatically pick up your device over MQTT.
-- **Entity management**: add and maintain multiple entities (sensors, switches, binary sensors, dates, cameras, etc.) that belong to a device.
+- **Entity management**: add and maintain multiple entities (sensors, switches, binary sensors, dates, datetimes, cameras, etc.) that belong to a device.
 - **Event subscriptions**: entities can subscribe to MQTT topics and deliver updates — for example switch commands from Home Assistant — to your async callbacks as `Event` objects.
 - **Thin and focused**: no heavy framework — just the abstractions needed to model a device and its entities.
 
@@ -96,8 +96,8 @@ via `to_json()` / `from_json()`.
 
 ### Entities
 
-Entities (sensors, binary sensors, numbers, dates, switches, buttons, event
-entities, images, cameras, etc.) are attached
+Entities (sensors, binary sensors, numbers, dates, datetimes, switches,
+buttons, event entities, images, cameras, etc.) are attached
 to a device by passing them to the `Device` constructor. Each entity needs a
 globally unique `unique_id`; entity topics follow the convention
 `~/<unique_id>/<topic>`, so a binary sensor with `unique_id="is_led_on"`
@@ -284,6 +284,51 @@ async def main() -> None:
         # are delivered to on_command.
         await target.on_event(on_command)
         await target.set_state("2024-01-01")  # publishes "2024-01-01"
+        await asyncio.sleep(10)
+
+    await device.remove()
+
+asyncio.run(main())
+```
+
+Datetimes are like dates but with a time of day: the device publishes the
+current value with `set_state()` — a `datetime.datetime` or a
+`YYYY-MM-DD HH:MM:SS` string such as `"2024-02-14 10:30:00"` — and Home
+Assistant commands are delivered as
+[`Event`](src/ha_mqtt_device/event.py) objects to the async callback
+registered with `on_event()` — `event.state` is the raw payload when it is a
+valid `YYYY-MM-DD HH:MM:SS` datetime (for example `"2024-02-14 10:30:00"`)
+and `None` otherwise. `set_state()` only accepts `datetime.datetime` objects
+and strict `YYYY-MM-DD HH:MM:SS` strings; a `datetime.date` raises a
+`TypeError` and other strings raise a `ValueError`. A timezone-aware datetime
+is published with its wall-clock components verbatim — no timezone conversion
+is performed. The discovery config advertises the command topic as `cmd_t`
+and omits `opt` and `frc_upd` when they match the defaults:
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, DateTime, Device, DeviceInfo, Event
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    alarm = DateTime(unique_id="alarm_time", name="Alarm time")
+    device = Device(provider, info, entities=[alarm])
+
+    async def on_command(event: Event) -> None:
+        # event.state is the payload when it is a valid YYYY-MM-DD HH:MM:SS
+        # datetime (e.g. "2024-02-14 10:30:00"), None otherwise.
+        print(f"{event.topic_type}: {event.message!r} -> {event.state}")
+        if event.state is not None:
+            await alarm.set_state(event.state)
+
+    async with device:
+        # Subscribes to ~/alarm_time/command; datetimes from Home Assistant
+        # are delivered to on_command.
+        await alarm.on_event(on_command)
+        await alarm.set_state("2024-01-01 07:00:00")  # publishes "2024-01-01 07:00:00"
         await asyncio.sleep(10)
 
     await device.remove()
