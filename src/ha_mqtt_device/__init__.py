@@ -12,6 +12,7 @@ from ha_mqtt_device.date import Date
 from ha_mqtt_device.date_time import DateTime
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
+from ha_mqtt_device.device_tracker import DeviceTracker
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.event_entity import EventEntity
@@ -32,6 +33,7 @@ __all__ = [
     "DateTime",
     "Device",
     "DeviceInfo",
+    "DeviceTracker",
     "Entity",
     "Event",
     "EventCallback",

@@ -5,7 +5,7 @@ A thin Python library for creating and maintaining [Home Assistant](https://www.
 ## Features
 
 - **Device discovery**: publish the discovery payload Home Assistant needs to automatically pick up your device over MQTT.
-- **Entity management**: add and maintain multiple entities (sensors, switches, binary sensors, dates, datetimes, cameras, etc.) that belong to a device.
+- **Entity management**: add and maintain multiple entities (sensors, switches, binary sensors, dates, datetimes, cameras, device trackers, etc.) that belong to a device.
 - **Event subscriptions**: entities can subscribe to MQTT topics and deliver updates — for example switch commands from Home Assistant — to your async callbacks as `Event` objects.
 - **Thin and focused**: no heavy framework — just the abstractions needed to model a device and its entities.
 
@@ -97,7 +97,7 @@ via `to_json()` / `from_json()`.
 ### Entities
 
 Entities (sensors, binary sensors, numbers, dates, datetimes, switches,
-buttons, event entities, images, cameras, etc.) are attached
+buttons, event entities, images, cameras, device trackers, etc.) are attached
 to a device by passing them to the `Device` constructor. Each entity needs a
 globally unique `unique_id`; entity topics follow the convention
 `~/<unique_id>/<topic>`, so a binary sensor with `unique_id="is_led_on"`
@@ -585,6 +585,50 @@ async def main() -> None:
     async with device:
         # Publishes base64-encoded bytes to ~/front_door/image.
         await camera.set_image(base64.b64encode(b"...jpeg data..."))
+        await asyncio.sleep(10)
+
+    await device.remove()
+
+asyncio.run(main())
+```
+
+Device trackers report a device's presence — and optionally its location —
+from the device to Home Assistant. Like sensors they are read-only: there is
+no command topic and no `on_event()` callback. `set_state()` publishes
+`payload_home` (default `"home"`) or `payload_not_home` (default
+`"not_home"`) to `~/<unique_id>/state`, and `set_location()` publishes a GPS
+position report — a JSON payload with `latitude`, `longitude`, and optional
+`gps_accuracy`, `battery_level`, and `source_type` — to the same topic.
+Optional location fields are advertised in the discovery config (`lat`, `lon`,
+`gps_acc`, `bat_lvl`, `source_type`) and used as fallbacks when the matching
+`set_location()` argument is omitted (`source_type` is omitted from the config
+when it matches the Home Assistant default `"gps"`); `pl_home`/`pl_not_home`
+are omitted when they match the defaults:
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, DeviceTracker
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    tracker = DeviceTracker(
+        unique_id="phone",
+        name="Phone",
+        source_type="gps",
+        gps_accuracy=50,
+        battery_level=82,
+    )
+    device = Device(provider, info, entities=[tracker])
+
+    async with device:
+        # Publishes "home" to ~/phone/state.
+        await tracker.set_state(True)
+        # Publishes a JSON position report to ~/phone/state; gps_accuracy
+        # and battery_level fall back to the configured values.
+        await tracker.set_location(32.87336, -117.22743)
         await asyncio.sleep(10)
 
     await device.remove()
