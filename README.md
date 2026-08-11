@@ -456,6 +456,88 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
+Fans are bidirectional like covers, with an on/off pair of topics and, when
+the corresponding feature is enabled, percentage, preset-mode, oscillation,
+and direction pairs. The device publishes the fan's state with `set_state()`
+to `~/<unique_id>/state`; its speed with `set_percentage()` to
+`~/<unique_id>/percentage_state`; its preset mode with `set_preset_mode()`
+(`None` publishes `payload_reset_percentage`, to switch back to percentage
+control) to `~/<unique_id>/preset_mode_state`; oscillation with
+`set_oscillation()` to `~/<unique_id>/oscillation_state`; and direction with
+`set_direction()` to `~/<unique_id>/direction_state`. Features are advertised
+and subscribed only when the matching flag is set — `percentage_enabled` is on
+by default, `preset_mode_enabled`, `oscillation_enabled`, and
+`direction_enabled` are off; calling a disabled feature's setter raises a
+`ValueError`. Home Assistant commands are delivered as
+[`Event`](src/ha_mqtt_device/event.py) objects to the async callback
+registered with `on_event()`:
+- on the command topic `~/<unique_id>/command`, `event.event_type` is
+  `"command"` and `event.state` is `"on"` or `"off"` (`None` for unknown
+  payloads);
+- on the percentage command topic `~/<unique_id>/percentage_command`,
+  `event.event_type` is `"percentage"` and `event.state` is the payload when
+  it parses as a number (`None` otherwise);
+- on the preset-mode command topic `~/<unique_id>/preset_mode_command`,
+  `event.event_type` is `"preset_mode"` and `event.state` is the payload when
+  it is one of `preset_modes` or equals `payload_reset_percentage` (`None`
+  otherwise);
+- on the oscillation command topic `~/<unique_id>/oscillation_command`,
+  `event.event_type` is `"oscillation"` and `event.state` is `"on"` or `"off"`
+  (`None` for unknown payloads);
+- on the direction command topic `~/<unique_id>/direction_command`,
+  `event.event_type` is `"direction"` and `event.state` is `"forward"` or
+  `"reverse"` (`None` for unknown payloads).
+
+The discovery config advertises the on/off topics as `stat_t` and `cmd_t` —
+note that the fan's state topic key is `stat_t`, not the base `p` — plus
+`pct_stat_t`/`pct_cmd_t` for percentage, `prst_mode_stat_t`/`prst_mode_cmd_t`
+for preset modes, `osc_stat_t`/`osc_cmd_t` for oscillation, and
+`dir_stat_t`/`dir_cmd_t` for direction, each only when the feature is enabled.
+It omits `pl_on`/`pl_off`, `pl_osc_on`/`pl_osc_off`, `pl_rst_pct`, `prst_modes`,
+`spd_rng_min`/`spd_rng_max` (1/100), and `opt` when they match the defaults:
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, Fan
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    fan = Fan(
+        unique_id="ceiling_fan",
+        name="Ceiling fan",
+        preset_mode_enabled=True,
+        oscillation_enabled=True,
+    )
+    device = Device(provider, info, entities=[fan])
+
+    async def on_fan_event(event: Event) -> None:
+        if event.event_type == "command":
+            # event.state is "on" or "off" (None for unknown payloads).
+            print(f"{event.topic_type}: {event.message!r} -> {event.state}")
+            await fan.set_state(event.state == "on")
+        elif event.event_type == "percentage" and event.state is not None:
+            # event.state is the requested speed (e.g. "60").
+            await fan.set_percentage(int(event.state))
+        elif event.event_type == "oscillation":
+            await fan.set_oscillation(event.state == "on")
+
+    async with device:
+        # Subscribes to ~/ceiling_fan/command, ~/ceiling_fan/percentage_command,
+        # and ~/ceiling_fan/oscillation_command; commands from Home Assistant
+        # are delivered to on_fan_event.
+        await fan.on_event(on_fan_event)
+        await fan.set_state(True)       # publishes "ON" to ~/ceiling_fan/state
+        await fan.set_percentage(60)    # publishes "60" to ~/ceiling_fan/percentage_state
+        await asyncio.sleep(10)
+
+    await device.remove()
+
+asyncio.run(main())
+```
+
 Buttons work in the opposite direction: Home Assistant shows the button and,
 when pressed, publishes `payload_press` (default `"PRESS"`) to
 `~/<unique_id>/command`. The device never publishes anything for a button —
