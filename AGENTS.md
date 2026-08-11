@@ -35,9 +35,10 @@ The project is managed with [uv](https://docs.astral.sh/uv/). Always use `uv`-pr
 - Public API is exposed through `src/ha_mqtt_device/__init__.py`.
 - Keep changes minimal and scoped. Prefer additive changes over refactors unless the refactor is part of the task.
 - When adding entities, consider the corresponding Home Assistant MQTT discovery schema (device class, unit of measurement, state/command topics, etc.).
+- `EXAMPLES.md` documents one section per entity (and device discovery and the MQTT provider). When adding an entity, add a runnable example there and a script under `examples/`; entities that are not yet supported stay listed in `EXAMPLES.md` with a TODO note.
 
 ## Dev guides
 
 - If you add a new command or tool to the workflow, document it in both `README.md` and this file.
-- Update `README.md` usage examples when the public API changes.
+- Update `EXAMPLES.md` when the public API changes: keep the entity examples in sync, and mark newly supported entities no longer TODO. The `README.md` just points users at `EXAMPLES.md`, so keep that link and the linked file consistent.
 - Verify the project metadata in `pyproject.toml` (name, version, entry points) stays in sync with the README.
