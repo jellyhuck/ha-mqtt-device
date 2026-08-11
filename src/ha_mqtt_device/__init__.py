@@ -8,6 +8,7 @@ from ha_mqtt_device.button import Button
 from ha_mqtt_device.camera import Camera
 from ha_mqtt_device.climate import Climate
 from ha_mqtt_device.cover import Cover
+from ha_mqtt_device.date import Date
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.entity import Entity
@@ -26,6 +27,7 @@ __all__ = [
     "Camera",
     "Climate",
     "Cover",
+    "Date",
     "Device",
     "DeviceInfo",
     "Entity",
