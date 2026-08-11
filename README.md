@@ -5,7 +5,7 @@ A thin Python library for creating and maintaining [Home Assistant](https://www.
 ## Features
 
 - **Device discovery**: publish the discovery payload Home Assistant needs to automatically pick up your device over MQTT.
-- **Entity management**: add and maintain multiple entities (sensors, switches, binary sensors, etc.) that belong to a device.
+- **Entity management**: add and maintain multiple entities (sensors, switches, binary sensors, cameras, etc.) that belong to a device.
 - **Event subscriptions**: entities can subscribe to MQTT topics and deliver updates — for example switch commands from Home Assistant — to your async callbacks as `Event` objects.
 - **Thin and focused**: no heavy framework — just the abstractions needed to model a device and its entities.
 
@@ -97,7 +97,7 @@ via `to_json()` / `from_json()`.
 ### Entities
 
 Entities (sensors, binary sensors, numbers, switches, buttons, event entities,
-images, etc.) are attached
+images, cameras, etc.) are attached
 to a device by passing them to the `Device` constructor. Each entity needs a
 globally unique `unique_id`; entity topics follow the convention
 `~/<unique_id>/<topic>`, so a binary sensor with `unique_id="is_led_on"`
@@ -343,6 +343,40 @@ async def main() -> None:
 
     async with device:
         # Publishes base64-encoded bytes to ~/camera/image.
+        await camera.set_image(base64.b64encode(b"...jpeg data..."))
+        await asyncio.sleep(10)
+
+    await device.remove()
+
+asyncio.run(main())
+```
+
+Cameras publish live image frames — for example a video stream's latest frame
+— from the device to Home Assistant. They are read-only like images (Home
+Assistant subscribes to the image topic and displays every frame), so there is
+no command topic and no `on_event()` callback. `set_image()` publishes the
+payload verbatim to `~/<unique_id>/image`; with the default `encoding`
+(`"b64"`) Home Assistant base64-decodes it, so pass base64-encoded bytes (or
+set `encoding` to a non-`"b64"` value and publish raw image bytes).
+`content_type` (`cont_t`) and `encoding` (`enc`) are omitted from the
+discovery config when they match the defaults; the single image topic is
+advertised as `t` (the Home Assistant camera discovery key):
+
+```python
+import asyncio
+import base64
+
+from ha_mqtt_device import AioMqttProvider, Camera, Device, DeviceInfo
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    camera = Camera(unique_id="front_door", name="Front door camera")
+    device = Device(provider, info, entities=[camera])
+
+    async with device:
+        # Publishes base64-encoded bytes to ~/front_door/image.
         await camera.set_image(base64.b64encode(b"...jpeg data..."))
         await asyncio.sleep(10)
 

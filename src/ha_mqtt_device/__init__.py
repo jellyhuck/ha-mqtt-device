@@ -5,6 +5,7 @@ from __future__ import annotations
 from ha_mqtt_device.aio_provider import AioMqttProvider
 from ha_mqtt_device.binary_sensor import BinarySensor
 from ha_mqtt_device.button import Button
+from ha_mqtt_device.camera import Camera
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.entity import Entity
@@ -20,6 +21,7 @@ __all__ = [
     "AioMqttProvider",
     "BinarySensor",
     "Button",
+    "Camera",
     "Device",
     "DeviceInfo",
     "Entity",
