@@ -89,7 +89,8 @@ via `to_json()` / `from_json()`.
 ## Entities
 
 Entities (sensors, binary sensors, numbers, dates, datetimes, switches,
-buttons, event entities, images, cameras, device trackers, etc.) are attached
+buttons, event entities, humidifiers, images, cameras, device trackers, etc.)
+are attached
 to a device by passing them to the `Device` constructor. Each entity needs a
 globally unique `unique_id`; entity topics follow the convention
 `~/<unique_id>/<topic>`, so a binary sensor with `unique_id="is_led_on"`
@@ -592,8 +593,65 @@ asyncio.run(main())
 
 ### Humidifier
 
-> TODO: not yet supported — there is no Humidifier entity in the library yet.
-> Tracked as future work.
+Humidifiers are bidirectional like switches, with an on/off pair of topics and
+a target-humidity pair. The device publishes its on/off state with
+`set_state()` to `~/<unique_id>/state` and its target humidity with
+`set_target_humidity()` to `~/<unique_id>/target_humidity`. Home Assistant
+commands are delivered as [`Event`](src/ha_mqtt_device/event.py) objects to
+the async callback registered with `on_event()`:
+- on the command topic `~/<unique_id>/command`, `event.event_type` is
+  `"command"` and `event.state` is `"on"` or `"off"` (`None` for unknown
+  payloads);
+- on the target-humidity command topic
+  `~/<unique_id>/target_humidity_command`, `event.event_type` is
+  `"target_humidity"` and `event.state` is the payload when it parses as a
+  number (for example `"50"`, `None` otherwise).
+
+The discovery config advertises the four topics as `stat_t`, `cmd_t`,
+`tgt_hum_stat_t`, and `tgt_hum_cmd_t` — note that the humidifier's state topic
+key is `stat_t`, not the base `p` — and omits `pl_on`/`pl_off`, `min_hum`
+(0)/`max_hum` (100), `opt`, and `dev_cla` when they match the defaults:
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, Humidifier
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    humidifier = Humidifier(
+        unique_id="bedroom_humidifier",
+        name="Bedroom humidifier",
+        device_class="humidifier",
+        min_humidity=30,
+        max_humidity=80,
+    )
+    device = Device(provider, info, entities=[humidifier])
+
+    async def on_humidifier_event(event: Event) -> None:
+        if event.event_type == "command":
+            # event.state is "on" or "off" (None for unknown payloads).
+            print(f"{event.topic_type}: {event.message!r} -> {event.state}")
+            await humidifier.set_state(event.state == "on")
+        elif event.event_type == "target_humidity" and event.state is not None:
+            # event.state is the requested target humidity (e.g. "50").
+            await humidifier.set_target_humidity(float(event.state))
+
+    async with device:
+        # Subscribes to ~/bedroom_humidifier/command and
+        # ~/bedroom_humidifier/target_humidity_command; commands from Home
+        # Assistant are delivered to on_humidifier_event.
+        await humidifier.on_event(on_humidifier_event)
+        await humidifier.set_state(True)             # publishes "ON" to ~/bedroom_humidifier/state
+        await humidifier.set_target_humidity(50)     # publishes "50" to ~/bedroom_humidifier/target_humidity
+        await asyncio.sleep(10)
+
+    await device.remove()
+
+asyncio.run(main())
+```
 
 ### Image
 

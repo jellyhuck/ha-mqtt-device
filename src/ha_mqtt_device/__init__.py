@@ -17,6 +17,7 @@ from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.event_entity import EventEntity
 from ha_mqtt_device.fan import Fan
+from ha_mqtt_device.humidifier import Humidifier
 from ha_mqtt_device.image import Image
 from ha_mqtt_device.number import Number
 from ha_mqtt_device.provider import Message, MqttMessageCallback, MqttProvider
@@ -40,6 +41,7 @@ __all__ = [
     "EventCallback",
     "EventEntity",
     "Fan",
+    "Humidifier",
     "Image",
     "Message",
     "MqttMessageCallback",
