@@ -133,7 +133,7 @@ async def main() -> None:
                 await blinds.set_state("stopped")
                 logger.info("Cover stopped")
             open_command_received.set()
-        elif event.state is not None:
+        elif isinstance(event.state, str):
             # A position command: move the cover to the requested position.
             position = int(event.state)
             await blinds.set_position(position)

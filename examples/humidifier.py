@@ -129,7 +129,7 @@ async def main() -> None:
             elif event.state == "off":
                 await humidifier.set_state(False)
                 logger.info("Humidifier state updated: OFF")
-        elif event.event_type == "target_humidity" and event.state is not None:
+        elif event.event_type == "target_humidity" and isinstance(event.state, str):
             # Acknowledge the command by publishing the new target humidity,
             # so Home Assistant sees 60 on
             # ~/bedroom_humidifier/target_humidity.

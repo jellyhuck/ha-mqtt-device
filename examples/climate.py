@@ -124,7 +124,7 @@ async def main() -> None:
             event.message,
             event.state,
         )
-        if event.event_type == "temperature" and event.state is not None:
+        if event.event_type == "temperature" and isinstance(event.state, str):
             # A target temperature command: report the current temperature and
             # acknowledge by publishing the new target temperature.
             await thermostat.set_current_temperature(21.0)
@@ -133,7 +133,7 @@ async def main() -> None:
                 await thermostat.set_action("heating")
             logger.info("Thermostat target temperature set to %s", event.state)
             temperature_command_received.set()
-        elif event.event_type == "mode" and event.state is not None:
+        elif event.event_type == "mode" and isinstance(event.state, str):
             # A mode command: apply the mode and acknowledge it.
             await thermostat.set_mode(event.state)
             if event.state == "off":

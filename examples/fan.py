@@ -123,12 +123,12 @@ async def main() -> None:
             # so Home Assistant sees ON on ~/ceiling_fan/state.
             await fan.set_state(event.state == "on")
             logger.info("Fan state updated: %s", "ON" if event.state == "on" else "OFF")
-        elif event.event_type == "percentage" and event.state is not None:
+        elif event.event_type == "percentage" and isinstance(event.state, str):
             # event.state is the requested speed (e.g. "60").
             await fan.set_percentage(int(event.state))
         elif event.event_type == "oscillation":
             await fan.set_oscillation(event.state == "on")
-        elif event.event_type == "direction" and event.state is not None:
+        elif event.event_type == "direction" and isinstance(event.state, str):
             await fan.set_direction(event.state)
         fan_command_received.set()
 

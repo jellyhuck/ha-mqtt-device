@@ -114,7 +114,7 @@ async def main() -> None:
     async def on_dimmer_command(event: Event) -> None:
         """Handle a command published to the dimmer's command topic."""
         logger.info("Dimmer received command %r (state=%s)", event.message, event.state)
-        if event.state is not None:
+        if isinstance(event.state, str):
             # Acknowledge the command by publishing the number's new value,
             # so Home Assistant sees 75.0 on ~/dimmer/state.
             await dimmer.set_state(float(event.state))

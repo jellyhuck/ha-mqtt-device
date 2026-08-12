@@ -89,8 +89,8 @@ via `to_json()` / `from_json()`.
 ## Entities
 
 Entities (sensors, binary sensors, numbers, dates, datetimes, switches,
-buttons, event entities, humidifiers, images, cameras, device trackers, etc.)
-are attached
+buttons, event entities, humidifiers, images, cameras, device trackers,
+infrared emitters/receivers, etc.) are attached
 to a device by passing them to the `Device` constructor. Each entity needs a
 globally unique `unique_id`; entity topics follow the convention
 `~/<unique_id>/<topic>`, so a binary sensor with `unique_id="is_led_on"`
@@ -689,8 +689,61 @@ asyncio.run(main())
 
 ### Infrared
 
-> TODO: not yet supported — there is no Infrared entity in the library yet.
-> Tracked as future work.
+Infrared entities come in two flavors. An [`InfraredReceiver`](src/ha_mqtt_device/infrared.py)
+reports received IR signals from the device to Home Assistant; it is read-only,
+has no command topic, and publishes a JSON signal to
+`~/<unique_id>/state` with `set_state()`. An
+[`InfraredEmitter`](src/ha_mqtt_device/infrared.py) is triggered by Home
+Assistant, which publishes an IR signal payload to `~/<unique_id>/command`;
+registering a callback with `on_event()` delivers each signal as an
+[`Event`](src/ha_mqtt_device/event.py) whose `state` is the parsed signal dict
+(`timings`, optional `modulation`, optional `repeat_count`) or `None` for an
+unparseable payload. The discovery config advertises the emitter's command topic
+as `cmd_t` with `sch` set to `"emitter"`, and the receiver's state topic as `p`
+with `sch` set to `"receiver"`:
+
+```python
+import asyncio
+import json
+
+from ha_mqtt_device import (
+    AioMqttProvider,
+    Device,
+    DeviceInfo,
+    Event,
+    InfraredEmitter,
+    InfraredReceiver,
+)
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    emitter = InfraredEmitter(unique_id="tv_power", name="TV power")
+    receiver = InfraredReceiver(unique_id="living_room_ir", name="Living room IR")
+    device = Device(provider, info, entities=[emitter, receiver])
+
+    async def on_ir_command(event: Event) -> None:
+        # event.state is the parsed signal dict or None for an unknown payload.
+        print(f"{event.topic_type}: {event.message!r} -> {event.state}")
+        if event.state is not None:
+            # ... send event.state to the IR hardware ...
+
+    async with device:
+        # Subscribes to ~/tv_power/command; signals from Home Assistant are
+        # delivered to on_ir_command.
+        await emitter.on_event(on_ir_command)
+
+        # Publishes a received IR signal to ~/living_room_ir/state.
+        await receiver.set_state(
+            {"timings": [9000, -4500, 562, -1687], "modulation": 38000}
+        )
+        await asyncio.sleep(10)
+
+    await device.remove()
+
+asyncio.run(main())
+```
 
 ### Lawn mower
 
