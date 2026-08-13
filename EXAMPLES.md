@@ -747,8 +747,55 @@ asyncio.run(main())
 
 ### Lawn mower
 
-> TODO: not yet supported — there is no LawnMower entity in the library yet.
-> Tracked as future work.
+Lawn mowers have one state topic and one command topic that carries all three
+commands. The device publishes its activity — one of `"mowing"`, `"paused"`,
+`"docked"`, or `"error"` — as a JSON payload `{"activity": "<activity>"}` with
+`set_state()` to `~/<unique_id>/state`. Home Assistant commands arrive on the
+shared command topic `~/<unique_id>/set` as JSON payloads
+`{"activity": "start_mowing"}`, `{"activity": "pause"}`, or
+`{"activity": "dock"}`, and are delivered as
+[`Event`](src/ha_mqtt_device/event.py) objects to the async callback registered
+with `on_event()`: `event.event_type` is `"command"`, `event.state` is
+`"start_mowing"`, `"pause"`, or `"dock"` (`None` for unknown payloads), and
+`event.topic_type` names which command topic the payload maps to
+(`"start_mowing_command_topic"`, `"pause_command_topic"`, or
+`"dock_command_topic"`). In the discovery config all three command topics
+(`st_mow_cmd_t`, `pau_cmd_t`, `doc_cmd_t`) point to the same `~/set` topic, and
+`act_stat_t` is the state topic; default payloads and states are omitted:
+
+```python
+import asyncio
+
+from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, LawnMower
+
+async def main() -> None:
+    provider = AioMqttProvider(host="localhost", port=1883)
+    info = DeviceInfo(device_id="my_device_id", name="My device")
+
+    mower = LawnMower(unique_id="mower", name="Lawn Mower")
+    device = Device(provider, info, entities=[mower])
+
+    async def on_mower_command(event: Event) -> None:
+        # event.state is "start_mowing", "pause", or "dock" (None for unknown).
+        print(f"{event.topic_type}: {event.message!r} -> {event.state}")
+        if event.state == "start_mowing":
+            await mower.set_state("mowing")
+        elif event.state == "pause":
+            await mower.set_state("paused")
+        elif event.state == "dock":
+            await mower.set_state("docked")
+
+    async with device:
+        # Subscribes to ~/mower/set; commands from Home Assistant are
+        # delivered to on_mower_command.
+        await mower.on_event(on_mower_command)
+        await mower.set_state("docked")  # publishes {"activity": "docked"}
+        await asyncio.sleep(10)
+
+    await device.remove()
+
+asyncio.run(main())
+```
 
 ### Light
 
