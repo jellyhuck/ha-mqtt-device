@@ -21,6 +21,7 @@ from ha_mqtt_device.humidifier import Humidifier
 from ha_mqtt_device.image import Image
 from ha_mqtt_device.infrared import InfraredEmitter, InfraredReceiver
 from ha_mqtt_device.lawn_mower import LawnMower
+from ha_mqtt_device.light import Light
 from ha_mqtt_device.number import Number
 from ha_mqtt_device.provider import Message, MqttMessageCallback, MqttProvider
 from ha_mqtt_device.sensor import Sensor
@@ -48,6 +49,7 @@ __all__ = [
     "InfraredEmitter",
     "InfraredReceiver",
     "LawnMower",
+    "Light",
     "Message",
     "MqttMessageCallback",
     "MqttProvider",

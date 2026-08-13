@@ -5,7 +5,7 @@ A thin Python library for creating and maintaining [Home Assistant](https://www.
 ## Features
 
 - **Device discovery**: publish the discovery payload Home Assistant needs to automatically pick up your device over MQTT.
-- **Entity management**: add and maintain multiple entities (sensors, switches, binary sensors, dates, datetimes, humidifiers, cameras, device trackers, infrared emitters/receivers, etc.) that belong to a device.
+- **Entity management**: add and maintain multiple entities (sensors, switches, lights, binary sensors, dates, datetimes, humidifiers, cameras, device trackers, infrared emitters/receivers, etc.) that belong to a device.
 - **Event subscriptions**: entities can subscribe to MQTT topics and deliver updates — for example switch commands from Home Assistant or infrared emitter signals — to your async callbacks as `Event` objects.
 - **Thin and focused**: no heavy framework — just the abstractions needed to model a device and its entities.
 

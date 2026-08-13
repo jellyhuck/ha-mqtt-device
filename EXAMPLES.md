@@ -104,6 +104,29 @@ per-entity availability config is needed.
 > TODO: not yet supported — there is no AlarmControlPanel entity in the
 > library yet. Tracked as future work.
 
+### Light
+
+Lights use grouped topics: power is published to `~/lamp/state/power` and
+commands arrive on `~/lamp/command/power`; optional brightness and color
+features use the same `state`/`command` grouping. See the runnable
+[`examples/light.py`](examples/light.py) example:
+
+```python
+from ha_mqtt_device import Light
+
+light = Light(
+    unique_id="lamp",
+    name="Lamp",
+    brightness_enabled=True,
+    rgb_enabled=True,
+    effect_enabled=True,
+    effect_list=["rainbow", "pulse"],
+)
+await light.set_state(True)
+await light.set_brightness(75)
+await light.set_rgb((255, 80, 20))
+```
+
 ### Binary sensor
 
 ```python
