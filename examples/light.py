@@ -53,7 +53,6 @@ async def main() -> None:
             await light.set_state(True)
             await light.set_brightness(75)
             await light.set_rgb((255, 80, 20))
-            await asyncio.sleep(10)
         await device.remove()
 
 

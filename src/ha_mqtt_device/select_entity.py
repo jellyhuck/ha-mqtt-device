@@ -10,13 +10,13 @@ from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
 
-__all__ = ["Select"]
+__all__ = ["SelectEntity"]
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Select(Entity):
+class SelectEntity(Entity):
     """An MQTT select with a fixed list of selectable string options."""
 
     component = "select"

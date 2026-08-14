@@ -25,7 +25,7 @@ async def on_command(message) -> None:
     print(f"{message.topic}: {message.payload!r}")
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883, username="user", password="pass")
+    provider = AioMqttProvider(hostname="localhost", port=1883, username="user", password="pass")
 
     # Messages are delivered to the callback as Message(topic, payload) objects.
     await provider.subscribe("home/device/set", on_command)
@@ -55,7 +55,7 @@ import json
 from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(
         device_id="my_device_id",
         name="My device",
@@ -132,7 +132,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, BinarySensor, Device, DeviceInfo
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     led = BinarySensor(
@@ -144,7 +144,6 @@ async def main() -> None:
 
     async with device:
         await led.set_state(True)   # publishes "ON" to ~/is_led_on/state
-        await asyncio.sleep(1)
         await led.set_state(False)  # publishes "OFF"
 
     await device.remove()
@@ -166,7 +165,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, Button, Device, DeviceInfo, Event
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     restart = Button(unique_id="restart", name="Restart", device_class="restart")
@@ -181,7 +180,6 @@ async def main() -> None:
         # Subscribes to ~/restart/command; presses from Home Assistant
         # are delivered to on_press.
         await restart.on_event(on_press)
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -208,7 +206,7 @@ import base64
 from ha_mqtt_device import AioMqttProvider, Camera, Device, DeviceInfo
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     camera = Camera(unique_id="front_door", name="Front door camera")
@@ -217,7 +215,6 @@ async def main() -> None:
     async with device:
         # Publishes base64-encoded bytes to ~/front_door/image.
         await camera.set_image(base64.b64encode(b"...jpeg data..."))
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -251,7 +248,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, Cover, Device, DeviceInfo, Event
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     blinds = Cover(unique_id="blinds", name="Blinds", device_class="blind")
@@ -274,7 +271,6 @@ async def main() -> None:
         await blinds.on_event(on_cover_event)
         await blinds.set_state("closed")  # publishes "closed" to ~/blinds/state
         await blinds.set_position(0)      # publishes "0" to ~/blinds/position
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -310,7 +306,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, Climate, Device, DeviceInfo, Event
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     thermostat = Climate(
@@ -341,7 +337,6 @@ async def main() -> None:
         await thermostat.set_target_temperature(21.5)   # ~/thermostat/temperature
         await thermostat.set_mode("heat")               # ~/thermostat/mode
         await thermostat.set_action("heating")          # ~/thermostat/action
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -367,7 +362,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, Date, Device, DeviceInfo, Event
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     target = Date(unique_id="target_date", name="Target date")
@@ -385,7 +380,6 @@ async def main() -> None:
         # are delivered to on_command.
         await target.on_event(on_command)
         await target.set_state("2024-01-01")  # publishes "2024-01-01"
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -414,7 +408,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, DateTime, Device, DeviceInfo, Event
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     alarm = DateTime(unique_id="alarm_time", name="Alarm time")
@@ -432,7 +426,6 @@ async def main() -> None:
         # are delivered to on_command.
         await alarm.on_event(on_command)
         await alarm.set_state("2024-01-01 07:00:00")  # publishes "2024-01-01 07:00:00"
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -460,7 +453,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, DeviceTracker
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     tracker = DeviceTracker(
@@ -478,7 +471,6 @@ async def main() -> None:
         # Publishes a JSON position report to ~/phone/state; gps_accuracy
         # and battery_level fall back to the configured values.
         await tracker.set_location(32.87336, -117.22743)
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -505,7 +497,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, EventEntity
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     doorbell = EventEntity(
@@ -519,7 +511,6 @@ async def main() -> None:
     async with device:
         # Fires an HA event "doorbell_pressed" on ~/doorbell/state.
         await doorbell.set_event("doorbell_pressed")
-        await asyncio.sleep(1)
         await doorbell.set_event("doorbell_long_press")
 
     await device.remove()
@@ -575,7 +566,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, Fan
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     fan = Fan(
@@ -604,7 +595,6 @@ async def main() -> None:
         await fan.on_event(on_fan_event)
         await fan.set_state(True)       # publishes "ON" to ~/ceiling_fan/state
         await fan.set_percentage(60)    # publishes "60" to ~/ceiling_fan/percentage_state
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -638,7 +628,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, Humidifier
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     humidifier = Humidifier(
@@ -666,7 +656,6 @@ async def main() -> None:
         await humidifier.on_event(on_humidifier_event)
         await humidifier.set_state(True)             # publishes "ON" to ~/bedroom_humidifier/state
         await humidifier.set_target_humidity(50)     # publishes "50" to ~/bedroom_humidifier/target_humidity
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -691,7 +680,7 @@ import base64
 from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Image
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     camera = Image(unique_id="camera", name="Camera")
@@ -700,7 +689,6 @@ async def main() -> None:
     async with device:
         # Publishes base64-encoded bytes to ~/camera/image.
         await camera.set_image(base64.b64encode(b"...jpeg data..."))
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -736,7 +724,7 @@ from ha_mqtt_device import (
 )
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     emitter = InfraredEmitter(unique_id="tv_power", name="TV power")
@@ -758,7 +746,6 @@ async def main() -> None:
         await receiver.set_state(
             {"timings": [9000, -4500, 562, -1687], "modulation": 38000}
         )
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -789,7 +776,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, LawnMower
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     mower = LawnMower(unique_id="mower", name="Lawn Mower")
@@ -810,7 +797,6 @@ async def main() -> None:
         # delivered to on_mower_command.
         await mower.on_event(on_mower_command)
         await mower.set_state("docked")  # publishes {"activity": "docked"}
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -898,7 +884,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, Number
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     dimmer = Number(
@@ -924,7 +910,6 @@ async def main() -> None:
         # are delivered to on_command.
         await dimmer.on_event(on_command)
         await dimmer.set_state(75.0)  # publishes "75.0" to ~/dimmer/state
-        await asyncio.sleep(10)
 
     await device.remove()
 
@@ -955,12 +940,14 @@ device state with `set_state()`, and deliver Home Assistant selections through
 `~/mode/command` (`cmd_t`); valid selections become `event.state`, while
 unknown command payloads are retained in `event.message` with `event.state is
 None`. Optional `opt`, `cmd_tpl`, and `val_tpl` are omitted unless configured.
-See the runnable [`examples/select.py`](examples/select.py):
+See the runnable [`examples/select_entity.py`](examples/select_entity.py):
 
 ```python
-from ha_mqtt_device import Select
+from ha_mqtt_device import SelectEntity
 
-select = Select(unique_id="mode", name="Mode", options=["Automatic", "Manual"])
+select = SelectEntity(
+    unique_id="mode", name="Mode", options=["Automatic", "Manual"]
+)
 await select.set_state("Automatic")
 ```
 
@@ -979,7 +966,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Sensor
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     temperature = Sensor(
@@ -993,7 +980,6 @@ async def main() -> None:
 
     async with device:
         await temperature.set_state(21.5)  # publishes "21.5" to ~/temperature/state
-        await asyncio.sleep(1)
         await temperature.set_state(21.7)
 
     await device.remove()
@@ -1038,7 +1024,7 @@ import asyncio
 from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, Switch
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
     info = DeviceInfo(device_id="my_device_id", name="My device")
 
     relay = Switch(unique_id="relay_1", name="Relay")
@@ -1054,7 +1040,6 @@ async def main() -> None:
         # are delivered to on_command.
         await relay.on_event(on_command)
         await relay.set_state(True)  # publishes "ON" to ~/relay_1/state
-        await asyncio.sleep(10)
 
     await device.remove()
 

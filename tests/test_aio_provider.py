@@ -152,7 +152,7 @@ async def wait_for_running(provider: AioMqttProvider) -> None:
 async def test_publish_uses_short_lived_connection(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost", port=1883)
+    provider = AioMqttProvider(hostname="localhost", port=1883)
 
     await provider.publish("home/device/state", b"on")
 
@@ -165,7 +165,7 @@ async def test_publish_uses_short_lived_connection(
 
 
 async def test_publish_accepts_str_payload(fake_aiomqtt: types.SimpleNamespace) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
 
     await provider.publish("home/device/state", "on")
 
@@ -175,7 +175,7 @@ async def test_publish_accepts_str_payload(fake_aiomqtt: types.SimpleNamespace) 
 async def test_subscribe_before_run_registers_callback(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
     received: list[Message] = []
 
     async def on_message(message: Message) -> None:
@@ -198,7 +198,7 @@ async def test_subscribe_before_run_registers_callback(
 async def test_subscribe_while_running_subscribes_on_wire(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
 
     async def on_message(message: Message) -> None:
         return None
@@ -216,7 +216,7 @@ async def test_subscribe_while_running_subscribes_on_wire(
 async def test_dispatch_delivers_message_to_callback(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
     received: list[Message] = []
     delivered = asyncio.Event()
 
@@ -244,7 +244,7 @@ async def test_dispatch_delivers_message_to_callback(
 async def test_dispatch_normalizes_str_and_none_payloads(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
     received: list[Message] = []
 
     async def on_message(message: Message) -> None:
@@ -273,7 +273,7 @@ async def test_dispatch_normalizes_str_and_none_payloads(
 async def test_multiple_callbacks_for_same_topic(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
     first: list[Message] = []
     second: list[Message] = []
 
@@ -305,7 +305,7 @@ async def test_multiple_callbacks_for_same_topic(
 async def test_stop_drains_in_flight_callback(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
     finished = asyncio.Event()
 
     async def slow_callback(message: Message) -> None:
@@ -329,7 +329,7 @@ async def test_stop_drains_in_flight_callback(
 async def test_stop_when_not_running_is_noop(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
 
     await provider.stop()
 
@@ -339,7 +339,7 @@ async def test_stop_when_not_running_is_noop(
 async def test_run_raises_when_already_running(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
     run_task = provider.run()
     await wait_for_running(provider)
 
@@ -353,7 +353,7 @@ async def test_run_raises_when_already_running(
 async def test_run_returns_task_without_awaiting(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
 
     run_task = provider.run()
 
@@ -372,7 +372,7 @@ async def test_run_returns_task_without_awaiting(
 async def test_stop_emits_stopped_event_and_awaits_pending_tasks(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
     finished = asyncio.Event()
 
     async def slow_callback(message: Message) -> None:
@@ -398,7 +398,7 @@ async def test_stop_emits_stopped_event_and_awaits_pending_tasks(
 async def test_async_with_starts_and_stops_provider(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
 
     async with provider:
         assert provider.is_running is True
@@ -415,7 +415,7 @@ async def test_async_with_starts_and_stops_provider(
 async def test_async_with_stops_provider_on_exception(
     fake_aiomqtt: types.SimpleNamespace,
 ) -> None:
-    provider = AioMqttProvider(host="localhost")
+    provider = AioMqttProvider(hostname="localhost")
 
     with pytest.raises(RuntimeError, match="boom"):
         async with provider:
@@ -451,7 +451,7 @@ async def test_publish_cancelled_during_connect_uses_public_api_only(
     FakeClient.connect_delay = 0.05
     FakeClient.simulate_socket = True
     try:
-        provider = AioMqttProvider(host="localhost")
+        provider = AioMqttProvider(hostname="localhost")
 
         publish_task = asyncio.create_task(provider.publish("home/device/state", b"on"))
         await asyncio.sleep(0)  # let the task construct the client
@@ -502,4 +502,4 @@ async def test_construct_raises_without_aiomqtt() -> None:
         ),
         pytest.raises(ImportError, match="mqtt"),
     ):
-        AioMqttProvider(host="localhost")
+        AioMqttProvider(hostname="localhost")

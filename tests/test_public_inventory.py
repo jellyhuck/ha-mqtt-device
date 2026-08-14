@@ -13,7 +13,7 @@ IN_SCOPE = {
     "Lock": ("lock.py", "Lock"),
     "Notify": ("notify.py", "Notify"),
     "Scene": ("scene.py", "Scene"),
-    "Select": ("select.py", "Select"),
+    "SelectEntity": ("select_entity.py", "Select"),
     "Siren": ("siren.py", "Siren"),
     "TagScanner": ("tag_scanner.py", "Tag scanner"),
     "Text": ("text.py", "Text"),

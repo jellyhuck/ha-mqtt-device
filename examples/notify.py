@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883, logger=logger)
+    provider = AioMqttProvider(hostname="localhost", port=1883, logger=logger)
     info = DeviceInfo(device_id="notify_example", name="Example notifier")
     notifier = Notify(unique_id="notifications", name="Notifications")
     device = Device(provider, info, entities=[notifier])
@@ -24,7 +24,6 @@ async def main() -> None:
     async with provider:
         async with device:
             await notifier.on_event(on_notification)
-            await asyncio.sleep(30)
         await device.remove()
 
 

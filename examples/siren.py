@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883, logger=logger)
+    provider = AioMqttProvider(hostname="localhost", port=1883, logger=logger)
     info = DeviceInfo(device_id="siren_example", name="Example siren")
     siren = Siren(
         unique_id="alarm_siren",
@@ -38,7 +38,6 @@ async def main() -> None:
         async with device:
             await siren.on_event(on_siren_command)
             await siren.set_state(True, tone="bell", duration=10, volume_level=0.5)
-            await asyncio.sleep(30)
         await device.remove()
 
 

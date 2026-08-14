@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883, logger=logger)
+    provider = AioMqttProvider(hostname="localhost", port=1883, logger=logger)
     heater = WaterHeater(
         unique_id="boiler",
         name="Boiler",
@@ -40,7 +40,6 @@ async def main() -> None:
             await heater.set_current_temperature(52.5)
             await heater.set_target_temperature(55)
             await heater.set_mode("eco")
-            await asyncio.sleep(30)
         await device.remove()
 
 

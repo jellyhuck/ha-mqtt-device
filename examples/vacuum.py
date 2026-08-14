@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883, logger=logger)
+    provider = AioMqttProvider(hostname="localhost", port=1883, logger=logger)
     info = DeviceInfo(device_id="vacuum_example", name="Example vacuum")
     vacuum = Vacuum(
         unique_id="cleaner",
@@ -38,7 +38,6 @@ async def main() -> None:
             await vacuum.on_event(on_command)
             await vacuum.set_state("docked", fan_speed="min")
             await vacuum.start()
-            await asyncio.sleep(30)
         await device.remove()
 
 

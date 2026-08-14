@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883, logger=logger)
+    provider = AioMqttProvider(hostname="localhost", port=1883, logger=logger)
     info = DeviceInfo(device_id="tag_reader", name="Example tag reader")
     scanner = TagScanner(
         unique_id="reader",
@@ -28,7 +28,6 @@ async def main() -> None:
             await scanner.on_event(on_scan)
             # Hardware integrations normally call this when their reader scans.
             await scanner.scan("E9F35959")
-            await asyncio.sleep(30)
         await device.remove()
 
 

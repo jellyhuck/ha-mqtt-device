@@ -5,15 +5,15 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, Select
+from ha_mqtt_device import AioMqttProvider, Device, DeviceInfo, Event, SelectEntity
 
 logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883, logger=logger)
+    provider = AioMqttProvider(hostname="localhost", port=1883, logger=logger)
     info = DeviceInfo(device_id="select_example", name="Example selector")
-    select = Select(
+    select = SelectEntity(
         unique_id="mode",
         name="Mode",
         options=["Automatic", "Manual"],
@@ -30,7 +30,6 @@ async def main() -> None:
         async with device:
             await select.on_event(on_selection)
             await select.set_state("Automatic")
-            await asyncio.sleep(30)
         await device.remove()
 
 

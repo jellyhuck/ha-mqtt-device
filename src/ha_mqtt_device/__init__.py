@@ -28,7 +28,7 @@ from ha_mqtt_device.notify import Notify
 from ha_mqtt_device.number import Number
 from ha_mqtt_device.provider import Message, MqttMessageCallback, MqttProvider
 from ha_mqtt_device.scene import Scene
-from ha_mqtt_device.select import Select
+from ha_mqtt_device.select_entity import SelectEntity
 from ha_mqtt_device.sensor import Sensor
 from ha_mqtt_device.siren import Siren
 from ha_mqtt_device.switch import Switch
@@ -71,7 +71,7 @@ __all__ = [
     "Notify",
     "Number",
     "Scene",
-    "Select",
+    "SelectEntity",
     "Sensor",
     "Siren",
     "Switch",

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883, logger=logger)
+    provider = AioMqttProvider(hostname="localhost", port=1883, logger=logger)
     info = DeviceInfo(device_id="update_example", name="Example update device")
     update = Update(
         unique_id="firmware",
@@ -33,7 +33,6 @@ async def main() -> None:
         async with device:
             await update.on_event(on_install)
             await update.set_state("1.21.0", latest_version="1.22.0")
-            await asyncio.sleep(30)
         await device.remove()
 
 

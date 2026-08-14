@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883, logger=logger)
+    provider = AioMqttProvider(hostname="localhost", port=1883, logger=logger)
     info = DeviceInfo(device_id="alarm_example", name="Example alarm")
     alarm = AlarmControlPanel(unique_id="alarm", name="Alarm")
     device = Device(provider, info, entities=[alarm])
@@ -31,7 +31,6 @@ async def main() -> None:
     async with provider:
         async with device:
             await alarm.on_event(on_alarm_command)
-            await asyncio.sleep(30)
         await device.remove()
 
 

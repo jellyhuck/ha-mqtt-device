@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883, logger=logger)
+    provider = AioMqttProvider(hostname="localhost", port=1883, logger=logger)
     info = DeviceInfo(device_id="text_example", name="Example text device")
     text = Text(
         unique_id="message",
@@ -31,7 +31,6 @@ async def main() -> None:
         async with device:
             await text.on_event(on_text_command)
             await text.set_state("Ready")
-            await asyncio.sleep(30)
         await device.remove()
 
 

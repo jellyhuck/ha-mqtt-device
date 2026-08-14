@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883, logger=logger)
+    provider = AioMqttProvider(hostname="localhost", port=1883, logger=logger)
     valve = Valve(unique_id="water_valve", name="Water valve", payload_stop="STOP")
     device = Device(
         provider,
@@ -31,7 +31,6 @@ async def main() -> None:
             await valve.on_event(on_command)
             await valve.set_state("closed")
             await valve.open()
-            await asyncio.sleep(30)
         await device.remove()
 
 

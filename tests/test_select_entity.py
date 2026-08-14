@@ -1,4 +1,4 @@
-"""Tests for Select using a recording provider."""
+"""Tests for SelectEntity using a recording provider."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 
 import pytest
 
-from ha_mqtt_device import Device, DeviceInfo, Event, Select
+from ha_mqtt_device import Device, DeviceInfo, Event, SelectEntity
 from ha_mqtt_device.provider import Message, MqttMessageCallback
 
 
@@ -33,8 +33,8 @@ class RecordingProvider:
             await callback(Message(topic, payload.encode()))
 
 
-def bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, Select]:
-    select = Select(**kwargs)
+def bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, SelectEntity]:
+    select = SelectEntity(**kwargs)
     return Device(
         provider, DeviceInfo(device_id="dev-1", name="Device"), [select]
     ), select
@@ -125,7 +125,7 @@ async def test_command_events_preserve_unknown_options_and_subscribe_once() -> N
 
 async def test_options_must_be_strings_and_state_requires_enabled_topic() -> None:
     with pytest.raises(ValueError, match="only strings"):
-        Select(unique_id="mode", options=["Auto", 1])  # type: ignore[list-item]
+        SelectEntity(unique_id="mode", options=["Auto", 1])  # type: ignore[list-item]
 
     provider = RecordingProvider()
     _, select = bound(provider, unique_id="mode", options=["Auto"], state_enabled=False)
@@ -134,7 +134,7 @@ async def test_options_must_be_strings_and_state_requires_enabled_topic() -> Non
 
 
 async def test_unbound_event_and_device_configuration() -> None:
-    select = Select(unique_id="mode", options=["Auto"])
+    select = SelectEntity(unique_id="mode", options=["Auto"])
     with pytest.raises(RuntimeError, match="not bound"):
         await select.set_state("Auto")
     with pytest.raises(RuntimeError, match="not bound"):

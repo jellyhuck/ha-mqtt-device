@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    provider = AioMqttProvider(host="localhost", port=1883, logger=logger)
+    provider = AioMqttProvider(hostname="localhost", port=1883, logger=logger)
     info = DeviceInfo(device_id="lock_example", name="Example lock")
     lock = Lock(unique_id="front_door_lock", name="Front door")
     device = Device(provider, info, entities=[lock])
@@ -27,7 +27,6 @@ async def main() -> None:
     async with provider:
         async with device:
             await lock.on_event(on_lock_command)
-            await asyncio.sleep(30)
         await device.remove()
 
 
