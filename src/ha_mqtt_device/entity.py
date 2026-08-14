@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 if TYPE_CHECKING:
     from ha_mqtt_device.device import Device
+    from ha_mqtt_device.device_info import DeviceInfo
 
 __all__ = ["Entity"]
 
@@ -48,6 +49,9 @@ class Entity:
 
     #: Home Assistant MQTT component name, e.g. ``"binary_sensor"``.
     component: ClassVar[str] = ""
+    #: Whether this entity publishes a standalone discovery message rather
+    #: than appearing in the device discovery payload's ``cmps`` mapping.
+    standalone_discovery: ClassVar[bool] = False
 
     def __post_init__(self) -> None:
         if not _UNIQUE_ID_RE.fullmatch(self.unique_id):
@@ -94,3 +98,11 @@ class Entity:
         if self.name is not None:
             config["name"] = self.name
         return config
+
+    def standalone_discovery_config(
+        self, info: DeviceInfo
+    ) -> tuple[str, dict[str, Any]]:
+        """Return a standalone discovery message for special entities."""
+        raise NotImplementedError(
+            f"{type(self).__name__} does not provide standalone discovery"
+        )

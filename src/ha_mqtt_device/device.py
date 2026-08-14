@@ -84,14 +84,21 @@ class Device:
             Exception: If the message could not be published.
         """
         payload = self.info.discovery_payload()
-        if self.entities:
+        regular_entities = [
+            entity for entity in self.entities if not entity.standalone_discovery
+        ]
+        if regular_entities:
             cmps: dict[str, dict[str, dict[str, Any]]] = {}
-            for entity in self.entities:
+            for entity in regular_entities:
                 cmps.setdefault(entity.component, {})[entity.unique_id] = (
                     entity.discovery_config()
                 )
             payload["cmps"] = cmps
         await self.provider.publish(self.info.discovery_topic(), json.dumps(payload))
+        for entity in self.entities:
+            if entity.standalone_discovery:
+                topic, config = entity.standalone_discovery_config(self.info)
+                await self.provider.publish(topic, json.dumps(config))
 
     async def set_availability(self, available: bool) -> None:
         """Publish the device's availability state.
@@ -122,6 +129,10 @@ class Device:
             Exception: If the message could not be published.
         """
         await self.provider.publish(self.info.discovery_topic(), "")
+        for entity in self.entities:
+            if entity.standalone_discovery:
+                topic, _config = entity.standalone_discovery_config(self.info)
+                await self.provider.publish(topic, "")
 
     async def close(self) -> None:
         """Publish the "unavailable" state.

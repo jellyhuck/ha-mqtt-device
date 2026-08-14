@@ -1,9 +1,10 @@
 # Examples
 
 This document walks through the library with runnable examples: the MQTT
-provider, device discovery, and one section per entity type. Entities that
-Home Assistant supports over MQTT but this library does not implement yet are
-listed in place with a TODO note.
+provider, device discovery, and one section per entity type. Each supported
+entity has a section and a runnable script. The legacy Home Assistant MQTT
+Device Trigger is intentionally excluded; use `EventEntity` and
+its event callback model instead.
 
 All examples assume an MQTT broker on `localhost:1883` and expect Python
 3.14+ with `ha-mqtt-device[mqtt]` installed (see the
@@ -101,31 +102,27 @@ per-entity availability config is needed.
 
 ### Alarm control panel
 
-> TODO: not yet supported — there is no AlarmControlPanel entity in the
-> library yet. Tracked as future work.
-
-### Light
-
-Lights use grouped topics: power is published to `~/lamp/state/power` and
-commands arrive on `~/lamp/command/power`; optional brightness and color
-features use the same `state`/`command` grouping. See the runnable
-[`examples/light.py`](examples/light.py) example:
+Alarm control panels receive Home Assistant arm, disarm, and trigger commands
+on `~/alarm/command` and, when state reporting is enabled, publish documented
+alarm states to `~/alarm/state`. Register `on_event()` to handle commands;
+`event.state` is an alarm state such as `"armed_home"` or `"disarmed"`, and
+`event.message` preserves the raw payload (including any code-bearing payload).
+Discovery uses `cmd_t` and optional `stat_t`; non-default command payloads use
+`pl_arm_away`, `pl_arm_home`, `pl_disarm`, and related keys, while code flags
+use `cod_arm_req`, `cod_dis_req`, and `cod_trig_req`. See the runnable
+[`examples/alarm_control_panel.py`](examples/alarm_control_panel.py):
 
 ```python
-from ha_mqtt_device import Light
+from ha_mqtt_device import AlarmControlPanel
 
-light = Light(
-    unique_id="lamp",
-    name="Lamp",
-    brightness_enabled=True,
-    rgb_enabled=True,
-    effect_enabled=True,
-    effect_list=["rainbow", "pulse"],
+alarm = AlarmControlPanel(
+    unique_id="alarm",
+    name="Alarm",
+    code_arm_required=True,
 )
-await light.set_state(True)
-await light.set_brightness(75)
-await light.set_rgb((255, 80, 20))
+await alarm.set_state("armed_home")
 ```
+
 
 ### Binary sensor
 
@@ -822,18 +819,68 @@ asyncio.run(main())
 
 ### Light
 
-> TODO: not yet supported — there is no Light entity in the library yet.
-> Tracked as future work.
+Lights use grouped topics: power state/commands use
+`~/lamp/state/power` and `~/lamp/command/power`; enabled brightness, color,
+effect, and white controls use matching `state/<feature>` and
+`command/<feature>` topics. `on_event()` receives `command`, `brightness`,
+color, and effect events; numeric/color payloads are parsed into `event.state`,
+while effect payloads remain text and invalid numeric/color payloads become
+`None`. Discovery uses `stat_t`/`cmd_t` plus
+feature-specific keys such as `bri_stat_t`/`bri_cmd_t`, `rgb_stat_t`/`rgb_cmd_t`,
+`effect_list`, and optional `dev_cla`; defaults are omitted. See
+the runnable [`examples/light.py`](examples/light.py):
+
+```python
+from ha_mqtt_device import Light
+
+light = Light(
+    unique_id="lamp",
+    name="Lamp",
+    brightness_enabled=True,
+    rgb_enabled=True,
+    effect_enabled=True,
+    effect_list=["rainbow", "pulse"],
+)
+await light.set_state(True)
+await light.set_brightness(75)
+await light.set_rgb((255, 80, 20))
+```
 
 ### Lock
 
-> TODO: not yet supported — there is no Lock entity in the library yet.
-> Tracked as future work.
+Locks publish configured `locked`, `unlocked`, `locking`, `unlocking`, or
+`jammed` payloads to `~/front_door_lock/state` and receive lock, unlock, and
+optional open commands on `~/front_door_lock/command`. Register `on_event()`
+to handle commands; `event.state` is `"lock"`, `"unlock"`, or `"open"` (or
+`None` for an unknown payload), while `event.message` retains the raw text.
+Discovery uses `cmd_t`/`stat_t`; custom payloads, state strings, `cod_fmt`, and
+templates are validated and emitted only when configured. See the runnable
+[`examples/lock.py`](examples/lock.py):
+
+```python
+from ha_mqtt_device import Lock
+
+lock = Lock(unique_id="front_door_lock", name="Front door")
+await lock.set_state("locked")
+```
 
 ### Notify
 
-> TODO: not yet supported — there is no Notify entity in the library yet.
-> Tracked as future work.
+Notify is an action-like MQTT service with no state topic. Home Assistant
+publishes notification payloads to `~/notifications/command`; register
+`on_event()` to receive them. Plain text remains a string in `event.state`,
+while a JSON object is exposed as a dictionary and the original text remains in
+`event.message`. Discovery contains `cmd_t` and optional `cmd_tpl`, `avty_t`,
+`avty_tpl`, `pl_avail`, and `pl_not_avail`; availability payloads must be
+non-empty. See the runnable
+[`examples/notify.py`](examples/notify.py):
+
+```python
+from ha_mqtt_device import Notify
+
+notifier = Notify(unique_id="notifications", name="Notifications")
+await notifier.on_event(on_notification)
+```
 
 ### Number
 
@@ -886,13 +933,36 @@ asyncio.run(main())
 
 ### Scene
 
-> TODO: not yet supported — there is no Scene entity in the library yet.
-> Tracked as future work.
+Scenes are command-only entities: they have no state topic. `activate()`
+publishes `payload_on` (default `"ON"`) to `~/party/command`; commands received
+on that topic can be handled with `on_event()`, where matching payloads map to
+`event.state == "on"` and unknown payloads map to `None`. Discovery uses `cmd_t`
+and optional `pl_on`, command-template, and availability keys. See the runnable
+[`examples/scene.py`](examples/scene.py):
+
+```python
+from ha_mqtt_device import Scene
+
+scene = Scene(unique_id="party", name="Party")
+await scene.activate()
+```
 
 ### Select
 
-> TODO: not yet supported — there is no Select entity in the library yet.
-> Tracked as future work.
+Select entities advertise their string `options` as `ops`, publish
+device state with `set_state()`, and deliver Home Assistant selections through
+`on_event()`. State uses `~/mode/state` (`stat_t`) and commands use
+`~/mode/command` (`cmd_t`); valid selections become `event.state`, while
+unknown command payloads are retained in `event.message` with `event.state is
+None`. Optional `opt`, `cmd_tpl`, and `val_tpl` are omitted unless configured.
+See the runnable [`examples/select.py`](examples/select.py):
+
+```python
+from ha_mqtt_device import Select
+
+select = Select(unique_id="mode", name="Mode", options=["Automatic", "Manual"])
+await select.set_state("Automatic")
+```
 
 ### Sensor
 
@@ -933,8 +1003,26 @@ asyncio.run(main())
 
 ### Siren
 
-> TODO: not yet supported — there is no Siren entity in the library yet.
-> Tracked as future work.
+Siren commands and state reports use JSON on `~/alarm_siren/command` and
+`~/alarm_siren/state`. `set_state()` accepts optional `tone`, `duration`, and
+`volume_level` parameters; `set_tone()`, `set_duration()`, and `set_volume()`
+validate enabled features, available tones, non-negative duration, and the
+0–1 volume range. Home Assistant command payloads are delivered to `on_event()`
+as raw text plus a parsed dictionary when valid JSON. Discovery uses `cmd_t`,
+`stat_t`, `av_tones`, `sup_dur`, `sup_vol`, and optional template, payload,
+optimistic, and availability keys. See the runnable
+[`examples/siren.py`](examples/siren.py):
+
+```python
+from ha_mqtt_device import Siren
+
+siren = Siren(
+    unique_id="alarm_siren",
+    name="Alarm siren",
+    available_tones=["bell", "siren"],
+)
+await siren.set_state(True, tone="bell", duration=10, volume_level=0.5)
+```
 
 ### Switch
 
@@ -975,38 +1063,160 @@ asyncio.run(main())
 
 ### Update
 
-> TODO: not yet supported — there is no Update entity in the library yet.
-> Tracked as future work.
+Update entities publish a JSON state containing the required
+`installed_version` and optional `latest_version`, title, release metadata,
+`in_progress`, and `update_percentage` fields to `~/firmware/state`. The install
+action is published to `~/firmware/command`; enable the separate
+`~/firmware/state/latest` topic with `latest_version_enabled=True`. Discovery
+uses the base `p`, optional `cmd_t`/`l_ver_t`, and abbreviated metadata keys
+such as `tit`, `dev_cla`, `rel_s`, `rel_u`, `ent_pic`, `val_tpl`, and `l_ver_tpl`.
+Invalid percentages outside 0–100 and unknown state fields are rejected. See
+the runnable [`examples/update.py`](examples/update.py):
+
+```python
+from ha_mqtt_device import Update
+
+update = Update(
+    unique_id="firmware",
+    title="Example device firmware",
+    device_class="firmware",
+    latest_version_enabled=True,
+)
+await update.set_state("1.21.0", latest_version="1.22.0")
+await update.install()
+```
 
 ### Tag scanner
 
-> TODO: not yet supported — there is no TagScanner entity in the library yet.
-> Tracked as future work.
+Tag scanners use Home Assistant's standalone `tag` discovery topic rather than
+an entity in the device `cmps` map. `TagScanner` publishes a `t` topic and
+optional `val_tpl` discovery payload (with the device map), subscribes to its
+scan topic with `on_event()`, and can publish a scan with `scan()`. Incoming
+scans use `event.event_type == "scan"`, `topic_type == "topic"`, and retain the
+text in both `event.message` and `event.state`; an empty topic is invalid. See
+the runnable
+[`examples/tag_scanner.py`](examples/tag_scanner.py):
+
+```python
+from ha_mqtt_device import TagScanner
+
+scanner = TagScanner(
+    unique_id="reader",
+    topic="~/tag_scanned",
+    value_template="{{ value_json.uid }}",
+)
+await scanner.scan("E9F35959")
+```
 
 ### Text
 
-> TODO: not yet supported — there is no Text entity in the library yet.
-> Tracked as future work.
+Text entities publish state to `~/message/state` (`stat_t`) and receive Home
+Assistant commands on `~/message/command` (`cmd_t`). Values are validated
+against `min_length` (0–255), `max_length` (0–255), and the optional regular-
+expression `pattern`; invalid inbound payloads remain in `event.message` with
+`event.state is None`. The `mode` may be `"text"` or `"password"`. Discovery
+omits default min/max/mode and emits configured `ptrn`, `cmd_tpl`, and
+`val_tpl`; state reporting can be disabled. See the runnable
+[`examples/text.py`](examples/text.py):
+
+```python
+from ha_mqtt_device import Text
+
+text = Text(unique_id="message", max_length=100, pattern=r"[A-Za-z0-9 ]*")
+await text.set_state("Ready")
+```
 
 ### Time
 
-> TODO: not yet supported — there is no Time entity in the library yet.
-> Tracked as future work.
+Time entities normalize `datetime.time` values and strict `HH:MM[:SS]` strings
+to deterministic `HH:MM:SS` payloads. State is published to `~/alarm/state`
+(`stat_t`) and commands arrive on `~/alarm/command` (`cmd_t`); invalid command
+values have `event.state is None` while `event.message` preserves the original
+payload. Fractional seconds and malformed times are rejected. Optional
+`cmd_tpl` and `val_tpl` are included only when configured, while `stat_t` is
+omitted only when state reporting is disabled. See the runnable
+[`examples/mqtt_time.py`](examples/mqtt_time.py):
+
+```python
+from datetime import time
+
+from ha_mqtt_device import Time
+
+alarm = Time(unique_id="alarm", name="Alarm time")
+await alarm.set_state(time(7, 30))  # publishes 07:30:00
+```
 
 ### Vacuum
 
-> TODO: not yet supported — there is no Vacuum entity in the library yet.
-> Tracked as future work.
+Vacuum state is JSON on `~/cleaner/state` with a required Home Assistant
+state (`cleaning`, `docked`, `paused`, `idle`, `returning`, or `error`) and
+optional fan speed or segment mappings. Basic commands share
+`~/cleaner/command`; fan speed, custom command, and clean-segment features use
+`command/fan_speed`, `command/send`, and `command/clean_segments` when enabled.
+Commands received from Home Assistant arrive as `Event` objects; unknown
+payloads map to `None`, configured fan speeds are validated, and state mappings
+reject unknown fields. Discovery uses `cmd_t`, `send_cmd_t`, `set_fan_spd_t`,
+`fanspd_lst`, `sup_feat`, and the documented payload keys. See the runnable
+[`examples/vacuum.py`](examples/vacuum.py):
+
+```python
+from ha_mqtt_device import Vacuum
+
+vacuum = Vacuum(
+    unique_id="cleaner",
+    supported_features=["start", "stop", "return_home", "status"],
+)
+await vacuum.set_state("docked")
+await vacuum.start()
+```
 
 ### Valve
 
-> TODO: not yet supported — there is no Valve entity in the library yet.
-> Tracked as future work.
+Valves publish one of `open`, `opening`, `closed`, or `closing` to
+`~/water_valve/state` and receive `OPEN`, `CLOSE`, and optional `STOP`
+commands on `~/water_valve/command`. Discovery uses `cmd_t`, optional
+`pl_open`/`pl_cls`/`pl_stop`, state payload keys, `pos`, `pos_clsd`, `pos_open`,
+`opt`, and `val_tpl`; defaults are omitted. Set `reports_position=True` to
+publish numeric positions instead; numeric or documented `{state, position}`
+JSON commands become position events, and custom open/close payloads and state
+strings are rejected in that mode. Commands are delivered through `on_event()`
+as `Event` objects, preserving raw payloads. See [`examples/valve.py`](examples/valve.py):
+
+```python
+from ha_mqtt_device import Valve
+
+valve = Valve(unique_id="water_valve", payload_stop="STOP")
+await valve.set_state("closed")
+await valve.open()
+```
 
 ### Water heater
 
-> TODO: not yet supported — there is no WaterHeater entity in the library yet.
-> Tracked as future work.
+Water heaters use grouped topics: current temperature is published to
+`~/boiler/state/current_temperature`, target temperature to
+`~/boiler/state/temperature`, and mode to `~/boiler/state/mode`; commands use
+matching `command/temperature` and `command/mode` paths. Optional power commands
+use `command/power` when `power_enabled=True`. Discovery uses
+`curr_temp_t`, `temp_stat_t`, `temp_cmd_t`, `mode_stat_t`, `mode_cmd_t`, and
+optional `power_command_topic`, `modes`, `min_temp`, `max_temp`, `init`, `prec`,
+`temp_unit`, `pl_on`, `pl_off`, and `opt`. Modes and target temperatures are
+validated (default ranges are 43.3–60 C or 110–140 F); command callbacks emit
+`temperature`, `mode`, and optional `power` events with unknown values as
+`None`. See [`examples/water_heater.py`](examples/water_heater.py):
+
+```python
+from ha_mqtt_device import WaterHeater
+
+heater = WaterHeater(
+    unique_id="boiler",
+    modes=["off", "eco", "electric"],
+    temperature_unit="C",
+    power_enabled=True,
+)
+await heater.set_current_temperature(52.5)
+await heater.set_target_temperature(55)
+await heater.set_mode("eco")
+```
 
 ## See also
 

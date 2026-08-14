@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from ha_mqtt_device.aio_provider import AioMqttProvider
+from ha_mqtt_device.alarm_control_panel import AlarmControlPanel
 from ha_mqtt_device.binary_sensor import BinarySensor
 from ha_mqtt_device.button import Button
 from ha_mqtt_device.camera import Camera
@@ -22,13 +23,26 @@ from ha_mqtt_device.image import Image
 from ha_mqtt_device.infrared import InfraredEmitter, InfraredReceiver
 from ha_mqtt_device.lawn_mower import LawnMower
 from ha_mqtt_device.light import Light
+from ha_mqtt_device.lock import Lock
+from ha_mqtt_device.notify import Notify
 from ha_mqtt_device.number import Number
 from ha_mqtt_device.provider import Message, MqttMessageCallback, MqttProvider
+from ha_mqtt_device.scene import Scene
+from ha_mqtt_device.select import Select
 from ha_mqtt_device.sensor import Sensor
+from ha_mqtt_device.siren import Siren
 from ha_mqtt_device.switch import Switch
+from ha_mqtt_device.tag_scanner import TagScanner
+from ha_mqtt_device.text import Text
+from ha_mqtt_device.time import Time
+from ha_mqtt_device.update import Update
+from ha_mqtt_device.vacuum import Vacuum
+from ha_mqtt_device.valve import Valve
+from ha_mqtt_device.water_heater import WaterHeater
 
 __all__ = [
     "AioMqttProvider",
+    "AlarmControlPanel",
     "BinarySensor",
     "Button",
     "Camera",
@@ -50,12 +64,24 @@ __all__ = [
     "InfraredReceiver",
     "LawnMower",
     "Light",
+    "Lock",
     "Message",
     "MqttMessageCallback",
     "MqttProvider",
+    "Notify",
     "Number",
+    "Scene",
+    "Select",
     "Sensor",
+    "Siren",
     "Switch",
+    "TagScanner",
+    "Text",
+    "Time",
+    "Update",
+    "Vacuum",
+    "Valve",
+    "WaterHeater",
 ]
 
 
