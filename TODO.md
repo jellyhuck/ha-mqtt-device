@@ -5,6 +5,12 @@ versions of `ha-mqtt-device`. Changes should preserve existing callers where
 possible and include discovery, topic, payload, and lifecycle tests as
 appropriate.
 
+## Recently resolved
+
+- **TODO-19 — Asynchronous provider test contract:** The short-lived publish
+  test now expects the `hostname` keyword that `AioMqttProvider` forwards to
+  `aiomqtt.Client`; the provider contract and existing callers remain unchanged.
+
 ## Discovery configuration
 
 - **TODO-01 — Correct shared discovery identity and state fields**
@@ -84,10 +90,6 @@ appropriate.
 - **TODO-18 — Resolve Switch discovery compatibility**
   Verify Switch command and state key names against a version-matched Home
   Assistant reference before changing or documenting them.
-
-- **TODO-19 — Fix the asynchronous provider test contract**
-  Resolve the mismatch between the fake client's `hostname` argument and the
-  provider test's expected `host` argument.
 
 - **TODO-20 — Keep examples synchronized with the public API**
   Add runnable examples for newly supported capabilities and avoid documenting

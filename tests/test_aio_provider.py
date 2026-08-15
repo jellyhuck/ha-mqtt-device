@@ -160,7 +160,7 @@ async def test_publish_uses_short_lived_connection(
     assert client.entered
     assert client.exited
     assert client.published == [("home/device/state", b"on")]
-    assert client.config == {"host": "localhost", "port": 1883}
+    assert client.config == {"hostname": "localhost", "port": 1883}
     assert provider.is_running is False
 
 
