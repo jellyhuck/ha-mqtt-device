@@ -63,6 +63,8 @@ from the device.
 
 ### Alarm control panel
 
+HA Integration: [MQTT Alarm Control Panel](https://www.home-assistant.io/integrations/alarm_control_panel.mqtt/).
+
 [`AlarmControlPanel`](src/ha_mqtt_device/alarm_control_panel.py) receives arm,
 disarm, and trigger commands and can publish alarm states. See
 [`examples/alarm_control_panel.py`](examples/alarm_control_panel.py).
@@ -81,6 +83,8 @@ await alarm.set_state("armed_home")
 
 ### Binary sensor
 
+HA Integration: [MQTT Binary Sensor](https://www.home-assistant.io/integrations/binary_sensor.mqtt/).
+
 [`BinarySensor`](src/ha_mqtt_device/binary_sensor.py) publishes boolean state
 values and has no command topic. See
 [`examples/binary_sensor.py`](examples/binary_sensor.py).
@@ -95,6 +99,8 @@ await led.set_state(False)  # publishes "OFF"
 
 ### Button
 
+HA Integration: [MQTT Button](https://www.home-assistant.io/integrations/button.mqtt/).
+
 [`Button`](src/ha_mqtt_device/button.py) is command-only. Register `on_event()`
 to handle Home Assistant presses; `event.state` is `"press"` for the default
 payload. See [`examples/button.py`](examples/button.py).
@@ -107,6 +113,8 @@ await restart.on_event(on_press)
 ```
 
 ### Camera
+
+HA Integration: [MQTT Camera](https://www.home-assistant.io/integrations/camera.mqtt/).
 
 [`Camera`](src/ha_mqtt_device/camera.py) publishes image frames to Home
 Assistant. See [`examples/camera.py`](examples/camera.py).
@@ -122,6 +130,8 @@ await camera.set_image(base64.b64encode(jpeg_bytes))
 
 ### Cover
 
+HA Integration: [MQTT Cover](https://www.home-assistant.io/integrations/cover.mqtt/).
+
 [`Cover`](src/ha_mqtt_device/cover.py) publishes state and position and
 receives open, close, stop, and position commands through `on_event()`. See
 [`examples/cover.py`](examples/cover.py).
@@ -136,6 +146,8 @@ await blinds.set_position(0)
 ```
 
 ### Climate (HVAC)
+
+HA Integration: [MQTT Climate (HVAC)](https://www.home-assistant.io/integrations/climate.mqtt/).
 
 [`Climate`](src/ha_mqtt_device/climate.py) exposes current temperature, target
 temperature, HVAC mode, and current action, validating finite temperatures and
@@ -160,6 +172,8 @@ await thermostat.set_action("heating")
 
 ### Date
 
+HA Integration: [MQTT Date](https://www.home-assistant.io/integrations/date.mqtt/).
+
 [`Date`](src/ha_mqtt_device/date.py) validates and publishes `YYYY-MM-DD`
 values and delivers valid commands through `on_event()`. See
 [`examples/date.py`](examples/date.py).
@@ -173,6 +187,8 @@ await target_date.set_state("2024-02-14")
 ```
 
 ### Date Time
+
+HA Integration: [MQTT Date/Time](https://www.home-assistant.io/integrations/datetime.mqtt/).
 
 [`DateTime`](src/ha_mqtt_device/date_time.py) handles strict
 `YYYY-MM-DD HH:MM:SS` values. See
@@ -189,6 +205,8 @@ await alarm_time.on_event(on_command)
 ```
 
 ### Device tracker
+
+HA Integration: [MQTT Device Tracker](https://www.home-assistant.io/integrations/device_tracker.mqtt/).
 
 [`DeviceTracker`](src/ha_mqtt_device/device_tracker.py) reports presence and
 can publish a JSON location payload. See
@@ -209,6 +227,8 @@ await phone.set_location(32.87336, -117.22743, battery_level=82)
 
 ### Event
 
+HA Integration: [MQTT Event](https://www.home-assistant.io/integrations/event.mqtt/).
+
 [`EventEntity`](src/ha_mqtt_device/event_entity.py) publishes transient event
 types that Home Assistant automations can trigger. The legacy Device Trigger
 is not supported. See [`examples/event.py`](examples/event.py).
@@ -225,6 +245,8 @@ await doorbell.set_event("doorbell_pressed")
 ```
 
 ### Fan
+
+HA Integration: [MQTT Fan](https://www.home-assistant.io/integrations/fan.mqtt/).
 
 [`Fan`](src/ha_mqtt_device/fan.py) supports on/off state plus optional
 percentage, preset, oscillation, and direction controls. Percentage values are
@@ -247,6 +269,8 @@ await fan.set_percentage(60)
 
 ### Humidifier
 
+HA Integration: [MQTT Humidifier](https://www.home-assistant.io/integrations/humidifier.mqtt/).
+
 [`Humidifier`](src/ha_mqtt_device/humidifier.py) publishes power and target
 humidity and receives both command types through `on_event()`. Target humidity
 is validated against the configured minimum and maximum. See
@@ -268,6 +292,8 @@ await humidifier.set_target_humidity(50)
 
 ### Image
 
+HA Integration: [MQTT Image](https://www.home-assistant.io/integrations/image.mqtt/).
+
 [`Image`](src/ha_mqtt_device/image.py) publishes image data without a command
 topic. See [`examples/image.py`](examples/image.py).
 
@@ -281,6 +307,8 @@ await snapshot.set_image(base64.b64encode(jpeg_bytes))
 ```
 
 ### Infrared
+
+HA Integration: [MQTT Infrared](https://www.home-assistant.io/integrations/infrared.mqtt/).
 
 [`InfraredEmitter`](src/ha_mqtt_device/infrared.py) receives signals from Home
 Assistant, while [`InfraredReceiver`](src/ha_mqtt_device/infrared.py) publishes
@@ -298,6 +326,8 @@ await receiver.set_state({"timings": [9000, -4500, 562, -1687], "modulation": 38
 
 ### Lawn mower
 
+HA Integration: [MQTT Lawn Mower](https://www.home-assistant.io/integrations/lawn_mower.mqtt/).
+
 [`LawnMower`](src/ha_mqtt_device/lawn_mower.py) publishes activity states and
 receives plain start, pause, and dock command payloads by default. Legacy JSON
 commands remain accepted for compatibility. See
@@ -312,6 +342,8 @@ await mower.set_state("mowing")
 ```
 
 ### Light
+
+HA Integration: [MQTT Light](https://www.home-assistant.io/integrations/light.mqtt/).
 
 [`Light`](src/ha_mqtt_device/light.py) supports grouped power, brightness,
 color, effect, and white-control topics when enabled, validating finite numeric
@@ -337,6 +369,8 @@ await light.set_rgb((255, 80, 20))
 
 ### Lock
 
+HA Integration: [MQTT Lock](https://www.home-assistant.io/integrations/lock.mqtt/).
+
 [`Lock`](src/ha_mqtt_device/lock.py) publishes lock state and receives lock,
 unlock, and optional open commands. See
 [`examples/lock.py`](examples/lock.py).
@@ -351,6 +385,8 @@ await lock.set_state("locked")
 
 ### Notify
 
+HA Integration: [MQTT Notify](https://www.home-assistant.io/integrations/notify.mqtt/).
+
 [`Notify`](src/ha_mqtt_device/notify.py) is an action-only notification
 service. It has no state topic; incoming text or JSON payloads are delivered
 through `on_event()`. See [`examples/notify.py`](examples/notify.py).
@@ -363,6 +399,8 @@ await notifier.on_event(on_notification)
 ```
 
 ### Number
+
+HA Integration: [MQTT Number](https://www.home-assistant.io/integrations/number.mqtt/).
 
 [`Number`](src/ha_mqtt_device/number.py) publishes numeric state and receives
 finite numeric commands within its configured range. See [`examples/number.py`](examples/number.py).
@@ -384,6 +422,8 @@ await dimmer.set_state(75)
 
 ### Scene
 
+HA Integration: [MQTT Scene](https://www.home-assistant.io/integrations/scene.mqtt/).
+
 [`Scene`](src/ha_mqtt_device/scene.py) is command-only; `activate()` publishes
 the configured scene-on payload. See [`examples/scene.py`](examples/scene.py).
 
@@ -396,6 +436,8 @@ await scene.activate()
 ```
 
 ### Select
+
+HA Integration: [MQTT Select](https://www.home-assistant.io/integrations/select.mqtt/).
 
 [`SelectEntity`](src/ha_mqtt_device/select_entity.py) validates configured
 options, publishes its state, and delivers selections through `on_event()`.
@@ -410,6 +452,8 @@ await mode.set_state("Automatic")
 ```
 
 ### Sensor
+
+HA Integration: [MQTT Sensor](https://www.home-assistant.io/integrations/sensor.mqtt/).
 
 [`Sensor`](src/ha_mqtt_device/sensor.py) publishes string or numeric readings
 without a command topic. See [`examples/sensor.py`](examples/sensor.py).
@@ -429,6 +473,8 @@ await temperature.set_state(21.5)
 
 ### Siren
 
+HA Integration: [MQTT Siren](https://www.home-assistant.io/integrations/siren.mqtt/).
+
 [`Siren`](src/ha_mqtt_device/siren.py) publishes JSON state and optional tone,
 duration, and volume parameters. See [`examples/siren.py`](examples/siren.py).
 
@@ -446,6 +492,8 @@ await siren.set_state(True, tone="bell", duration=10, volume_level=0.5)
 
 ### Switch
 
+HA Integration: [MQTT Switch](https://www.home-assistant.io/integrations/switch.mqtt/).
+
 [`Switch`](src/ha_mqtt_device/switch.py) publishes on/off state and delivers
 Home Assistant commands through `on_event()`. See
 [`examples/switch.py`](examples/switch.py).
@@ -459,6 +507,8 @@ await relay.set_state(True)
 ```
 
 ### Update
+
+HA Integration: [MQTT Update](https://www.home-assistant.io/integrations/update.mqtt/).
 
 [`Update`](src/ha_mqtt_device/update.py) publishes JSON update state, requiring
 an installed version, and can publish an install command and an optional
@@ -481,6 +531,8 @@ await update.install()
 
 ### Tag scanner
 
+HA Integration: [MQTT Tag Scanner](https://www.home-assistant.io/integrations/tag.mqtt/).
+
 [`TagScanner`](src/ha_mqtt_device/tag_scanner.py) uses Home Assistant's
 standalone `tag` discovery topic. An optional `node_id` must be a single path
 segment. `scan()` publishes a tag ID and `on_event()` receives scans. See [`examples/tag_scanner.py`](examples/tag_scanner.py).
@@ -498,6 +550,8 @@ await scanner.scan("E9F35959")
 ```
 
 ### Text
+
+HA Integration: [MQTT Text](https://www.home-assistant.io/integrations/text.mqtt/).
 
 [`Text`](src/ha_mqtt_device/text.py) validates text length and an optional
 pattern while publishing state and receiving commands. See
@@ -518,6 +572,8 @@ await message.set_state("Ready")
 
 ### Time
 
+HA Integration: [MQTT Time](https://www.home-assistant.io/integrations/time.mqtt/).
+
 [`Time`](src/ha_mqtt_device/time.py) normalizes `datetime.time` values and
 strict time strings. See [`examples/mqtt_time.py`](examples/mqtt_time.py).
 
@@ -532,6 +588,8 @@ await alarm.set_state(time(7, 30))  # publishes 07:30:00
 ```
 
 ### Vacuum
+
+HA Integration: [MQTT Vacuum](https://www.home-assistant.io/integrations/vacuum.mqtt/).
 
 [`Vacuum`](src/ha_mqtt_device/vacuum.py) publishes JSON state and exposes
 feature-specific command methods. See [`examples/vacuum.py`](examples/vacuum.py).
@@ -551,6 +609,8 @@ await vacuum.start()
 
 ### Valve
 
+HA Integration: [MQTT Valve](https://www.home-assistant.io/integrations/valve.mqtt/).
+
 [`Valve`](src/ha_mqtt_device/valve.py) publishes valve states and open, close,
 and optional stop commands. See [`examples/valve.py`](examples/valve.py).
 
@@ -564,6 +624,8 @@ await valve.open()
 ```
 
 ### Water heater
+
+HA Integration: [MQTT Water Heater](https://www.home-assistant.io/integrations/water_heater.mqtt/).
 
 [`WaterHeater`](src/ha_mqtt_device/water_heater.py) publishes current and target
 temperatures and mode, with optional power control. See
