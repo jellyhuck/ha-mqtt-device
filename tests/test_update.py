@@ -160,6 +160,8 @@ async def test_update_state_validation_and_device_integration() -> None:
         await entity.set_state("1.0", update_percentage=101)
     with pytest.raises(ValueError, match="unsupported update state"):
         await entity.publish_state({"installed_version": "1.0", "unknown": "x"})
+    with pytest.raises(ValueError, match="requires installed_version"):
+        await entity.publish_state({"latest_version": "1.1"})
     with pytest.raises(ValueError, match="non-empty"):
         await entity.set_state("")
 

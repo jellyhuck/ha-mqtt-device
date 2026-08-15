@@ -263,6 +263,36 @@ async def test_dispatch_mode_unknown_payload_is_delivered_verbatim() -> None:
     assert received[0].state == "eco"
 
 
+async def test_dispatch_mode_rejects_unconfigured_mode() -> None:
+    provider = RecordingProvider()
+    _, climate = make_bound(provider, unique_id="thermostat", modes=["off", "heat"])
+    received: list[Event] = []
+    await climate.on_event(collector(received))
+
+    await provider.deliver("homeassistant/device/dev-1/thermostat/mode_command", "eco")
+
+    assert received[0].message == "eco"
+    assert received[0].state is None
+
+
+async def test_dispatch_temperature_rejects_non_finite_and_out_of_range_values() -> (
+    None
+):
+    provider = RecordingProvider()
+    _, climate = make_bound(provider, unique_id="thermostat", min_temp=10, max_temp=30)
+    received: list[Event] = []
+    await climate.on_event(collector(received))
+
+    await provider.deliver(
+        "homeassistant/device/dev-1/thermostat/temperature_command", "nan"
+    )
+    await provider.deliver(
+        "homeassistant/device/dev-1/thermostat/temperature_command", "31"
+    )
+
+    assert [event.state for event in received] == [None, None]
+
+
 async def test_dispatch_decodes_utf8_payload() -> None:
     provider = RecordingProvider()
     _, climate = make_bound(provider, unique_id="thermostat")

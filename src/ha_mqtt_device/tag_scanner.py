@@ -44,6 +44,10 @@ class TagScanner(Entity):
         super().__post_init__()
         if not self.topic:
             raise ValueError("topic is required")
+        if self.node_id is not None and (
+            not isinstance(self.node_id, str) or not self.node_id or "/" in self.node_id
+        ):
+            raise ValueError("node_id must be a non-empty path segment")
 
     async def scan(self, tag_id: str) -> None:
         """Publish a scanned tag ID to the configured scan topic."""

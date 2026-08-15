@@ -167,6 +167,25 @@ async def test_dispatch_rejects_signal_without_timings() -> None:
     assert received[0].state is None
 
 
+async def test_dispatch_rejects_empty_and_boolean_signal_values() -> None:
+    provider = RecordingProvider()
+    _, emitter = make_bound(provider, InfraredEmitter, unique_id="tv_power")
+    received: list[Event] = []
+    await emitter.on_event(collector(received))
+
+    signals: tuple[dict[str, object], ...] = (
+        {"timings": []},
+        {"timings": [True]},
+        {"timings": [9000, -4500], "modulation": True},
+    )
+    for signal in signals:
+        await provider.deliver(
+            "homeassistant/device/dev-1/tv_power/command", json.dumps(signal)
+        )
+
+    assert [event.state for event in received] == [None, None, None]
+
+
 async def test_dispatch_invokes_all_callbacks() -> None:
     provider = RecordingProvider()
     _, emitter = make_bound(provider, InfraredEmitter, unique_id="tv_power")
@@ -250,6 +269,10 @@ async def test_set_state_rejects_missing_timings() -> None:
 
     with pytest.raises(ValueError, match="timings"):
         await receiver.set_state({"modulation": 38000})
+    with pytest.raises(ValueError, match="timings"):
+        await receiver.set_state({"timings": []})
+    with pytest.raises(TypeError, match="modulation"):
+        await receiver.set_state({"timings": [9000, -4500], "modulation": True})
 
 
 async def test_set_state_rejects_non_dict() -> None:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from math import isfinite
 
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
@@ -133,6 +134,7 @@ class Number(Entity):
             Exception: If the message could not be published.
         """
         device = self._require_device()
+        self._validate_value(value)
         payload = str(value)
         topic = device.info.resolve_topic(self.state_topic)
         await device.provider.publish(topic, payload)
@@ -193,10 +195,23 @@ class Number(Entity):
         anything else (for example a reset payload) maps to ``None``.
         """
         try:
-            float(payload)
+            value = float(payload)
         except ValueError:
             return None
+        if not isfinite(value) or not self._value_in_range(value):
+            return None
         return payload
+
+    def _validate_value(self, value: float) -> None:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise TypeError("value must be a number")
+        if not isfinite(value):
+            raise ValueError("value must be finite")
+        if not self._value_in_range(value):
+            raise ValueError("value is outside the configured range")
+
+    def _value_in_range(self, value: float) -> bool:
+        return self.min_value <= value <= self.max_value
 
     def discovery_config(self) -> dict[str, object]:
         """Return this number's ``cmps`` config entry for the discovery payload."""

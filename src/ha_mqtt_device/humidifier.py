@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from math import isfinite
 
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
@@ -152,6 +153,7 @@ class Humidifier(Entity):
             Exception: If the message could not be published.
         """
         device = self._require_device()
+        self._validate_humidity(humidity)
         topic = device.info.resolve_topic(self.target_humidity_state_topic)
         await device.provider.publish(topic, str(humidity))
 
@@ -260,10 +262,23 @@ class Humidifier(Entity):
         anything else maps to ``None``.
         """
         try:
-            float(payload)
+            humidity = float(payload)
         except ValueError:
             return None
+        if not isfinite(humidity) or not self._humidity_in_range(humidity):
+            return None
         return payload
+
+    def _validate_humidity(self, humidity: float) -> None:
+        if isinstance(humidity, bool) or not isinstance(humidity, (int, float)):
+            raise TypeError("humidity must be a number")
+        if not isfinite(humidity):
+            raise ValueError("humidity must be finite")
+        if not self._humidity_in_range(humidity):
+            raise ValueError("humidity is outside the configured range")
+
+    def _humidity_in_range(self, humidity: float) -> bool:
+        return self.min_humidity <= humidity <= self.max_humidity
 
     def discovery_config(self) -> dict[str, object]:
         """Return this humidifier's ``cmps`` config entry for the discovery payload."""

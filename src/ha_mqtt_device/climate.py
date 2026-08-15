@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from math import isfinite
 
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
@@ -155,6 +156,7 @@ class Climate(Entity):
             Exception: If the message could not be published.
         """
         device = self._require_device()
+        self._validate_finite(temperature, "temperature")
         topic = device.info.resolve_topic(self.current_temperature_topic)
         await device.provider.publish(topic, str(temperature))
 
@@ -172,6 +174,7 @@ class Climate(Entity):
             Exception: If the message could not be published.
         """
         device = self._require_device()
+        self._validate_target_temperature(temperature)
         topic = device.info.resolve_topic(self.temperature_state_topic)
         await device.provider.publish(topic, str(temperature))
 
@@ -268,8 +271,14 @@ class Climate(Entity):
             topic_type=_TOPIC_TYPE_MODE,
             message=message,
             payload=payload,
-            state=payload,
+            state=self._mode_state(payload),
         )
+
+    def _mode_state(self, payload: str) -> str | None:
+        """Map a mode command to a configured mode when modes are advertised."""
+        if self.modes is not None and payload not in self.modes:
+            return None
+        return payload
 
     async def _notify(
         self,
@@ -306,10 +315,29 @@ class Climate(Entity):
         else maps to ``None``.
         """
         try:
-            float(payload)
+            temperature = float(payload)
         except ValueError:
             return None
+        if not isfinite(temperature) or not self._in_target_range(temperature):
+            return None
         return payload
+
+    def _validate_target_temperature(self, temperature: float) -> None:
+        self._validate_finite(temperature, "temperature")
+        if not self._in_target_range(temperature):
+            raise ValueError("temperature is outside the configured range")
+
+    def _in_target_range(self, temperature: float) -> bool:
+        return (self.min_temp is None or temperature >= self.min_temp) and (
+            self.max_temp is None or temperature <= self.max_temp
+        )
+
+    @staticmethod
+    def _validate_finite(value: float, name: str) -> None:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise TypeError(f"{name} must be a number")
+        if not isfinite(value):
+            raise ValueError(f"{name} must be finite")
 
     def discovery_config(self) -> dict[str, object]:
         """Return this climate's ``cmps`` config entry for the discovery payload."""

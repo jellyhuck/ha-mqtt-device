@@ -139,6 +139,25 @@ async def test_set_position_requires_binding() -> None:
         await cover.set_position(50)
 
 
+async def test_set_position_rejects_values_outside_documented_range() -> None:
+    provider = RecordingProvider()
+    _, cover = make_bound(provider, unique_id="blinds")
+
+    with pytest.raises(ValueError, match="outside"):
+        await cover.set_position(101)
+
+
+async def test_dispatch_rejects_position_outside_documented_range() -> None:
+    provider = RecordingProvider()
+    _, cover = make_bound(provider, unique_id="blinds")
+    received: list[Event] = []
+    await cover.on_event(collector(received))
+
+    await provider.deliver("homeassistant/device/dev-1/blinds/set_position", "101")
+
+    assert received[0].state is None
+
+
 async def test_state_topic_shorthand() -> None:
     _, cover = make_bound(RecordingProvider(), unique_id="blinds")
 

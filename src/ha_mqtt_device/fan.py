@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from math import isfinite
 
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
@@ -255,6 +256,7 @@ class Fan(Entity):
         """
         device = self._require_device()
         self._require_enabled(self.percentage_enabled, "percentage")
+        self._validate_percentage(percentage)
         topic = device.info.resolve_topic(self.percentage_state_topic)
         await device.provider.publish(topic, str(percentage))
 
@@ -490,10 +492,25 @@ class Fan(Entity):
         anything else maps to ``None``.
         """
         try:
-            int(payload)
+            percentage = float(payload)
         except ValueError:
             return None
+        if (
+            not isfinite(percentage)
+            or not percentage.is_integer()
+            or not self._percentage_in_range(int(percentage))
+        ):
+            return None
         return payload
+
+    def _validate_percentage(self, percentage: int) -> None:
+        if isinstance(percentage, bool) or not isinstance(percentage, int):
+            raise TypeError("percentage must be an integer")
+        if not self._percentage_in_range(percentage):
+            raise ValueError("percentage is outside the configured speed range")
+
+    def _percentage_in_range(self, percentage: int) -> bool:
+        return self.speed_range_min <= percentage <= self.speed_range_max
 
     def _preset_mode_state(self, payload: str) -> str | None:
         """Map a preset-mode command payload to the payload or ``None``.

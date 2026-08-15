@@ -138,7 +138,8 @@ await blinds.set_position(0)
 ### Climate (HVAC)
 
 [`Climate`](src/ha_mqtt_device/climate.py) exposes current temperature, target
-temperature, HVAC mode, and current action. See
+temperature, HVAC mode, and current action, validating finite temperatures and
+configured modes. See
 [`examples/climate.py`](examples/climate.py).
 
 ```python
@@ -226,7 +227,8 @@ await doorbell.set_event("doorbell_pressed")
 ### Fan
 
 [`Fan`](src/ha_mqtt_device/fan.py) supports on/off state plus optional
-percentage, preset, oscillation, and direction controls. See
+percentage, preset, oscillation, and direction controls. Percentage values are
+validated in the documented 0–100 range. See
 [`examples/fan.py`](examples/fan.py).
 
 ```python
@@ -246,7 +248,8 @@ await fan.set_percentage(60)
 ### Humidifier
 
 [`Humidifier`](src/ha_mqtt_device/humidifier.py) publishes power and target
-humidity and receives both command types through `on_event()`. See
+humidity and receives both command types through `on_event()`. Target humidity
+is validated against the configured minimum and maximum. See
 [`examples/humidifier.py`](examples/humidifier.py).
 
 ```python
@@ -281,7 +284,8 @@ await snapshot.set_image(base64.b64encode(jpeg_bytes))
 
 [`InfraredEmitter`](src/ha_mqtt_device/infrared.py) receives signals from Home
 Assistant, while [`InfraredReceiver`](src/ha_mqtt_device/infrared.py) publishes
-received signals. See [`examples/infrared.py`](examples/infrared.py).
+received signals. Signals require non-empty integer timings and valid optional
+modulation/repeat fields. See [`examples/infrared.py`](examples/infrared.py).
 
 ```python
 from ha_mqtt_device import InfraredEmitter, InfraredReceiver
@@ -295,7 +299,8 @@ await receiver.set_state({"timings": [9000, -4500, 562, -1687], "modulation": 38
 ### Lawn mower
 
 [`LawnMower`](src/ha_mqtt_device/lawn_mower.py) publishes activity states and
-receives JSON start, pause, and dock commands. See
+receives plain start, pause, and dock command payloads by default. Legacy JSON
+commands remain accepted for compatibility. See
 [`examples/lawn_mower.py`](examples/lawn_mower.py).
 
 ```python
@@ -309,7 +314,8 @@ await mower.set_state("mowing")
 ### Light
 
 [`Light`](src/ha_mqtt_device/light.py) supports grouped power, brightness,
-color, effect, and white-control topics when enabled. See
+color, effect, and white-control topics when enabled, validating finite numeric
+values and configured effects. See
 [`examples/light.py`](examples/light.py).
 
 ```python
@@ -359,7 +365,7 @@ await notifier.on_event(on_notification)
 ### Number
 
 [`Number`](src/ha_mqtt_device/number.py) publishes numeric state and receives
-numeric commands. See [`examples/number.py`](examples/number.py).
+finite numeric commands within its configured range. See [`examples/number.py`](examples/number.py).
 
 ```python
 from ha_mqtt_device import Number
@@ -454,8 +460,9 @@ await relay.set_state(True)
 
 ### Update
 
-[`Update`](src/ha_mqtt_device/update.py) publishes JSON update state and can
-publish an install command and an optional latest-version topic. See
+[`Update`](src/ha_mqtt_device/update.py) publishes JSON update state, requiring
+an installed version, and can publish an install command and an optional
+latest-version topic. See
 [`examples/update.py`](examples/update.py).
 
 ```python
@@ -475,8 +482,8 @@ await update.install()
 ### Tag scanner
 
 [`TagScanner`](src/ha_mqtt_device/tag_scanner.py) uses Home Assistant's
-standalone `tag` discovery topic. `scan()` publishes a tag ID and `on_event()`
-receives scans. See [`examples/tag_scanner.py`](examples/tag_scanner.py).
+standalone `tag` discovery topic. An optional `node_id` must be a single path
+segment. `scan()` publishes a tag ID and `on_event()` receives scans. See [`examples/tag_scanner.py`](examples/tag_scanner.py).
 
 ```python
 from ha_mqtt_device import TagScanner

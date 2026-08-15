@@ -108,3 +108,24 @@ async def test_disabled_feature_rejected() -> None:
     _, light = bound(RecordingProvider(), unique_id="lamp")
     with pytest.raises(ValueError):
         await light.set_brightness(1)
+
+
+async def test_effect_and_numeric_events_reject_invalid_values() -> None:
+    provider = RecordingProvider()
+    _, light = bound(
+        provider,
+        unique_id="lamp",
+        brightness_enabled=True,
+        effect_enabled=True,
+        effect_list=["rainbow"],
+    )
+    received: list[Event] = []
+
+    async def collect(event: Event) -> None:
+        received.append(event)
+
+    await light.on_event(collect)
+    await provider.deliver("homeassistant/device/dev-1/lamp/command/brightness", "256")
+    await provider.deliver("homeassistant/device/dev-1/lamp/command/effect", "other")
+
+    assert [event.state for event in received] == [None, None]

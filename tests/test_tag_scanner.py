@@ -109,6 +109,10 @@ async def test_scan_events_preserve_raw_payload_and_subscribe_once() -> None:
 async def test_topic_is_required_and_unbound_operations_fail() -> None:
     with pytest.raises(ValueError, match="topic is required"):
         TagScanner(unique_id="scanner")
+    with pytest.raises(ValueError, match="node_id"):
+        TagScanner(unique_id="scanner", topic="tags", node_id="node/id")
+    with pytest.raises(ValueError, match="node_id"):
+        TagScanner(unique_id="scanner", topic="tags", node_id="")
 
     scanner = TagScanner(unique_id="scanner", topic="tags")
     with pytest.raises(RuntimeError, match="not bound"):

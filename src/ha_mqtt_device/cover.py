@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from math import isfinite
 
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
@@ -191,6 +192,7 @@ class Cover(Entity):
             Exception: If the message could not be published.
         """
         device = self._require_device()
+        self._validate_position(position)
         topic = device.info.resolve_topic(self.position_topic)
         await device.provider.publish(topic, str(position))
 
@@ -314,10 +316,23 @@ class Cover(Entity):
         anything else maps to ``None``.
         """
         try:
-            int(payload)
+            position = float(payload)
         except ValueError:
             return None
+        if not isfinite(position) or not position.is_integer():
+            return None
+        if not self._position_in_range(int(position)):
+            return None
         return payload
+
+    def _validate_position(self, position: int) -> None:
+        if isinstance(position, bool) or not isinstance(position, int):
+            raise TypeError("position must be an integer")
+        if not self._position_in_range(position):
+            raise ValueError("position is outside the configured range")
+
+    def _position_in_range(self, position: int) -> bool:
+        return self.position_closed <= position <= self.position_open
 
     def discovery_config(self) -> dict[str, object]:
         """Return this cover's ``cmps`` config entry for the discovery payload."""

@@ -16,9 +16,9 @@ __all__ = ["LawnMower"]
 logger = logging.getLogger(__name__)
 
 # Home Assistant MQTT discovery defaults for command payloads
-DEFAULT_START_MOWING_PAYLOAD = '{"activity": "start_mowing"}'
-DEFAULT_PAUSE_PAYLOAD = '{"activity": "pause"}'
-DEFAULT_DOCK_PAYLOAD = '{"activity": "dock"}'
+DEFAULT_START_MOWING_PAYLOAD = "start_mowing"
+DEFAULT_PAUSE_PAYLOAD = "pause"
+DEFAULT_DOCK_PAYLOAD = "dock"
 
 # Home Assistant MQTT discovery defaults for state values
 DEFAULT_MOWING_STATE = "mowing"
@@ -68,12 +68,11 @@ class LawnMower(Entity):
         unique_id: See :class:`~ha_mqtt_device.entity.Entity`.
         name: See :class:`~ha_mqtt_device.entity.Entity`.
         payload_start_mowing: Payload published when Home Assistant sends a
-            start mowing command (``pl_strt``). Defaults to
-            ``{"activity": "start_mowing"}``.
+            start mowing command (``pl_strt``). Defaults to ``"start_mowing"``.
         payload_pause: Payload published when Home Assistant sends a pause
-            command (``pl_pau``). Defaults to ``{"activity": "pause"}``.
+            command (``pl_pau``). Defaults to ``"pause"``.
         payload_dock: Payload published when Home Assistant sends a dock
-            command (``pl_doc``). Defaults to ``{"activity": "dock"}``.
+            command (``pl_doc``). Defaults to ``"dock"``.
         state_mowing: State value Home Assistant treats as mowing
             (``sta_mow``). Defaults to ``"mowing"``.
         state_paused: State value Home Assistant treats as paused
@@ -120,20 +119,21 @@ class LawnMower(Entity):
     async def set_state(self, activity: str) -> None:
         """Publish the lawn mower's activity state.
 
-        Publishes a JSON payload ``{"activity": activity}`` to the state topic
-        (``~/<unique_id>/state``).
+        Publishes the configured activity payload to the state topic
+        (``~/<unique_id>/state``). The default payloads are the plain activity
+        values documented by Home Assistant (``mowing``, ``paused``,
+        ``docked``, and ``error``).
 
         Args:
             activity: The activity state to publish (e.g., "mowing", "paused",
-                "docked", "error"). No validation is performed; any string is
-                accepted.
+                "docked", or "error").
 
         Raises:
             RuntimeError: If the lawn mower is not bound to a device.
             Exception: If the message could not be published.
         """
         device = self._require_device()
-        payload = json.dumps({"activity": activity})
+        payload = self._state_payload(activity)
         topic = device.info.resolve_topic(self.state_topic)
         await device.provider.publish(topic, payload)
 
@@ -202,17 +202,39 @@ class LawnMower(Entity):
     def _command_activity(self, payload: str) -> str | None:
         """Extract the activity from a command payload.
 
-        Expects JSON with an "activity" field: {"activity": "start_mowing"}
-        Returns "start_mowing", "pause", "dock", or None if not recognized.
+        Plain configured payloads are preferred. JSON payloads with an
+        ``activity`` field remain accepted for compatibility with the earlier
+        library behavior and custom command templates.
         """
+        configured = {
+            self.payload_start_mowing: "start_mowing",
+            self.payload_pause: "pause",
+            self.payload_dock: "dock",
+        }
+        if payload in configured:
+            return configured[payload]
         try:
             data = json.loads(payload)
+            if not isinstance(data, dict):
+                return None
             activity = data.get("activity")
             if activity in ("start_mowing", "pause", "dock"):
                 return activity
         except json.JSONDecodeError:
             pass
         return None
+
+    def _state_payload(self, activity: str) -> str:
+        """Resolve a canonical activity to its configured state payload."""
+        payloads = {
+            "mowing": self.state_mowing or DEFAULT_MOWING_STATE,
+            "paused": self.state_paused or DEFAULT_PAUSED_STATE,
+            "docked": self.state_docked or DEFAULT_DOCKED_STATE,
+            "error": self.state_error or DEFAULT_ERROR_STATE,
+        }
+        if activity not in payloads:
+            raise ValueError(f"activity {activity!r} must be one of {sorted(payloads)}")
+        return payloads[activity]
 
     def discovery_config(self) -> dict[str, object]:
         """Return this lawn mower's ``cmps`` config entry for the discovery payload."""

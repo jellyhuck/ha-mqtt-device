@@ -167,6 +167,8 @@ class Update(Entity):
         if not isinstance(state, Mapping):
             raise TypeError("update state must be a mapping")
         payload = dict(state)
+        if "installed_version" not in payload:
+            raise ValueError("update state requires installed_version")
         unknown = set(payload) - {
             "installed_version",
             "latest_version",

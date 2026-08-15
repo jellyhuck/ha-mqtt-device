@@ -62,7 +62,7 @@ def collector(received: list[Event]) -> EventCallback:
     return collect
 
 
-async def test_set_state_publishes_json_to_state_topic() -> None:
+async def test_set_state_publishes_plain_activity_to_state_topic() -> None:
     provider = RecordingProvider()
     _, mower = make_bound(provider, unique_id="mower_1")
 
@@ -70,19 +70,31 @@ async def test_set_state_publishes_json_to_state_topic() -> None:
     await mower.set_state("docked")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/mower_1/state", '{"activity": "mowing"}'),
-        ("homeassistant/device/dev-1/mower_1/state", '{"activity": "docked"}'),
+        ("homeassistant/device/dev-1/mower_1/state", "mowing"),
+        ("homeassistant/device/dev-1/mower_1/state", "docked"),
     ]
 
 
-async def test_set_state_accepts_any_string() -> None:
+async def test_set_state_rejects_unknown_activity() -> None:
     provider = RecordingProvider()
     _, mower = make_bound(provider, unique_id="mower_1")
 
-    await mower.set_state("custom_activity")
+    with pytest.raises(ValueError, match="must be one of"):
+        await mower.set_state("custom_activity")
+
+
+async def test_set_state_uses_custom_state_payloads() -> None:
+    provider = RecordingProvider()
+    _, mower = make_bound(
+        provider, unique_id="mower_1", state_mowing="MOWING", state_docked="DOCKED"
+    )
+
+    await mower.set_state("mowing")
+    await mower.set_state("docked")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/mower_1/state", '{"activity": "custom_activity"}'),
+        ("homeassistant/device/dev-1/mower_1/state", "MOWING"),
+        ("homeassistant/device/dev-1/mower_1/state", "DOCKED"),
     ]
 
 
@@ -137,22 +149,15 @@ async def test_on_event_subscribes_once_for_multiple_callbacks() -> None:
     }
 
 
-async def test_dispatch_delivers_command_events() -> None:
+async def test_dispatch_delivers_plain_command_events() -> None:
     provider = RecordingProvider()
     _, mower = make_bound(provider, unique_id="mower_1")
     received: list[Event] = []
     await mower.on_event(collector(received))
 
-    await provider.deliver(
-        "homeassistant/device/dev-1/mower_1/set",
-        '{"activity": "start_mowing"}',
-    )
-    await provider.deliver(
-        "homeassistant/device/dev-1/mower_1/set", '{"activity": "pause"}'
-    )
-    await provider.deliver(
-        "homeassistant/device/dev-1/mower_1/set", '{"activity": "dock"}'
-    )
+    await provider.deliver("homeassistant/device/dev-1/mower_1/set", "start_mowing")
+    await provider.deliver("homeassistant/device/dev-1/mower_1/set", "pause")
+    await provider.deliver("homeassistant/device/dev-1/mower_1/set", "dock")
 
     assert len(received) == 3
     states = [event.state for event in received]
@@ -166,7 +171,7 @@ async def test_dispatch_delivers_command_events() -> None:
     first = received[0]
     assert first.event_type == "command"
     assert first.topic == "homeassistant/device/dev-1/mower_1/set"
-    assert first.message == '{"activity": "start_mowing"}'
+    assert first.message == "start_mowing"
 
 
 async def test_dispatch_delivers_unknown_payload_with_null_state() -> None:
@@ -184,6 +189,20 @@ async def test_dispatch_delivers_unknown_payload_with_null_state() -> None:
     assert received[0].message == '{"activity": "unknown"}'
     assert received[0].state is None
     assert received[1].state is None
+
+
+async def test_dispatch_accepts_legacy_json_command_payload() -> None:
+    provider = RecordingProvider()
+    _, mower = make_bound(provider, unique_id="mower_1")
+    received: list[Event] = []
+    await mower.on_event(collector(received))
+
+    await provider.deliver(
+        "homeassistant/device/dev-1/mower_1/set",
+        '{"activity": "start_mowing"}',
+    )
+
+    assert received[0].state == "start_mowing"
 
 
 async def test_dispatch_decodes_utf8_payload() -> None:

@@ -16,6 +16,31 @@ __all__ = ["InfraredEmitter", "InfraredReceiver"]
 
 logger = logging.getLogger(__name__)
 
+
+def _validate_signal(signal: dict[str, Any]) -> None:
+    """Validate the documented infrared signal fields."""
+    timings = signal.get("timings")
+    if (
+        not isinstance(timings, list)
+        or not timings
+        or any(
+            isinstance(value, bool) or not isinstance(value, int) or value == 0
+            for value in timings
+        )
+    ):
+        raise ValueError("signal must contain non-zero integer 'timings'")
+    for name in ("modulation", "repeat_count"):
+        value = signal.get(name)
+        if value is None:
+            continue
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise TypeError(f"signal {name} must be an integer")
+        if name == "modulation" and value <= 0:
+            raise ValueError("signal modulation must be positive")
+        if name == "repeat_count" and value < 0:
+            raise ValueError("signal repeat_count must not be negative")
+
+
 #: ``event_type`` of events built from messages on the command topic.
 _EVENT_TYPE_COMMAND = "command"
 
@@ -128,18 +153,15 @@ class InfraredEmitter(Entity):
             return None
         if not isinstance(data, dict):
             return None
-        timings = data.get("timings")
-        if not isinstance(timings, list) or not all(
-            isinstance(x, int) for x in timings
-        ):
+        try:
+            _validate_signal(data)
+        except TypeError, ValueError:
             return None
-        result: dict[str, Any] = {"timings": timings}
-        modulation = data.get("modulation")
-        if isinstance(modulation, int):
-            result["modulation"] = modulation
-        repeat_count = data.get("repeat_count")
-        if isinstance(repeat_count, int):
-            result["repeat_count"] = repeat_count
+        result: dict[str, Any] = {"timings": data["timings"]}
+        if "modulation" in data:
+            result["modulation"] = data["modulation"]
+        if "repeat_count" in data:
+            result["repeat_count"] = data["repeat_count"]
         return result
 
     def discovery_config(self) -> dict[str, object]:
@@ -190,11 +212,7 @@ class InfraredReceiver(Entity):
         """
         if not isinstance(signal, dict):
             raise TypeError("signal must be a dict")
-        timings = signal.get("timings")
-        if not isinstance(timings, list) or not all(
-            isinstance(x, int) for x in timings
-        ):
-            raise ValueError("signal must contain 'timings' as a list of ints")
+        _validate_signal(signal)
         device = self._require_device()
         topic = device.info.resolve_topic(self.state_topic)
         await device.provider.publish(topic, json.dumps(signal))

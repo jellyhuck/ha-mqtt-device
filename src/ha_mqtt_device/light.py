@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from math import isfinite
 
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
@@ -135,6 +136,7 @@ class Light(Entity):
 
     async def set_color_temp(self, value: int) -> None:
         self._require_enabled(self.color_temp_enabled, "color_temp")
+        self._validate_integer(value, "color_temp")
         await self._publish(self.color_temp_state_topic, str(value))
 
     async def set_rgb(self, rgb: tuple[int, int, int]) -> None:
@@ -145,10 +147,12 @@ class Light(Entity):
 
     async def set_hs(self, hs: tuple[float, float]) -> None:
         self._require_enabled(self.hs_enabled, "hs")
+        self._validate_hs(hs)
         await self._publish(self.hs_state_topic, f"{hs[0]},{hs[1]}")
 
     async def set_xy(self, xy: tuple[float, float]) -> None:
         self._require_enabled(self.xy_enabled, "xy")
+        self._validate_xy(xy)
         await self._publish(self.xy_state_topic, f"{xy[0]},{xy[1]}")
 
     async def set_effect(self, effect: str) -> None:
@@ -229,8 +233,17 @@ class Light(Entity):
             )
         if event_type in {"brightness", "color_temp", "white"}:
             try:
-                int(payload)
+                value = float(payload)
             except ValueError:
+                return None
+            if not isfinite(value) or not value.is_integer():
+                return None
+            integer = int(value)
+            if event_type == "brightness" and not 0 <= integer <= self.brightness_scale:
+                return None
+            if event_type == "white" and not 0 <= integer <= self.white_scale:
+                return None
+            if event_type == "color_temp" and integer < 0:
                 return None
             return payload
         if event_type in {"rgb", "hs", "xy"}:
@@ -241,7 +254,19 @@ class Light(Entity):
                     "hs": ("hue", "sat"),
                     "xy": ("x", "y"),
                 }[event_type]
-                if len(values) != len(names):
+                if len(values) != len(names) or not all(
+                    isfinite(value) for value in values
+                ):
+                    return None
+                if event_type == "rgb" and any(
+                    not value.is_integer() or not 0 <= value <= 255 for value in values
+                ):
+                    return None
+                if event_type == "hs" and not (
+                    0 <= values[0] <= 360 and 0 <= values[1] <= 100
+                ):
+                    return None
+                if event_type == "xy" and any(not 0 <= value <= 1 for value in values):
                     return None
                 return {
                     name: (int(value) if event_type == "rgb" else value)
@@ -249,7 +274,30 @@ class Light(Entity):
                 }
             except ValueError, KeyError:
                 return None
-        return payload if event_type == "effect" else None
+        if event_type == "effect":
+            return (
+                payload if not self.effect_list or payload in self.effect_list else None
+            )
+        return None
+
+    @staticmethod
+    def _validate_integer(value: int, name: str) -> None:
+        if isinstance(value, bool) or not isinstance(value, int):
+            raise TypeError(f"{name} must be an integer")
+
+    @staticmethod
+    def _validate_hs(hs: tuple[float, float]) -> None:
+        if len(hs) != 2 or not all(isfinite(value) for value in hs):
+            raise ValueError("hs must contain two finite values")
+        if not 0 <= hs[0] <= 360 or not 0 <= hs[1] <= 100:
+            raise ValueError("hs must be within hue 0..360 and saturation 0..100")
+
+    @staticmethod
+    def _validate_xy(xy: tuple[float, float]) -> None:
+        if len(xy) != 2 or not all(isfinite(value) for value in xy):
+            raise ValueError("xy must contain two finite values")
+        if any(not 0 <= value <= 1 for value in xy):
+            raise ValueError("xy values must be between 0 and 1")
 
     def _require_enabled(self, enabled: bool, feature: str) -> None:
         if not enabled:

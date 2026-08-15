@@ -100,11 +100,11 @@ async def test_set_percentage_publishes_stringified_value() -> None:
     _, fan = make_bound(provider, unique_id="ceiling_fan")
 
     await fan.set_percentage(60)
-    await fan.set_percentage(0)
+    await fan.set_percentage(1)
 
     assert provider.published == [
         ("homeassistant/device/dev-1/ceiling_fan/percentage_state", "60"),
-        ("homeassistant/device/dev-1/ceiling_fan/percentage_state", "0"),
+        ("homeassistant/device/dev-1/ceiling_fan/percentage_state", "1"),
     ]
 
 
@@ -113,6 +113,14 @@ async def test_set_percentage_requires_binding() -> None:
 
     with pytest.raises(RuntimeError, match="not bound"):
         await fan.set_percentage(50)
+
+
+async def test_set_percentage_rejects_values_outside_speed_range() -> None:
+    provider = RecordingProvider()
+    _, fan = make_bound(provider, unique_id="ceiling_fan")
+
+    with pytest.raises(ValueError, match="speed range"):
+        await fan.set_percentage(0)
 
 
 async def test_set_percentage_requires_enabled() -> None:
@@ -415,14 +423,22 @@ async def test_dispatch_delivers_percentage_event() -> None:
     await provider.deliver(
         "homeassistant/device/dev-1/ceiling_fan/percentage_command", "fast"
     )
+    await provider.deliver(
+        "homeassistant/device/dev-1/ceiling_fan/percentage_command", "nan"
+    )
+    await provider.deliver(
+        "homeassistant/device/dev-1/ceiling_fan/percentage_command", "101"
+    )
 
-    assert len(received) == 2
-    first, second = received
+    assert len(received) == 4
+    first, second, _, _ = received
     assert first.event_type == "percentage"
     assert first.topic_type == "percentage_command_topic"
     assert first.message == "60"
     assert first.state == "60"
     assert second.state is None
+    assert received[2].state is None
+    assert received[3].state is None
 
 
 async def test_dispatch_delivers_preset_mode_event() -> None:

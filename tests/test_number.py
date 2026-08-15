@@ -84,6 +84,16 @@ async def test_set_state_requires_binding() -> None:
         await number.set_state(75.0)
 
 
+async def test_set_state_rejects_non_finite_and_out_of_range_values() -> None:
+    provider = RecordingProvider()
+    _, number = make_bound(provider, unique_id="dimmer", min_value=10, max_value=20)
+
+    with pytest.raises(ValueError, match="outside"):
+        await number.set_state(21)
+    with pytest.raises(ValueError, match="finite"):
+        await number.set_state(float("inf"))
+
+
 async def test_set_state_does_not_subscribe() -> None:
     provider = RecordingProvider()
     _, number = make_bound(provider, unique_id="dimmer")

@@ -126,6 +126,18 @@ async def test_set_target_humidity_requires_binding() -> None:
         await humidifier.set_target_humidity(50)
 
 
+async def test_set_target_humidity_rejects_values_outside_configured_range() -> None:
+    provider = RecordingProvider()
+    _, humidifier = make_bound(
+        provider, unique_id="bedroom", min_humidity=30, max_humidity=80
+    )
+
+    with pytest.raises(ValueError, match="outside"):
+        await humidifier.set_target_humidity(81)
+    with pytest.raises(ValueError, match="finite"):
+        await humidifier.set_target_humidity(float("nan"))
+
+
 async def test_publish_methods_do_not_subscribe() -> None:
     provider = RecordingProvider()
     _, humidifier = make_bound(provider, unique_id="bedroom")
