@@ -11,6 +11,7 @@ from ha_mqtt_device.binary_sensor import BinarySensor
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.provider import MqttMessageCallback
+from ha_mqtt_device.sensor import Sensor
 
 
 class RecordingProvider:
@@ -225,7 +226,12 @@ async def test_configure_includes_cmps_for_entities() -> None:
 
     payload = json.loads(provider.published[0][1])
     assert payload["cmps"] == {
-        "binary_sensor": {"is_led_on": sensor.discovery_config()}
+        "is_led_on": {
+            "uniq_id": "is_led_on",
+            "p": "binary_sensor",
+            "stat_t": "~/is_led_on/state",
+            "name": "LED state",
+        }
     }
 
 
@@ -258,7 +264,7 @@ async def test_constructor_rejects_duplicate_entity_keys() -> None:
     first = BinarySensor(unique_id="is_led_on")
     second = BinarySensor(unique_id="is_led_on", name="Duplicate")
 
-    with pytest.raises(ValueError, match="duplicate entity"):
+    with pytest.raises(ValueError, match="duplicate entity unique_id"):
         Device(
             provider,
             DeviceInfo(device_id="dev-1", name="Device"),
@@ -266,6 +272,22 @@ async def test_constructor_rejects_duplicate_entity_keys() -> None:
         )
 
     # Neither entity was bound.
+    assert first.device is None
+    assert second.device is None
+
+
+async def test_constructor_rejects_duplicate_unique_id_across_components() -> None:
+    provider = RecordingProvider()
+    first = BinarySensor(unique_id="shared_id")
+    second = Sensor(unique_id="shared_id")
+
+    with pytest.raises(ValueError, match="duplicate entity unique_id"):
+        Device(
+            provider,
+            DeviceInfo(device_id="dev-1", name="Device"),
+            entities=[first, second],
+        )
+
     assert first.device is None
     assert second.device is None
 

@@ -54,6 +54,7 @@ async def test_discovery_is_command_only_and_omits_defaults() -> None:
 
     assert scene.discovery_config() == {
         "uniq_id": "party",
+        "p": "scene",
         "name": "Party",
         "cmd_t": "~/party/command",
     }
@@ -73,6 +74,7 @@ async def test_discovery_includes_custom_payload_template_and_availability() -> 
 
     assert scene.discovery_config() == {
         "uniq_id": "party",
+        "p": "scene",
         "cmd_t": "~/party/command",
         "pl_on": "ACTIVATE",
         "cmd_tpl": "{{ value }}",
@@ -115,7 +117,7 @@ async def test_unbound_scene_operations_fail_and_device_configures() -> None:
     device, _scene = bound(provider, unique_id="party")
     await device.configure()
     assert json.loads(provider.published[0][1])["cmps"] == {
-        "scene": {"party": _scene.discovery_config()}
+        "party": _scene.discovery_config()
     }
 
 

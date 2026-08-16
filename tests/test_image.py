@@ -91,9 +91,11 @@ async def test_set_image_does_not_subscribe() -> None:
 async def test_discovery_config_defaults() -> None:
     _, image = make_bound(RecordingProvider(), unique_id="camera")
 
-    # enc/cont_t are omitted because they match the discovery defaults.
+    # img_e and cont_type are omitted because the documented defaults are raw
+    # image data and image/jpeg.
     assert image.discovery_config() == {
         "uniq_id": "camera",
+        "p": "image",
         "img_t": "~/camera/image",
     }
 
@@ -103,39 +105,42 @@ async def test_discovery_config_includes_name() -> None:
 
     assert image.discovery_config() == {
         "uniq_id": "camera",
+        "p": "image",
         "img_t": "~/camera/image",
         "name": "Camera",
     }
 
 
-async def test_discovery_config_includes_encoding_and_content_type() -> None:
+async def test_discovery_config_uses_image_encoding_and_content_type_keys() -> None:
     _, image = make_bound(
         RecordingProvider(),
         unique_id="camera",
-        encoding="binary",
+        encoding="b64",
         content_type="image/png",
     )
 
     assert image.discovery_config() == {
         "uniq_id": "camera",
+        "p": "image",
         "img_t": "~/camera/image",
-        "enc": "binary",
-        "cont_t": "image/png",
+        "img_e": "b64",
+        "cont_type": "image/png",
     }
 
 
-async def test_discovery_config_omits_only_default_encoding() -> None:
+async def test_discovery_config_omits_encoding_with_non_default_content_type() -> None:
     _, image = make_bound(
         RecordingProvider(),
         unique_id="camera",
         content_type="image/png",
     )
 
-    # enc still matches the discovery default and is omitted.
+    # The raw-image default is omitted while the explicit content type remains.
     assert image.discovery_config() == {
         "uniq_id": "camera",
+        "p": "image",
         "img_t": "~/camera/image",
-        "cont_t": "image/png",
+        "cont_type": "image/png",
     }
 
 
@@ -151,4 +156,4 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"image": {"camera": image.discovery_config()}}
+    assert payload["cmps"] == {"camera": image.discovery_config()}

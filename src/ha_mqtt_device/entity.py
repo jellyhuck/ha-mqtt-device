@@ -93,7 +93,8 @@ class Entity:
         """Return this entity's ``cmps`` config entry for the discovery payload."""
         config: dict[str, Any] = {
             "uniq_id": self.unique_id,
-            "p": self.state_topic,
+            "p": self.component,
+            "stat_t": self.state_topic,
         }
         if self.name is not None:
             config["name"] = self.name

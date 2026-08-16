@@ -37,7 +37,7 @@ async def main(
     )
 
     info = DeviceInfo(device_id="example_device_01", name="Example device")
-    camera = Image(unique_id="camera", name="Camera")
+    camera = Image(unique_id="camera", name="Camera", encoding="b64")
     device = Device(provider, info, entities=[camera])
 
     async with provider:

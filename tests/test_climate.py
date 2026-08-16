@@ -346,6 +346,7 @@ async def test_discovery_config_defaults() -> None:
 
     assert climate.discovery_config() == {
         "uniq_id": "thermostat",
+        "p": "climate",
         "curr_temp_t": "~/thermostat/current_temperature",
         "temp_stat_t": "~/thermostat/temperature",
         "temp_cmd_t": "~/thermostat/temperature_command",
@@ -376,6 +377,7 @@ async def test_discovery_config_includes_modes_unit_and_bounds() -> None:
 
     assert climate.discovery_config() == {
         "uniq_id": "thermostat",
+        "p": "climate",
         "curr_temp_t": "~/thermostat/current_temperature",
         "temp_stat_t": "~/thermostat/temperature",
         "temp_cmd_t": "~/thermostat/temperature_command",
@@ -423,7 +425,7 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"climate": {"thermostat": climate.discovery_config()}}
+    assert payload["cmps"] == {"thermostat": climate.discovery_config()}
 
 
 async def _noop() -> None:

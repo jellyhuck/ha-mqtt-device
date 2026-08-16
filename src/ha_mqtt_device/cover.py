@@ -102,15 +102,15 @@ class Cover(Entity):
         payload_stop: Payload Home Assistant sends to stop the cover
             (``pl_stop``).
         state_open: Payload Home Assistant treats as ``open`` in state
-            updates (``sta_open``). Defaults to ``"open"``.
+            updates (``stat_open``). Defaults to ``"open"``.
         state_opening: Payload Home Assistant treats as ``opening`` in state
-            updates (``sta_opening``). Defaults to ``"opening"``.
+            updates (``stat_opening``). Defaults to ``"opening"``.
         state_closed: Payload Home Assistant treats as ``closed`` in state
-            updates (``sta_closed``). Defaults to ``"closed"``.
+            updates (``stat_clsd``). Defaults to ``"closed"``.
         state_closing: Payload Home Assistant treats as ``closing`` in state
-            updates (``sta_closing``). Defaults to ``"closing"``.
+            updates (``stat_closing``). Defaults to ``"closing"``.
         state_stopped: Payload Home Assistant treats as ``stopped`` in state
-            updates (``sta_stopped``). Defaults to ``"stopped"``.
+            updates (``stat_stopped``). Defaults to ``"stopped"``.
         position_open: Value that represents fully open (``pos_open``).
             Defaults to ``100``.
         position_closed: Value that represents fully closed (``pos_clsd``).
@@ -337,9 +337,7 @@ class Cover(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this cover's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
-        # Home Assistant's cover state topic key is ``sta_t``, not the base ``p``.
-        config.pop("p")
-        config["sta_t"] = self.state_topic
+        config["stat_t"] = self.state_topic
         config["cmd_t"] = self.command_topic
         config["pos_t"] = self.position_topic
         config["set_pos_t"] = self.set_position_topic
@@ -350,24 +348,24 @@ class Cover(Entity):
         if self.payload_stop != DEFAULT_PAYLOAD_STOP:
             config["pl_stop"] = self.payload_stop
         if self.state_open is not None and self.state_open != DEFAULT_STATE_OPEN:
-            config["sta_open"] = self.state_open
+            config["stat_open"] = self.state_open
         if (
             self.state_opening is not None
             and self.state_opening != DEFAULT_STATE_OPENING
         ):
-            config["sta_opening"] = self.state_opening
+            config["stat_opening"] = self.state_opening
         if self.state_closed is not None and self.state_closed != DEFAULT_STATE_CLOSED:
-            config["sta_closed"] = self.state_closed
+            config["stat_clsd"] = self.state_closed
         if (
             self.state_closing is not None
             and self.state_closing != DEFAULT_STATE_CLOSING
         ):
-            config["sta_closing"] = self.state_closing
+            config["stat_closing"] = self.state_closing
         if (
             self.state_stopped is not None
             and self.state_stopped != DEFAULT_STATE_STOPPED
         ):
-            config["sta_stopped"] = self.state_stopped
+            config["stat_stopped"] = self.state_stopped
         if self.position_open != DEFAULT_POSITION_OPEN:
             config["pos_open"] = self.position_open
         if self.position_closed != DEFAULT_POSITION_CLOSED:

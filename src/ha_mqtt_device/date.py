@@ -200,6 +200,7 @@ class Date(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this date's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
+        config["stat_t"] = self.state_topic
         config["cmd_t"] = self.command_topic
         if self.optimistic:
             config["opt"] = True

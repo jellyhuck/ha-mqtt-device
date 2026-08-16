@@ -126,6 +126,16 @@ async def test_set_target_humidity_requires_binding() -> None:
         await humidifier.set_target_humidity(50)
 
 
+async def test_set_target_humidity_requires_enabled() -> None:
+    provider = RecordingProvider()
+    _, humidifier = make_bound(
+        provider, unique_id="bedroom", target_humidity_enabled=False
+    )
+
+    with pytest.raises(ValueError, match="target humidity control is disabled"):
+        await humidifier.set_target_humidity(50)
+
+
 async def test_set_target_humidity_rejects_values_outside_configured_range() -> None:
     provider = RecordingProvider()
     _, humidifier = make_bound(
@@ -168,6 +178,19 @@ async def test_on_event_subscribes_to_both_resolved_command_topics() -> None:
     assert list(provider.subscriptions) == [
         "homeassistant/device/dev-1/bedroom/command",
         "homeassistant/device/dev-1/bedroom/target_humidity_command",
+    ]
+
+
+async def test_on_event_omits_disabled_target_humidity_topic() -> None:
+    provider = RecordingProvider()
+    _, humidifier = make_bound(
+        provider, unique_id="bedroom", target_humidity_enabled=False
+    )
+
+    await humidifier.on_event(lambda event: _noop())
+
+    assert list(provider.subscriptions) == [
+        "homeassistant/device/dev-1/bedroom/command",
     ]
 
 
@@ -328,10 +351,28 @@ async def test_discovery_config_defaults() -> None:
     # discovery defaults.
     assert humidifier.discovery_config() == {
         "uniq_id": "bedroom",
+        "p": "humidifier",
         "stat_t": "~/bedroom/state",
         "cmd_t": "~/bedroom/command",
-        "tgt_hum_stat_t": "~/bedroom/target_humidity",
-        "tgt_hum_cmd_t": "~/bedroom/target_humidity_command",
+        "hum_stat_t": "~/bedroom/target_humidity",
+        "hum_cmd_t": "~/bedroom/target_humidity_command",
+    }
+
+
+async def test_discovery_config_omits_disabled_target_humidity() -> None:
+    _, humidifier = make_bound(
+        RecordingProvider(),
+        unique_id="bedroom",
+        target_humidity_enabled=False,
+        min_humidity=30,
+        max_humidity=80,
+    )
+
+    assert humidifier.discovery_config() == {
+        "uniq_id": "bedroom",
+        "p": "humidifier",
+        "stat_t": "~/bedroom/state",
+        "cmd_t": "~/bedroom/command",
     }
 
 
@@ -345,10 +386,11 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
 
     assert humidifier.discovery_config() == {
         "uniq_id": "bedroom",
+        "p": "humidifier",
         "stat_t": "~/bedroom/state",
         "cmd_t": "~/bedroom/command",
-        "tgt_hum_stat_t": "~/bedroom/target_humidity",
-        "tgt_hum_cmd_t": "~/bedroom/target_humidity_command",
+        "hum_stat_t": "~/bedroom/target_humidity",
+        "hum_cmd_t": "~/bedroom/target_humidity_command",
         "name": "Bedroom humidifier",
         "dev_cla": "humidifier",
     }
@@ -364,10 +406,11 @@ async def test_discovery_config_includes_custom_payloads() -> None:
 
     assert humidifier.discovery_config() == {
         "uniq_id": "bedroom",
+        "p": "humidifier",
         "stat_t": "~/bedroom/state",
         "cmd_t": "~/bedroom/command",
-        "tgt_hum_stat_t": "~/bedroom/target_humidity",
-        "tgt_hum_cmd_t": "~/bedroom/target_humidity_command",
+        "hum_stat_t": "~/bedroom/target_humidity",
+        "hum_cmd_t": "~/bedroom/target_humidity_command",
         "pl_on": "1",
         "pl_off": "0",
     }
@@ -383,10 +426,11 @@ async def test_discovery_config_includes_humidity_range() -> None:
 
     assert humidifier.discovery_config() == {
         "uniq_id": "bedroom",
+        "p": "humidifier",
         "stat_t": "~/bedroom/state",
         "cmd_t": "~/bedroom/command",
-        "tgt_hum_stat_t": "~/bedroom/target_humidity",
-        "tgt_hum_cmd_t": "~/bedroom/target_humidity_command",
+        "hum_stat_t": "~/bedroom/target_humidity",
+        "hum_cmd_t": "~/bedroom/target_humidity_command",
         "min_hum": 30,
         "max_hum": 80,
     }
@@ -399,10 +443,11 @@ async def test_discovery_config_includes_optimistic() -> None:
 
     assert humidifier.discovery_config() == {
         "uniq_id": "bedroom",
+        "p": "humidifier",
         "stat_t": "~/bedroom/state",
         "cmd_t": "~/bedroom/command",
-        "tgt_hum_stat_t": "~/bedroom/target_humidity",
-        "tgt_hum_cmd_t": "~/bedroom/target_humidity_command",
+        "hum_stat_t": "~/bedroom/target_humidity",
+        "hum_cmd_t": "~/bedroom/target_humidity_command",
         "opt": True,
     }
 
@@ -419,7 +464,7 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"humidifier": {"bedroom": humidifier.discovery_config()}}
+    assert payload["cmps"] == {"bedroom": humidifier.discovery_config()}
 
 
 async def _noop() -> None:

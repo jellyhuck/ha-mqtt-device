@@ -242,7 +242,8 @@ async def test_discovery_config_defaults() -> None:
     # pl_on/pl_off are omitted because they match the discovery defaults.
     assert switch.discovery_config() == {
         "uniq_id": "relay_1",
-        "p": "~/relay_1/state",
+        "p": "switch",
+        "stat_t": "~/relay_1/state",
         "cmd_t": "~/relay_1/command",
     }
 
@@ -257,7 +258,8 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
 
     assert switch.discovery_config() == {
         "uniq_id": "relay_1",
-        "p": "~/relay_1/state",
+        "p": "switch",
+        "stat_t": "~/relay_1/state",
         "cmd_t": "~/relay_1/command",
         "name": "Relay",
         "dev_cla": "outlet",
@@ -274,7 +276,8 @@ async def test_discovery_config_includes_custom_payloads() -> None:
 
     assert switch.discovery_config() == {
         "uniq_id": "relay_1",
-        "p": "~/relay_1/state",
+        "p": "switch",
+        "stat_t": "~/relay_1/state",
         "cmd_t": "~/relay_1/command",
         "pl_on": "1",
         "pl_off": "0",
@@ -293,10 +296,11 @@ async def test_discovery_config_includes_state_and_command_mapping() -> None:
 
     assert switch.discovery_config() == {
         "uniq_id": "relay_1",
-        "p": "~/relay_1/state",
+        "p": "switch",
+        "stat_t": "~/relay_1/state",
         "cmd_t": "~/relay_1/command",
-        "sta_on": "HIGH",
-        "sta_off": "LOW",
+        "stat_on": "HIGH",
+        "stat_off": "LOW",
         "cmd_on": "ON_CMD",
         "cmd_off": "OFF_CMD",
     }
@@ -310,10 +314,11 @@ async def test_discovery_config_omits_mapping_matching_payloads() -> None:
         command_on="ON",
     )
 
-    # sta_on/cmd_on match payload_on and are omitted; nothing is emitted.
+    # stat_on/cmd_on match payload_on and are omitted; nothing is emitted.
     assert switch.discovery_config() == {
         "uniq_id": "relay_1",
-        "p": "~/relay_1/state",
+        "p": "switch",
+        "stat_t": "~/relay_1/state",
         "cmd_t": "~/relay_1/command",
     }
 
@@ -323,7 +328,8 @@ async def test_discovery_config_includes_optimistic() -> None:
 
     assert switch.discovery_config() == {
         "uniq_id": "relay_1",
-        "p": "~/relay_1/state",
+        "p": "switch",
+        "stat_t": "~/relay_1/state",
         "cmd_t": "~/relay_1/command",
         "opt": True,
     }
@@ -341,7 +347,7 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"switch": {"relay_1": switch.discovery_config()}}
+    assert payload["cmps"] == {"relay_1": switch.discovery_config()}
 
 
 async def _noop() -> None:

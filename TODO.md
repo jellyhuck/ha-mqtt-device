@@ -11,19 +11,23 @@ appropriate.
   test now expects the `hostname` keyword that `AioMqttProvider` forwards to
   `aiomqtt.Client`; the provider contract and existing callers remain unchanged.
 
+- **TODO-01 — Shared discovery identity and component structure:** Regular
+  components now advertise their platform and state topic separately, and
+  `Device.configure()` publishes the flattened component-ID `cmps` map with
+  deterministic global unique-ID validation. Regression coverage includes
+  cross-platform coexistence and duplicate IDs.
+
+- **TODO-03 — Camera and Image encoding behavior:** Camera and Image now
+  default to raw image payloads by omitting `img_e`; explicit image encoding
+  uses the documented `img_e` key. Image content types use `cont_type`, while
+  unsupported Camera content types and generic text encoding are not emitted.
+
+- **TODO-02 — Platform-specific discovery keys:** Camera, Cover, Event, Fan,
+  Humidifier, Image, Infrared, Lawn Mower, Light, Number, and Switch now emit
+  the documented discovery keys, topics, defaults, and omissions. Exact
+  recording-provider regressions cover each correction.
+
 ## Discovery configuration
-
-- **TODO-01 — Correct shared discovery identity and state fields**
-  Align the platform name, unique-ID component map, state topic, and related
-  discovery fields with Home Assistant's MQTT discovery schema.
-
-- **TODO-02 — Correct platform-specific discovery keys**
-  Review and fix abbreviated or outdated keys used by Camera, Cover, Event,
-  Fan, Humidifier, Image, Infrared, Lawn Mower, Light, Number, and Switch.
-
-- **TODO-03 — Resolve Camera and Image encoding behavior**
-  Decide how generic encoding, image encoding, content type, defaults, and
-  omitted fields should work, then expose and advertise them consistently.
 
 - **TODO-04 — Improve shared availability support**
   Add a common model for entity availability and ensure availability options

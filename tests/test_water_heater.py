@@ -57,6 +57,7 @@ async def test_default_discovery_and_state_topics() -> None:
     _, heater = bound(RecordingProvider(), unique_id="boiler")
     assert heater.discovery_config() == {
         "uniq_id": "boiler",
+        "p": "water_heater",
         "curr_temp_t": "~/boiler/state/current_temperature",
         "temp_stat_t": "~/boiler/state/temperature",
         "temp_cmd_t": "~/boiler/command/temperature",
@@ -109,6 +110,7 @@ async def test_optional_discovery_and_custom_payloads() -> None:
     )
     assert heater.discovery_config() == {
         "uniq_id": "boiler",
+        "p": "water_heater",
         "name": "Boiler",
         "curr_temp_t": "~/boiler/state/current_temperature",
         "temp_stat_t": "~/boiler/state/temperature",
@@ -173,7 +175,7 @@ async def test_validation_and_device_configure() -> None:
 
     await device.configure()
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"water_heater": {"boiler": heater.discovery_config()}}
+    assert payload["cmps"] == {"boiler": heater.discovery_config()}
 
 
 async def test_valve_and_water_heater_coexist_in_one_device() -> None:
@@ -189,6 +191,6 @@ async def test_valve_and_water_heater_coexist_in_one_device() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert set(payload["cmps"]) == {"valve", "water_heater"}
-    assert set(payload["cmps"]["valve"]) == {"valve"}
-    assert set(payload["cmps"]["water_heater"]) == {"boiler"}
+    assert set(payload["cmps"]) == {"valve", "boiler"}
+    assert payload["cmps"]["valve"] == valve.discovery_config()
+    assert payload["cmps"]["boiler"] == heater.discovery_config()

@@ -230,7 +230,8 @@ async def test_discovery_config_defaults() -> None:
     # opt/frc_upd are omitted because they match the discovery defaults.
     assert entity.discovery_config() == {
         "uniq_id": "vacation",
-        "p": "~/vacation/state",
+        "p": "date",
+        "stat_t": "~/vacation/state",
         "cmd_t": "~/vacation/command",
     }
 
@@ -244,7 +245,8 @@ async def test_discovery_config_includes_name() -> None:
 
     assert entity.discovery_config() == {
         "uniq_id": "vacation",
-        "p": "~/vacation/state",
+        "p": "date",
+        "stat_t": "~/vacation/state",
         "cmd_t": "~/vacation/command",
         "name": "Vacation start",
     }
@@ -255,7 +257,8 @@ async def test_discovery_config_includes_optimistic() -> None:
 
     assert entity.discovery_config() == {
         "uniq_id": "vacation",
-        "p": "~/vacation/state",
+        "p": "date",
+        "stat_t": "~/vacation/state",
         "cmd_t": "~/vacation/command",
         "opt": True,
     }
@@ -266,7 +269,8 @@ async def test_discovery_config_includes_force_update() -> None:
 
     assert entity.discovery_config() == {
         "uniq_id": "vacation",
-        "p": "~/vacation/state",
+        "p": "date",
+        "stat_t": "~/vacation/state",
         "cmd_t": "~/vacation/command",
         "frc_upd": True,
     }
@@ -283,7 +287,8 @@ async def test_discovery_config_omits_default_flags() -> None:
     # Both flags match the discovery defaults and are omitted.
     assert entity.discovery_config() == {
         "uniq_id": "vacation",
-        "p": "~/vacation/state",
+        "p": "date",
+        "stat_t": "~/vacation/state",
         "cmd_t": "~/vacation/command",
     }
 
@@ -300,7 +305,7 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"date": {"vacation": entity.discovery_config()}}
+    assert payload["cmps"] == {"vacation": entity.discovery_config()}
 
 
 async def _noop() -> None:

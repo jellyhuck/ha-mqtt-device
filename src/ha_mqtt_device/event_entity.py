@@ -37,7 +37,7 @@ class EventEntity(Entity):
         device_class: Home Assistant device class (``dev_cla``), for example
             ``"doorbell"`` or ``"button"``. Omitted from the discovery config
             when unset.
-        event_types: Event types that can be fired (``eve_t``). Must contain
+        event_types: Event types that can be fired (``evt_typ``). Must contain
             at least one type.
         event_type_template: Template that extracts the event type from the
             payload (``eve_tt``). Mutually exclusive with
@@ -85,7 +85,8 @@ class EventEntity(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this entity's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
-        config["eve_t"] = self.event_types
+        config["stat_t"] = self.state_topic
+        config["evt_typ"] = self.event_types
         if self.event_type_template is not None:
             config["eve_tt"] = self.event_type_template
         if self.value_template is not None:

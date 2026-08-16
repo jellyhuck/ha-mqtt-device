@@ -227,8 +227,9 @@ async def test_discovery_config_defaults() -> None:
 
     assert emitter.discovery_config() == {
         "uniq_id": "tv_power",
+        "p": "infrared",
         "cmd_t": "~/tv_power/command",
-        "sch": "emitter",
+        "schema": "emitter",
     }
 
 
@@ -239,8 +240,9 @@ async def test_discovery_config_includes_name() -> None:
 
     assert emitter.discovery_config() == {
         "uniq_id": "tv_power",
+        "p": "infrared",
         "cmd_t": "~/tv_power/command",
-        "sch": "emitter",
+        "schema": "emitter",
         "name": "TV power",
     }
 
@@ -297,8 +299,9 @@ async def test_receiver_discovery_config_defaults() -> None:
 
     assert receiver.discovery_config() == {
         "uniq_id": "living_room_ir",
-        "p": "~/living_room_ir/state",
-        "sch": "receiver",
+        "p": "infrared",
+        "stat_t": "~/living_room_ir/state",
+        "schema": "receiver",
     }
 
 
@@ -312,8 +315,9 @@ async def test_receiver_discovery_config_includes_name() -> None:
 
     assert receiver.discovery_config() == {
         "uniq_id": "living_room_ir",
-        "p": "~/living_room_ir/state",
-        "sch": "receiver",
+        "p": "infrared",
+        "stat_t": "~/living_room_ir/state",
+        "schema": "receiver",
         "name": "Living room IR",
     }
 
@@ -332,7 +336,7 @@ async def test_configure_includes_cmps_for_emitter() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"infrared": {"tv_power": emitter.discovery_config()}}
+    assert payload["cmps"] == {"tv_power": emitter.discovery_config()}
 
 
 async def test_configure_includes_cmps_for_receiver() -> None:
@@ -344,9 +348,7 @@ async def test_configure_includes_cmps_for_receiver() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {
-        "infrared": {"living_room_ir": receiver.discovery_config()}
-    }
+    assert payload["cmps"] == {"living_room_ir": receiver.discovery_config()}
 
 
 async def _noop() -> None:

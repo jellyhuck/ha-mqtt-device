@@ -95,9 +95,10 @@ async def test_set_image_does_not_subscribe() -> None:
 async def test_discovery_config_defaults() -> None:
     _, camera = make_bound(RecordingProvider(), unique_id="front_door")
 
-    # enc/cont_t are omitted because they match the discovery defaults.
+    # img_e is omitted because the documented default is raw image data.
     assert camera.discovery_config() == {
         "uniq_id": "front_door",
+        "p": "camera",
         "t": "~/front_door/image",
     }
 
@@ -109,39 +110,39 @@ async def test_discovery_config_includes_name() -> None:
 
     assert camera.discovery_config() == {
         "uniq_id": "front_door",
+        "p": "camera",
         "t": "~/front_door/image",
         "name": "Front door camera",
     }
 
 
-async def test_discovery_config_includes_encoding_and_content_type() -> None:
+async def test_discovery_config_uses_image_encoding_key() -> None:
     _, camera = make_bound(
         RecordingProvider(),
         unique_id="front_door",
-        encoding="binary",
-        content_type="image/png",
+        encoding="b64",
     )
 
     assert camera.discovery_config() == {
         "uniq_id": "front_door",
+        "p": "camera",
         "t": "~/front_door/image",
-        "enc": "binary",
-        "cont_t": "image/png",
+        "img_e": "b64",
     }
 
 
-async def test_discovery_config_omits_only_default_encoding() -> None:
+async def test_discovery_config_omits_encoding_and_unsupported_content_type() -> None:
     _, camera = make_bound(
         RecordingProvider(),
         unique_id="front_door",
         content_type="image/png",
     )
 
-    # enc still matches the discovery default and is omitted.
+    # Camera discovery has no documented content-type field.
     assert camera.discovery_config() == {
         "uniq_id": "front_door",
+        "p": "camera",
         "t": "~/front_door/image",
-        "cont_t": "image/png",
     }
 
 
@@ -157,4 +158,4 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"camera": {"front_door": camera.discovery_config()}}
+    assert payload["cmps"] == {"front_door": camera.discovery_config()}

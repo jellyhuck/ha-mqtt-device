@@ -83,7 +83,8 @@ async def test_discovery_config_defaults() -> None:
     # Every optional key is omitted because it matches the discovery defaults.
     assert sensor.discovery_config() == {
         "uniq_id": "temperature",
-        "p": "~/temperature/state",
+        "p": "sensor",
+        "stat_t": "~/temperature/state",
     }
 
 
@@ -97,7 +98,8 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
 
     assert sensor.discovery_config() == {
         "uniq_id": "temperature",
-        "p": "~/temperature/state",
+        "p": "sensor",
+        "stat_t": "~/temperature/state",
         "name": "Temperature",
         "dev_cla": "temperature",
     }
@@ -115,7 +117,8 @@ async def test_discovery_config_includes_measurement_fields() -> None:
 
     assert sensor.discovery_config() == {
         "uniq_id": "energy",
-        "p": "~/energy/state",
+        "p": "sensor",
+        "stat_t": "~/energy/state",
         "unit_of_meas": "kWh",
         "stat_cla": "total_increasing",
         "exp_aft": 300,
@@ -136,7 +139,8 @@ async def test_discovery_config_includes_force_update() -> None:
 
     assert sensor.discovery_config() == {
         "uniq_id": "temperature",
-        "p": "~/temperature/state",
+        "p": "sensor",
+        "stat_t": "~/temperature/state",
         "frc_upd": True,
     }
 
@@ -153,4 +157,4 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"sensor": {"temperature": sensor.discovery_config()}}
+    assert payload["cmps"] == {"temperature": sensor.discovery_config()}

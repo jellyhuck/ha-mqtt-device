@@ -86,7 +86,8 @@ async def test_discovery_config_defaults() -> None:
     # pl_on/pl_off are omitted because they match the discovery defaults.
     assert sensor.discovery_config() == {
         "uniq_id": "is_led_on",
-        "p": "~/is_led_on/state",
+        "p": "binary_sensor",
+        "stat_t": "~/is_led_on/state",
     }
 
 
@@ -100,7 +101,8 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
 
     assert sensor.discovery_config() == {
         "uniq_id": "door",
-        "p": "~/door/state",
+        "p": "binary_sensor",
+        "stat_t": "~/door/state",
         "name": "Front door",
         "dev_cla": "door",
     }
@@ -116,7 +118,8 @@ async def test_discovery_config_includes_custom_payloads() -> None:
 
     assert sensor.discovery_config() == {
         "uniq_id": "motion",
-        "p": "~/motion/state",
+        "p": "binary_sensor",
+        "stat_t": "~/motion/state",
         "pl_on": "1",
         "pl_off": "0",
     }
@@ -132,7 +135,8 @@ async def test_discovery_config_omits_only_default_payloads() -> None:
     # pl_off still matches the discovery default and is omitted.
     assert sensor.discovery_config() == {
         "uniq_id": "motion",
-        "p": "~/motion/state",
+        "p": "binary_sensor",
+        "stat_t": "~/motion/state",
         "pl_on": "1",
     }
 
@@ -149,6 +153,4 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {
-        "binary_sensor": {"is_led_on": sensor.discovery_config()}
-    }
+    assert payload["cmps"] == {"is_led_on": sensor.discovery_config()}

@@ -117,14 +117,18 @@ await restart.on_event(on_press)
 HA Integration: [MQTT Camera](https://www.home-assistant.io/integrations/camera.mqtt/).
 
 [`Camera`](src/ha_mqtt_device/camera.py) publishes image frames to Home
-Assistant. See [`examples/camera.py`](examples/camera.py).
+Assistant. The example explicitly selects Base64 image encoding; omit
+`encoding` when publishing raw image bytes. See
+[`examples/camera.py`](examples/camera.py).
 
 ```python
 import base64
 
 from ha_mqtt_device import Camera
 
-camera = Camera(unique_id="front_door", name="Front door camera")
+camera = Camera(
+    unique_id="front_door", name="Front door camera", encoding="b64"
+)
 await camera.set_image(base64.b64encode(jpeg_bytes))
 ```
 
@@ -295,14 +299,15 @@ await humidifier.set_target_humidity(50)
 HA Integration: [MQTT Image](https://www.home-assistant.io/integrations/image.mqtt/).
 
 [`Image`](src/ha_mqtt_device/image.py) publishes image data without a command
-topic. See [`examples/image.py`](examples/image.py).
+topic. The example explicitly selects Base64 image encoding; omit `encoding`
+when publishing raw image bytes. See [`examples/image.py`](examples/image.py).
 
 ```python
 import base64
 
 from ha_mqtt_device import Image
 
-snapshot = Image(unique_id="camera", name="Camera")
+snapshot = Image(unique_id="camera", name="Camera", encoding="b64")
 await snapshot.set_image(base64.b64encode(jpeg_bytes))
 ```
 

@@ -64,9 +64,9 @@ class Switch(Entity):
         payload_off: Payload published when the switch reports ``False`` and
             the default for ``state_off``/``command_off``.
         state_on: Payload Home Assistant treats as ``on`` in state updates
-            (``sta_on``). Defaults to :attr:`payload_on`.
+            (``stat_on``). Defaults to :attr:`payload_on`.
         state_off: Payload Home Assistant treats as ``off`` in state updates
-            (``sta_off``). Defaults to :attr:`payload_off`.
+            (``stat_off``). Defaults to :attr:`payload_off`.
         command_on: Payload Home Assistant sends to turn the switch on
             (``cmd_on``). Defaults to :attr:`payload_on`.
         command_off: Payload Home Assistant sends to turn the switch off
@@ -180,15 +180,16 @@ class Switch(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this switch's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
+        config["stat_t"] = self.state_topic
         config["cmd_t"] = self.command_topic
         if self.payload_on != DEFAULT_PAYLOAD_ON:
             config["pl_on"] = self.payload_on
         if self.payload_off != DEFAULT_PAYLOAD_OFF:
             config["pl_off"] = self.payload_off
         if self.state_on is not None and self.state_on != self.payload_on:
-            config["sta_on"] = self.state_on
+            config["stat_on"] = self.state_on
         if self.state_off is not None and self.state_off != self.payload_off:
-            config["sta_off"] = self.state_off
+            config["stat_off"] = self.state_off
         if self.command_on is not None and self.command_on != self.payload_on:
             config["cmd_on"] = self.command_on
         if self.command_off is not None and self.command_off != self.payload_off:

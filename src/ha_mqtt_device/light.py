@@ -307,7 +307,6 @@ class Light(Entity):
 
     def discovery_config(self) -> dict[str, object]:
         config = super().discovery_config()
-        config.pop("p")
         config.update({"stat_t": self.power_state_topic, "cmd_t": self.command_topic})
         if self.payload_on != DEFAULT_PAYLOAD_ON:
             config["pl_on"] = self.payload_on
@@ -350,18 +349,11 @@ class Light(Entity):
                 self.xy_command_topic,
             ),
             "effect": (
-                "eff_stat_t",
-                "eff_cmd_t",
+                "fx_stat_t",
+                "fx_cmd_t",
                 self.effect_enabled,
                 self.effect_state_topic,
                 self.effect_command_topic,
-            ),
-            "white": (
-                "white_stat_t",
-                "white_cmd_t",
-                self.white_enabled,
-                self.white_state_topic,
-                self.white_command_topic,
             ),
         }
         for (
@@ -375,13 +367,15 @@ class Light(Entity):
                 config[state_key] = state_topic
                 config[command_key] = command_topic
         if self.effect_enabled and self.effect_list:
-            config["effect_list"] = self.effect_list
+            config["fx_list"] = self.effect_list
         if self.color_temp_kelvin:
-            config["color_temp_kelvin"] = True
+            config["clr_temp_k"] = True
+        if self.white_enabled:
+            config["whit_cmd_t"] = self.white_command_topic
         if self.brightness_scale != 255:
             config["bri_scl"] = self.brightness_scale
         if self.white_scale != 255:
-            config["whi_scl"] = self.white_scale
+            config["whit_scl"] = self.white_scale
         if self.optimistic:
             config["opt"] = True
         if self.device_class is not None:

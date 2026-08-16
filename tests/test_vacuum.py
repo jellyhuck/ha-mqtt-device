@@ -46,7 +46,8 @@ async def test_default_discovery_and_json_state() -> None:
 
     assert entity.discovery_config() == {
         "uniq_id": "cleaner",
-        "p": "~/cleaner/state",
+        "p": "vacuum",
+        "stat_t": "~/cleaner/state",
         "cmd_t": "~/cleaner/command",
     }
     await entity.set_state(
@@ -87,7 +88,8 @@ async def test_optional_features_and_payload_mappings() -> None:
 
     assert entity.discovery_config() == {
         "uniq_id": "cleaner",
-        "p": "~/cleaner/state",
+        "p": "vacuum",
+        "stat_t": "~/cleaner/state",
         "cmd_t": "~/cleaner/command",
         "send_cmd_t": "~/cleaner/command/send",
         "set_fan_spd_t": "~/cleaner/command/fan_speed",
@@ -215,7 +217,7 @@ async def test_vacuum_validation_and_device_configuration() -> None:
     device, entity = bound(provider, unique_id="cleaner")
     await device.configure()
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"vacuum": {"cleaner": entity.discovery_config()}}
+    assert payload["cmps"] == {"cleaner": entity.discovery_config()}
 
     with pytest.raises(ValueError, match="disabled"):
         await entity.set_fan_speed("max")

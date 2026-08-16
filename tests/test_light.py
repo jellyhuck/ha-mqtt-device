@@ -91,16 +91,61 @@ async def test_discovery_config() -> None:
     )
     await device.configure()
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"]["light"]["lamp"] == {
+    assert payload["cmps"]["lamp"] == {
         "uniq_id": "lamp",
+        "p": "light",
         "stat_t": "~/lamp/state/power",
         "cmd_t": "~/lamp/command/power",
         "name": "Lamp",
         "bri_stat_t": "~/lamp/state/brightness",
         "bri_cmd_t": "~/lamp/command/brightness",
-        "eff_stat_t": "~/lamp/state/effect",
-        "eff_cmd_t": "~/lamp/command/effect",
-        "effect_list": ["rainbow"],
+        "fx_stat_t": "~/lamp/state/effect",
+        "fx_cmd_t": "~/lamp/command/effect",
+        "fx_list": ["rainbow"],
+    }
+
+
+async def test_discovery_config_includes_documented_optional_keys() -> None:
+    _, light = bound(
+        RecordingProvider(),
+        unique_id="lamp",
+        brightness_enabled=True,
+        color_temp_enabled=True,
+        color_temp_kelvin=True,
+        effect_enabled=True,
+        effect_list=["rainbow"],
+        white_enabled=True,
+        white_scale=100,
+    )
+
+    assert light.discovery_config() == {
+        "uniq_id": "lamp",
+        "p": "light",
+        "stat_t": "~/lamp/state/power",
+        "cmd_t": "~/lamp/command/power",
+        "bri_stat_t": "~/lamp/state/brightness",
+        "bri_cmd_t": "~/lamp/command/brightness",
+        "clr_temp_stat_t": "~/lamp/state/color_temp",
+        "clr_temp_cmd_t": "~/lamp/command/color_temp",
+        "fx_stat_t": "~/lamp/state/effect",
+        "fx_cmd_t": "~/lamp/command/effect",
+        "fx_list": ["rainbow"],
+        "clr_temp_k": True,
+        "whit_cmd_t": "~/lamp/command/white",
+        "whit_scl": 100,
+    }
+
+    assert not any(key.startswith("white_") for key in light.discovery_config())
+
+
+async def test_discovery_config_omits_disabled_optional_keys() -> None:
+    _, light = bound(RecordingProvider(), unique_id="lamp")
+
+    assert light.discovery_config() == {
+        "uniq_id": "lamp",
+        "p": "light",
+        "stat_t": "~/lamp/state/power",
+        "cmd_t": "~/lamp/command/power",
     }
 
 

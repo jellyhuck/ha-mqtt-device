@@ -58,6 +58,7 @@ async def test_discovery_defaults_include_required_options_and_topics() -> None:
 
     assert select.discovery_config() == {
         "uniq_id": "mode",
+        "p": "select",
         "name": "Mode",
         "stat_t": "~/mode/state",
         "cmd_t": "~/mode/command",
@@ -74,6 +75,7 @@ async def test_discovery_omits_or_includes_optimistic_and_templates() -> None:
     )
     assert optimistic.discovery_config() == {
         "uniq_id": "mode",
+        "p": "select",
         "cmd_t": "~/mode/command",
         "ops": [],
     }
@@ -88,6 +90,7 @@ async def test_discovery_omits_or_includes_optimistic_and_templates() -> None:
     )
     assert configured.discovery_config() == {
         "uniq_id": "mode",
+        "p": "select",
         "stat_t": "~/mode/state",
         "cmd_t": "~/mode/command",
         "ops": ["Auto"],
@@ -144,7 +147,7 @@ async def test_unbound_event_and_device_configuration() -> None:
     device, select = bound(provider, unique_id="mode", options=["Auto"])
     await device.configure()
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"select": {"mode": select.discovery_config()}}
+    assert payload["cmps"] == {"mode": select.discovery_config()}
 
 
 async def _noop() -> None:

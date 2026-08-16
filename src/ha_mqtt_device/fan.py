@@ -126,7 +126,7 @@ class Fan(Entity):
         payload_reset_percentage: Payload that switches from a preset mode
             back to percentage control (``pl_rst_pct``). Also the payload
             published by :meth:`set_preset_mode` for ``None``.
-        preset_modes: Preset modes the fan supports (``prst_modes``). Defaults
+        preset_modes: Preset modes the fan supports (``pr_modes``). Defaults
             to ``["auto", "smart"]``.
         speed_range_min: Minimum value Home Assistant treats as 0% speed
             (``spd_rng_min``). Defaults to ``1``.
@@ -550,8 +550,6 @@ class Fan(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this fan's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
-        # Home Assistant's fan state topic key is ``stat_t``, not the base ``p``.
-        config.pop("p")
         config["stat_t"] = self.state_topic
         config["cmd_t"] = self.command_topic
         if self.payload_on != DEFAULT_PAYLOAD_ON:
@@ -568,10 +566,10 @@ class Fan(Entity):
             if self.speed_range_max != DEFAULT_SPEED_RANGE_MAX:
                 config["spd_rng_max"] = self.speed_range_max
         if self.preset_mode_enabled:
-            config["prst_mode_stat_t"] = self.preset_mode_state_topic
-            config["prst_mode_cmd_t"] = self.preset_mode_command_topic
+            config["pr_mode_stat_t"] = self.preset_mode_state_topic
+            config["pr_mode_cmd_t"] = self.preset_mode_command_topic
             if self.preset_modes != list(DEFAULT_PRESET_MODES):
-                config["prst_modes"] = self.preset_modes
+                config["pr_modes"] = self.preset_modes
             if self.payload_reset_percentage != DEFAULT_PAYLOAD_RESET_PERCENTAGE:
                 config["pl_rst_pct"] = self.payload_reset_percentage
         if self.oscillation_enabled:

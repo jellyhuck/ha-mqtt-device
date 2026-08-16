@@ -343,8 +343,8 @@ class Climate(Entity):
         """Return this climate's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
         # Home Assistant's climate has no single state topic; its topics are
-        # named individually, so drop the base ``p`` added by Entity.
-        config.pop("p")
+        # named individually.
+        config.pop("stat_t")
         config["curr_temp_t"] = self.current_temperature_topic
         config["temp_stat_t"] = self.temperature_state_topic
         config["temp_cmd_t"] = self.temperature_command_topic

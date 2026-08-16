@@ -75,6 +75,7 @@ async def test_discovery_defaults_omit_documented_defaults() -> None:
 
     assert siren.discovery_config() == {
         "uniq_id": "alarm",
+        "p": "siren",
         "stat_t": "~/alarm/state",
         "cmd_t": "~/alarm/command",
     }
@@ -106,6 +107,7 @@ async def test_discovery_includes_features_templates_payloads_and_availability()
 
     assert siren.discovery_config() == {
         "uniq_id": "alarm",
+        "p": "siren",
         "stat_t": "~/alarm/state",
         "cmd_t": "~/alarm/command",
         "av_tones": ["bell"],
@@ -184,7 +186,7 @@ async def test_unbound_operations_and_device_configuration() -> None:
     device, siren = bound(provider, unique_id="alarm")
     await device.configure()
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"siren": {"alarm": siren.discovery_config()}}
+    assert payload["cmps"] == {"alarm": siren.discovery_config()}
 
 
 async def _noop() -> None:

@@ -36,15 +36,11 @@ class Device:
         self.provider = provider
         self.info = info
         self.entities: tuple[Entity, ...] = tuple(entities or [])
-        seen: set[tuple[str, str]] = set()
+        seen: set[str] = set()
         for entity in self.entities:
-            key = (entity.component, entity.unique_id)
-            if key in seen:
-                raise ValueError(
-                    f"duplicate entity component/unique_id: "
-                    f"{entity.component}/{entity.unique_id}"
-                )
-            seen.add(key)
+            if entity.unique_id in seen:
+                raise ValueError(f"duplicate entity unique_id: {entity.unique_id}")
+            seen.add(entity.unique_id)
         for entity in self.entities:
             entity.bind(self)
 
@@ -88,11 +84,9 @@ class Device:
             entity for entity in self.entities if not entity.standalone_discovery
         ]
         if regular_entities:
-            cmps: dict[str, dict[str, dict[str, Any]]] = {}
+            cmps: dict[str, dict[str, Any]] = {}
             for entity in regular_entities:
-                cmps.setdefault(entity.component, {})[entity.unique_id] = (
-                    entity.discovery_config()
-                )
+                cmps[entity.unique_id] = entity.discovery_config()
             payload["cmps"] = cmps
         await self.provider.publish(self.info.discovery_topic(), json.dumps(payload))
         for entity in self.entities:

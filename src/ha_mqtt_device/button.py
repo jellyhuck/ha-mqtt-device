@@ -130,7 +130,7 @@ class Button(Entity):
         """Return this button's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
         # Buttons have no state topic; the single topic is the command topic.
-        config.pop("p")
+        config.pop("stat_t")
         config["cmd_t"] = self.command_topic
         if self.payload_press != DEFAULT_PAYLOAD_PRESS:
             config["pl_prs"] = self.payload_press

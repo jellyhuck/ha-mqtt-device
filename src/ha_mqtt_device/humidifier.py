@@ -45,15 +45,15 @@ _TOPIC_TYPE_TARGET_HUMIDITY = "target_humidity_command_topic"
 class Humidifier(Entity):
     """A humidifier belonging to a device.
 
-    A humidifier has two state topics and two command topics. The device
-    publishes its on/off state to the state topic (``~/<unique_id>/state``)
-    with :meth:`set_state` and its target humidity to the target-humidity
-    state topic (``~/<unique_id>/target_humidity``) with
-    :meth:`set_target_humidity`. It receives commands from Home Assistant on
-    the command topic (``~/<unique_id>/command``) and the target-humidity
-    command topic (``~/<unique_id>/target_humidity_command``). Registering an
-    async callback with :meth:`on_event` subscribes to both and delivers every
-    message as an :class:`~ha_mqtt_device.event.Event`::
+    A humidifier has an on/off state and command topic, plus an optional
+    target-humidity state and command topic. The device publishes its on/off
+    state to the state topic (``~/<unique_id>/state``) with :meth:`set_state`;
+    when target-humidity control is enabled, it publishes humidity to
+    ``~/<unique_id>/target_humidity`` with :meth:`set_target_humidity`. It
+    receives commands from Home Assistant on the corresponding command
+    topics. Registering an async callback with :meth:`on_event` subscribes to
+    the enabled topics and delivers every message as an
+    :class:`~ha_mqtt_device.event.Event`::
 
         humidifier = Humidifier(unique_id="bedroom", name="Bedroom humidifier")
         device = Device(provider, info, entities=[humidifier])
@@ -89,6 +89,8 @@ class Humidifier(Entity):
             ``100``, Home Assistant's discovery default.
         optimistic: Whether Home Assistant should assume commands take effect
             immediately (``opt``). Defaults to ``False``.
+        target_humidity_enabled: Whether target-humidity state and command
+            topics are advertised and subscribed. Defaults to ``True``.
     """
 
     component = "humidifier"
@@ -99,6 +101,7 @@ class Humidifier(Entity):
     min_humidity: int = DEFAULT_MIN_HUMIDITY
     max_humidity: int = DEFAULT_MAX_HUMIDITY
     optimistic: bool = False
+    target_humidity_enabled: bool = True
 
     #: Callbacks registered via :meth:`on_event`.
     _event_callbacks: list[EventCallback] = field(
@@ -150,9 +153,13 @@ class Humidifier(Entity):
 
         Raises:
             RuntimeError: If the humidifier is not bound to a device.
+            ValueError: If target-humidity control is disabled or the humidity
+                is outside the configured range.
             Exception: If the message could not be published.
         """
         device = self._require_device()
+        if not self.target_humidity_enabled:
+            raise ValueError("target humidity control is disabled")
         self._validate_humidity(humidity)
         topic = device.info.resolve_topic(self.target_humidity_state_topic)
         await device.provider.publish(topic, str(humidity))
@@ -161,9 +168,9 @@ class Humidifier(Entity):
         """Register ``callback`` for every command received from Home Assistant.
 
         Appends ``callback`` and, on first use, subscribes to the command
-        topic (``~/<unique_id>/command``) and the target-humidity command
-        topic (``~/<unique_id>/target_humidity_command``). Every message is
-        awaited as an :class:`~ha_mqtt_device.event.Event`:
+        topic (``~/<unique_id>/command``) and, when enabled, the target-
+        humidity command topic (``~/<unique_id>/target_humidity_command``).
+        Every message is awaited as an :class:`~ha_mqtt_device.event.Event`:
 
         - On the command topic, ``event_type`` is ``"command"``,
           ``topic_type`` is ``"command_topic"``, and ``state`` is ``"on"`` or
@@ -190,10 +197,11 @@ class Humidifier(Entity):
             await device.provider.subscribe(
                 device.info.resolve_topic(self.command_topic), self._dispatch_command
             )
-            await device.provider.subscribe(
-                device.info.resolve_topic(self.target_humidity_command_topic),
-                self._dispatch_target_humidity,
-            )
+            if self.target_humidity_enabled:
+                await device.provider.subscribe(
+                    device.info.resolve_topic(self.target_humidity_command_topic),
+                    self._dispatch_target_humidity,
+                )
             self._subscribed = True
         self._event_callbacks.append(callback)
 
@@ -283,21 +291,20 @@ class Humidifier(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this humidifier's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
-        # Home Assistant's humidifier state topic key is ``stat_t``, not the
-        # base ``p`` added by Entity.
-        config.pop("p")
         config["stat_t"] = self.state_topic
         config["cmd_t"] = self.command_topic
-        config["tgt_hum_stat_t"] = self.target_humidity_state_topic
-        config["tgt_hum_cmd_t"] = self.target_humidity_command_topic
+        if self.target_humidity_enabled:
+            config["hum_stat_t"] = self.target_humidity_state_topic
+            config["hum_cmd_t"] = self.target_humidity_command_topic
         if self.payload_on != DEFAULT_PAYLOAD_ON:
             config["pl_on"] = self.payload_on
         if self.payload_off != DEFAULT_PAYLOAD_OFF:
             config["pl_off"] = self.payload_off
-        if self.min_humidity != DEFAULT_MIN_HUMIDITY:
-            config["min_hum"] = self.min_humidity
-        if self.max_humidity != DEFAULT_MAX_HUMIDITY:
-            config["max_hum"] = self.max_humidity
+        if self.target_humidity_enabled:
+            if self.min_humidity != DEFAULT_MIN_HUMIDITY:
+                config["min_hum"] = self.min_humidity
+            if self.max_humidity != DEFAULT_MAX_HUMIDITY:
+                config["max_hum"] = self.max_humidity
         if self.optimistic:
             config["opt"] = True
         if self.device_class is not None:

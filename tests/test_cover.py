@@ -342,12 +342,13 @@ async def test_dispatch_logs_callback_exception(
 async def test_discovery_config_defaults() -> None:
     _, cover = make_bound(RecordingProvider(), unique_id="blinds")
 
-    # The cover's state topic key is ``sta_t`` (not the base ``p``), and
-    # pl_open/pl_cls/pl_stop, the state payloads, and the position bounds are
+    # The cover's state topic key is ``stat_t`` and pl_open/pl_cls/pl_stop,
+    # the state payloads, and the position bounds are
     # omitted because they match the discovery defaults.
     assert cover.discovery_config() == {
         "uniq_id": "blinds",
-        "sta_t": "~/blinds/state",
+        "p": "cover",
+        "stat_t": "~/blinds/state",
         "cmd_t": "~/blinds/command",
         "pos_t": "~/blinds/position",
         "set_pos_t": "~/blinds/set_position",
@@ -364,7 +365,8 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
 
     assert cover.discovery_config() == {
         "uniq_id": "blinds",
-        "sta_t": "~/blinds/state",
+        "p": "cover",
+        "stat_t": "~/blinds/state",
         "cmd_t": "~/blinds/command",
         "pos_t": "~/blinds/position",
         "set_pos_t": "~/blinds/set_position",
@@ -384,7 +386,8 @@ async def test_discovery_config_includes_custom_payloads() -> None:
 
     assert cover.discovery_config() == {
         "uniq_id": "blinds",
-        "sta_t": "~/blinds/state",
+        "p": "cover",
+        "stat_t": "~/blinds/state",
         "cmd_t": "~/blinds/command",
         "pos_t": "~/blinds/position",
         "set_pos_t": "~/blinds/set_position",
@@ -407,15 +410,16 @@ async def test_discovery_config_includes_custom_state_payloads() -> None:
 
     assert cover.discovery_config() == {
         "uniq_id": "blinds",
-        "sta_t": "~/blinds/state",
+        "p": "cover",
+        "stat_t": "~/blinds/state",
         "cmd_t": "~/blinds/command",
         "pos_t": "~/blinds/position",
         "set_pos_t": "~/blinds/set_position",
-        "sta_open": "OPENED",
-        "sta_opening": "OPENING_",
-        "sta_closed": "SHUT",
-        "sta_closing": "SHUTTING",
-        "sta_stopped": "PAUSED",
+        "stat_open": "OPENED",
+        "stat_opening": "OPENING_",
+        "stat_clsd": "SHUT",
+        "stat_closing": "SHUTTING",
+        "stat_stopped": "PAUSED",
     }
 
 
@@ -426,7 +430,8 @@ async def test_discovery_config_includes_position_bounds() -> None:
 
     assert cover.discovery_config() == {
         "uniq_id": "blinds",
-        "sta_t": "~/blinds/state",
+        "p": "cover",
+        "stat_t": "~/blinds/state",
         "cmd_t": "~/blinds/command",
         "pos_t": "~/blinds/position",
         "set_pos_t": "~/blinds/set_position",
@@ -440,7 +445,8 @@ async def test_discovery_config_includes_optimistic() -> None:
 
     assert cover.discovery_config() == {
         "uniq_id": "blinds",
-        "sta_t": "~/blinds/state",
+        "p": "cover",
+        "stat_t": "~/blinds/state",
         "cmd_t": "~/blinds/command",
         "pos_t": "~/blinds/position",
         "set_pos_t": "~/blinds/set_position",
@@ -460,7 +466,7 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"cover": {"blinds": cover.discovery_config()}}
+    assert payload["cmps"] == {"blinds": cover.discovery_config()}
 
 
 async def _noop() -> None:

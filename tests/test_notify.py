@@ -44,6 +44,7 @@ async def test_discovery_is_command_only() -> None:
 
     assert notify.discovery_config() == {
         "uniq_id": "alerts",
+        "p": "notify",
         "cmd_t": "~/alerts/command",
     }
 
@@ -61,6 +62,7 @@ async def test_discovery_includes_template_and_availability_options() -> None:
 
     assert notify.discovery_config() == {
         "uniq_id": "alerts",
+        "p": "notify",
         "cmd_t": "~/alerts/command",
         "cmd_tpl": "{{ value_json.message }}",
         "avty_t": "~/notify_status",
@@ -104,7 +106,7 @@ async def test_on_event_requires_binding_and_device_configure() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"notify": {"alerts": notify.discovery_config()}}
+    assert payload["cmps"] == {"alerts": notify.discovery_config()}
 
 
 async def _noop() -> None:

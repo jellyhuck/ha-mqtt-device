@@ -30,6 +30,7 @@ DEFAULT_ERROR_STATE = "error"
 _EVENT_TYPE_COMMAND = "command"
 
 # Discovery config field names for command topics
+_TOPIC_TYPE_ACTIVITY_STATE = "activity_state_topic"
 _TOPIC_TYPE_START_MOWING_COMMAND = "start_mowing_command_topic"
 _TOPIC_TYPE_PAUSE_COMMAND = "pause_command_topic"
 _TOPIC_TYPE_DOCK_COMMAND = "dock_command_topic"
@@ -239,15 +240,16 @@ class LawnMower(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this lawn mower's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
+        config.pop("stat_t")
 
         # State topic
-        config["act_stat_t"] = self.state_topic
+        config[_TOPIC_TYPE_ACTIVITY_STATE] = self.state_topic
 
         # All command topics point to the same MQTT topic
         command_topic = self.command_topic
-        config["st_mow_cmd_t"] = command_topic
-        config["pau_cmd_t"] = command_topic
-        config["doc_cmd_t"] = command_topic
+        config[_TOPIC_TYPE_START_MOWING_COMMAND] = command_topic
+        config[_TOPIC_TYPE_PAUSE_COMMAND] = command_topic
+        config[_TOPIC_TYPE_DOCK_COMMAND] = command_topic
 
         # Command payloads (what HA sends)
         if self.payload_start_mowing != DEFAULT_START_MOWING_PAYLOAD:

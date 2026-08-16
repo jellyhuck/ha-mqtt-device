@@ -110,7 +110,8 @@ class Time(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this time entity's abbreviated discovery configuration."""
         config = super().discovery_config()
-        config.pop("p", None)
+        if not self.state_enabled:
+            config.pop("stat_t")
         if self.state_enabled:
             config["stat_t"] = self.state_topic
         config["cmd_t"] = self.command_topic

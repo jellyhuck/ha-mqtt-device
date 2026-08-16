@@ -108,6 +108,7 @@ async def test_discovery_options_and_device_configuration() -> None:
     )
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
+        "p": "time",
         "stat_t": "~/alarm/state",
         "cmd_t": "~/alarm/command",
         "cmd_tpl": "{{ value }}",
@@ -116,7 +117,7 @@ async def test_discovery_options_and_device_configuration() -> None:
 
     await device.configure()
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"time": {"alarm": entity.discovery_config()}}
+    assert payload["cmps"] == {"alarm": entity.discovery_config()}
 
 
 async def test_unbound_and_disabled_state_errors() -> None:
@@ -130,6 +131,7 @@ async def test_unbound_and_disabled_state_errors() -> None:
     _, disabled = bound(provider, unique_id="alarm", state_enabled=False)
     assert disabled.discovery_config() == {
         "uniq_id": "alarm",
+        "p": "time",
         "cmd_t": "~/alarm/command",
     }
     with pytest.raises(ValueError, match="state reporting"):

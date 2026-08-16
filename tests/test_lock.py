@@ -50,6 +50,7 @@ async def test_state_and_discovery_defaults() -> None:
     ]
     assert lock.discovery_config() == {
         "uniq_id": "front_door",
+        "p": "lock",
         "cmd_t": "~/front_door/command",
         "stat_t": "~/front_door/state",
     }
@@ -72,6 +73,7 @@ async def test_custom_lock_configuration() -> None:
 
     assert lock.discovery_config() == {
         "uniq_id": "front_door",
+        "p": "lock",
         "cmd_t": "~/front_door/command",
         "stat_t": "~/front_door/state",
         "pl_lock": "CLOSE",
@@ -135,4 +137,4 @@ async def test_device_configure_includes_lock_component() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"lock": {"front_door": lock.discovery_config()}}
+    assert payload["cmps"] == {"front_door": lock.discovery_config()}

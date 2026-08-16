@@ -357,6 +357,7 @@ class Vacuum(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this vacuum's abbreviated discovery configuration."""
         config = super().discovery_config()
+        config["stat_t"] = self.state_topic
         if any(feature in self._features for feature in DEFAULT_PAYLOADS):
             config["cmd_t"] = self.command_topic
         if self.send_command_enabled:

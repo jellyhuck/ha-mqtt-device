@@ -258,7 +258,8 @@ async def test_discovery_config_defaults() -> None:
     # opt/frc_upd are omitted because they match the discovery defaults.
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
-        "p": "~/alarm/state",
+        "p": "datetime",
+        "stat_t": "~/alarm/state",
         "cmd_t": "~/alarm/command",
     }
 
@@ -272,7 +273,8 @@ async def test_discovery_config_includes_name() -> None:
 
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
-        "p": "~/alarm/state",
+        "p": "datetime",
+        "stat_t": "~/alarm/state",
         "cmd_t": "~/alarm/command",
         "name": "Morning alarm",
     }
@@ -283,7 +285,8 @@ async def test_discovery_config_includes_optimistic() -> None:
 
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
-        "p": "~/alarm/state",
+        "p": "datetime",
+        "stat_t": "~/alarm/state",
         "cmd_t": "~/alarm/command",
         "opt": True,
     }
@@ -294,7 +297,8 @@ async def test_discovery_config_includes_force_update() -> None:
 
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
-        "p": "~/alarm/state",
+        "p": "datetime",
+        "stat_t": "~/alarm/state",
         "cmd_t": "~/alarm/command",
         "frc_upd": True,
     }
@@ -311,7 +315,8 @@ async def test_discovery_config_omits_default_flags() -> None:
     # Both flags match the discovery defaults and are omitted.
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
-        "p": "~/alarm/state",
+        "p": "datetime",
+        "stat_t": "~/alarm/state",
         "cmd_t": "~/alarm/command",
     }
 
@@ -328,7 +333,7 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"datetime": {"alarm": entity.discovery_config()}}
+    assert payload["cmps"] == {"alarm": entity.discovery_config()}
 
 
 async def _noop() -> None:

@@ -8,8 +8,8 @@ from ha_mqtt_device.entity import Entity
 
 __all__ = ["Image"]
 
-#: Home Assistant MQTT discovery default for ``encoding``.
-DEFAULT_ENCODING = "b64"
+#: An omitted ``image_encoding`` means that the image payload is raw binary.
+DEFAULT_ENCODING: str | None = None
 
 #: Home Assistant MQTT discovery default for ``content_type``.
 DEFAULT_CONTENT_TYPE = "image/jpeg"
@@ -24,35 +24,32 @@ class Image(Entity):
     just a unique id and pass it to the device constructor, which binds it and
     publishes its discovery config::
 
-        camera = Image(unique_id="camera", name="Camera")
-        device = Device(provider, info, entities=[camera])
+        snapshot = Image(unique_id="camera", name="Camera", encoding="b64")
+        device = Device(provider, info, entities=[snapshot])
 
         async with device:
-            await camera.set_image(base64.b64encode(raw_image_bytes))
+            await snapshot.set_image(base64.b64encode(raw_image_bytes))
 
     Home Assistant decodes the payload on the image topic according to the
-    ``encoding`` advertised in the discovery config. The default is ``"b64"``
-    (base64), so the payload must be base64-encoded text by default; set
-    :attr:`encoding` to any other value to publish raw image bytes instead.
+    optional ``image_encoding`` advertised in the discovery config. The
+    default is omitted, so the payload is raw image data; set :attr:`encoding`
+    to ``"b64"`` when publishing base64-encoded text.
 
     Attributes:
         unique_id: See :class:`~ha_mqtt_device.entity.Entity`.
         name: See :class:`~ha_mqtt_device.entity.Entity`.
-        content_type: MIME type of the image payload (``cont_t``), for
-            example ``"image/jpeg"`` or ``"image/png"``. Omitted from the
-            discovery config when it equals the default ``"image/jpeg"``.
-        encoding: How Home Assistant should decode the payload (``enc``).
-            Defaults to ``"b64"``, meaning the payload is base64-encoded
-            text. Any other value tells Home Assistant to treat the payload
-            as raw image bytes. Omitted from the discovery config when it
-            equals the default. :meth:`set_image` publishes the payload
-            verbatim regardless of this setting.
+        content_type: MIME type of image data (``cont_type``), for example
+            ``"image/jpeg"`` or ``"image/png"``. The default is omitted.
+        encoding: Optional image payload encoding (``img_e``). ``None`` is
+            omitted and means raw image bytes; ``"b64"`` enables Base64
+            decoding. :meth:`set_image` publishes the payload verbatim
+            regardless of this setting.
     """
 
     component = "image"
 
     content_type: str = DEFAULT_CONTENT_TYPE
-    encoding: str = DEFAULT_ENCODING
+    encoding: str | None = DEFAULT_ENCODING
 
     @property
     def image_topic(self) -> str:
@@ -63,12 +60,10 @@ class Image(Entity):
         """Publish an image payload to Home Assistant.
 
         ``payload`` is published verbatim to the image topic
-        (``~/<unique_id>/image``); this entity does not transform it. With the
-        default :attr:`encoding` (``"b64"``) Home Assistant base64-decodes the
-        payload, so pass base64-encoded bytes — for example
-        ``base64.b64encode(raw_image_bytes)``. Set :attr:`encoding` to a
-        non-``"b64"`` value and pass the raw image bytes to publish binary
-        image data.
+        (``~/<unique_id>/image``); this entity does not transform it. With
+        :attr:`encoding` omitted, Home Assistant expects raw image bytes. Set
+        it to ``"b64"`` and pass base64-encoded bytes — for example
+        ``base64.b64encode(raw_image_bytes)``.
 
         Raises:
             RuntimeError: If the entity is not bound to a device.
@@ -82,10 +77,10 @@ class Image(Entity):
         """Return this entity's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
         # Images have no state topic; the single topic is the image topic.
-        config.pop("p")
+        config.pop("stat_t")
         config["img_t"] = self.image_topic
-        if self.encoding != DEFAULT_ENCODING:
-            config["enc"] = self.encoding
+        if self.encoding is not None:
+            config["img_e"] = self.encoding
         if self.content_type != DEFAULT_CONTENT_TYPE:
-            config["cont_t"] = self.content_type
+            config["cont_type"] = self.content_type
         return config

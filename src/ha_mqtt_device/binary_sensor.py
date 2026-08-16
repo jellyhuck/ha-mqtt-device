@@ -65,6 +65,7 @@ class BinarySensor(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this sensor's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
+        config["stat_t"] = self.state_topic
         if self.payload_on != DEFAULT_PAYLOAD_ON:
             config["pl_on"] = self.payload_on
         if self.payload_off != DEFAULT_PAYLOAD_OFF:

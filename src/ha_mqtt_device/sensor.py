@@ -77,6 +77,7 @@ class Sensor(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this sensor's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
+        config["stat_t"] = self.state_topic
         if self.device_class is not None:
             config["dev_cla"] = self.device_class
         if self.unit_of_measurement is not None:

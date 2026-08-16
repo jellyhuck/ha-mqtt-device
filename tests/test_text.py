@@ -55,6 +55,7 @@ async def test_discovery_defaults_and_options() -> None:
     _, defaults = bound(RecordingProvider(), unique_id="label")
     assert defaults.discovery_config() == {
         "uniq_id": "label",
+        "p": "text",
         "stat_t": "~/label/state",
         "cmd_t": "~/label/command",
     }
@@ -71,6 +72,7 @@ async def test_discovery_defaults_and_options() -> None:
     )
     assert configured.discovery_config() == {
         "uniq_id": "password",
+        "p": "text",
         "stat_t": "~/password/state",
         "cmd_t": "~/password/command",
         "max": 20,
@@ -125,6 +127,7 @@ async def test_configuration_validation_and_state_can_be_disabled() -> None:
     _, text = bound(provider, unique_id="label", state_enabled=False, min_length=0)
     assert text.discovery_config() == {
         "uniq_id": "label",
+        "p": "text",
         "cmd_t": "~/label/command",
     }
     with pytest.raises(ValueError, match="state reporting"):
@@ -142,7 +145,7 @@ async def test_unbound_and_device_configuration() -> None:
     device, text = bound(provider, unique_id="label")
     await device.configure()
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"text": {"label": text.discovery_config()}}
+    assert payload["cmps"] == {"label": text.discovery_config()}
 
 
 async def _noop() -> None:

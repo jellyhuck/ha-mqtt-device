@@ -240,6 +240,7 @@ class Valve(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this valve's compact MQTT discovery configuration."""
         config = super().discovery_config()
+        config["stat_t"] = self.state_topic
         config["cmd_t"] = self.command_topic
         if self.reports_position:
             config["pos"] = True

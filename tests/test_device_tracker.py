@@ -148,7 +148,8 @@ async def test_discovery_config_defaults() -> None:
     # defaults; the optional location fields are omitted when unset.
     assert tracker.discovery_config() == {
         "uniq_id": "phone",
-        "p": "~/phone/state",
+        "p": "device_tracker",
+        "stat_t": "~/phone/state",
     }
 
 
@@ -162,7 +163,8 @@ async def test_discovery_config_includes_name_and_icon() -> None:
 
     assert tracker.discovery_config() == {
         "uniq_id": "phone",
-        "p": "~/phone/state",
+        "p": "device_tracker",
+        "stat_t": "~/phone/state",
         "name": "Phone",
         "ic": "mdi:cellphone",
     }
@@ -178,7 +180,8 @@ async def test_discovery_config_includes_custom_payloads() -> None:
 
     assert tracker.discovery_config() == {
         "uniq_id": "phone",
-        "p": "~/phone/state",
+        "p": "device_tracker",
+        "stat_t": "~/phone/state",
         "pl_home": "in",
         "pl_not_home": "out",
     }
@@ -197,7 +200,8 @@ async def test_discovery_config_includes_location_fields() -> None:
 
     assert tracker.discovery_config() == {
         "uniq_id": "phone",
-        "p": "~/phone/state",
+        "p": "device_tracker",
+        "stat_t": "~/phone/state",
         "source_type": "bluetooth",
         "lat": 32.87336,
         "lon": -117.22743,
@@ -212,7 +216,8 @@ async def test_discovery_config_omits_default_source_type() -> None:
     # source_type matches the Home Assistant default and is omitted.
     assert tracker.discovery_config() == {
         "uniq_id": "phone",
-        "p": "~/phone/state",
+        "p": "device_tracker",
+        "stat_t": "~/phone/state",
     }
 
 
@@ -228,4 +233,4 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"device_tracker": {"phone": tracker.discovery_config()}}
+    assert payload["cmps"] == {"phone": tracker.discovery_config()}

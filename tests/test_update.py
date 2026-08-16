@@ -78,7 +78,8 @@ async def test_discovery_defaults_and_optional_configuration() -> None:
     _, defaults = bound(RecordingProvider(), unique_id="firmware")
     assert defaults.discovery_config() == {
         "uniq_id": "firmware",
-        "p": "~/firmware/state",
+        "p": "update",
+        "stat_t": "~/firmware/state",
         "cmd_t": "~/firmware/command",
     }
 
@@ -97,7 +98,8 @@ async def test_discovery_defaults_and_optional_configuration() -> None:
     )
     assert configured.discovery_config() == {
         "uniq_id": "firmware",
-        "p": "~/firmware/state",
+        "p": "update",
+        "stat_t": "~/firmware/state",
         "cmd_t": "~/firmware/command",
         "l_ver_t": "~/firmware/state/latest",
         "pl_inst": "update_fw",
@@ -154,7 +156,7 @@ async def test_update_state_validation_and_device_integration() -> None:
     device, entity = bound(provider, unique_id="firmware")
     await device.configure()
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"update": {"firmware": entity.discovery_config()}}
+    assert payload["cmps"] == {"firmware": entity.discovery_config()}
 
     with pytest.raises(ValueError, match="percentage"):
         await entity.set_state("1.0", update_percentage=101)

@@ -215,6 +215,7 @@ class Update(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this update entity's abbreviated discovery configuration."""
         config = super().discovery_config()
+        config["stat_t"] = self.state_topic
         if self.install_enabled:
             config["cmd_t"] = self.command_topic
         if self.latest_version_enabled:

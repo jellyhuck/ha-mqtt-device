@@ -105,8 +105,9 @@ async def test_discovery_config_defaults() -> None:
 
     assert doorbell.discovery_config() == {
         "uniq_id": "doorbell",
-        "p": "~/doorbell/state",
-        "eve_t": ["doorbell_pressed", "doorbell_long_press"],
+        "p": "event",
+        "stat_t": "~/doorbell/state",
+        "evt_typ": ["doorbell_pressed", "doorbell_long_press"],
     }
 
 
@@ -121,8 +122,9 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
 
     assert doorbell.discovery_config() == {
         "uniq_id": "doorbell",
-        "p": "~/doorbell/state",
-        "eve_t": ["doorbell_pressed"],
+        "p": "event",
+        "stat_t": "~/doorbell/state",
+        "evt_typ": ["doorbell_pressed"],
         "name": "Doorbell",
         "dev_cla": "doorbell",
     }
@@ -138,8 +140,9 @@ async def test_discovery_config_includes_event_type_template() -> None:
 
     assert doorbell.discovery_config() == {
         "uniq_id": "doorbell",
-        "p": "~/doorbell/state",
-        "eve_t": ["doorbell_pressed"],
+        "p": "event",
+        "stat_t": "~/doorbell/state",
+        "evt_typ": ["doorbell_pressed"],
         "eve_tt": "{{ value.split('_')[0] }}",
     }
 
@@ -154,8 +157,9 @@ async def test_discovery_config_includes_value_template() -> None:
 
     assert doorbell.discovery_config() == {
         "uniq_id": "doorbell",
-        "p": "~/doorbell/state",
-        "eve_t": ["doorbell_pressed"],
+        "p": "event",
+        "stat_t": "~/doorbell/state",
+        "evt_typ": ["doorbell_pressed"],
         "val_tpl": "{{ value }}",
     }
 
@@ -177,4 +181,4 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"event": {"doorbell": doorbell.discovery_config()}}
+    assert payload["cmps"] == {"doorbell": doorbell.discovery_config()}

@@ -265,11 +265,11 @@ async def test_discovery_config_defaults() -> None:
     # because they match the discovery defaults.
     assert mower.discovery_config() == {
         "uniq_id": "mower_1",
-        "p": "~/mower_1/state",
-        "act_stat_t": "~/mower_1/state",
-        "st_mow_cmd_t": "~/mower_1/set",
-        "pau_cmd_t": "~/mower_1/set",
-        "doc_cmd_t": "~/mower_1/set",
+        "p": "lawn_mower",
+        "activity_state_topic": "~/mower_1/state",
+        "start_mowing_command_topic": "~/mower_1/set",
+        "pause_command_topic": "~/mower_1/set",
+        "dock_command_topic": "~/mower_1/set",
     }
 
 
@@ -282,11 +282,11 @@ async def test_discovery_config_includes_name() -> None:
 
     assert mower.discovery_config() == {
         "uniq_id": "mower_1",
-        "p": "~/mower_1/state",
-        "act_stat_t": "~/mower_1/state",
-        "st_mow_cmd_t": "~/mower_1/set",
-        "pau_cmd_t": "~/mower_1/set",
-        "doc_cmd_t": "~/mower_1/set",
+        "p": "lawn_mower",
+        "activity_state_topic": "~/mower_1/state",
+        "start_mowing_command_topic": "~/mower_1/set",
+        "pause_command_topic": "~/mower_1/set",
+        "dock_command_topic": "~/mower_1/set",
         "name": "Lawn Mower",
     }
 
@@ -302,11 +302,11 @@ async def test_discovery_config_includes_custom_payloads() -> None:
 
     assert mower.discovery_config() == {
         "uniq_id": "mower_1",
-        "p": "~/mower_1/state",
-        "act_stat_t": "~/mower_1/state",
-        "st_mow_cmd_t": "~/mower_1/set",
-        "pau_cmd_t": "~/mower_1/set",
-        "doc_cmd_t": "~/mower_1/set",
+        "p": "lawn_mower",
+        "activity_state_topic": "~/mower_1/state",
+        "start_mowing_command_topic": "~/mower_1/set",
+        "pause_command_topic": "~/mower_1/set",
+        "dock_command_topic": "~/mower_1/set",
         "pl_strt": '{"cmd": "start"}',
         "pl_pau": '{"cmd": "pause"}',
         "pl_doc": '{"cmd": "dock"}',
@@ -325,11 +325,11 @@ async def test_discovery_config_includes_custom_states() -> None:
 
     assert mower.discovery_config() == {
         "uniq_id": "mower_1",
-        "p": "~/mower_1/state",
-        "act_stat_t": "~/mower_1/state",
-        "st_mow_cmd_t": "~/mower_1/set",
-        "pau_cmd_t": "~/mower_1/set",
-        "doc_cmd_t": "~/mower_1/set",
+        "p": "lawn_mower",
+        "activity_state_topic": "~/mower_1/state",
+        "start_mowing_command_topic": "~/mower_1/set",
+        "pause_command_topic": "~/mower_1/set",
+        "dock_command_topic": "~/mower_1/set",
         "sta_mow": "MOWING",
         "sta_pau": "PAUSED",
         "sta_doc": "DOCKED",
@@ -348,11 +348,11 @@ async def test_discovery_config_omits_states_matching_defaults() -> None:
     # state_mowing/state_paused match the defaults and are omitted.
     assert mower.discovery_config() == {
         "uniq_id": "mower_1",
-        "p": "~/mower_1/state",
-        "act_stat_t": "~/mower_1/state",
-        "st_mow_cmd_t": "~/mower_1/set",
-        "pau_cmd_t": "~/mower_1/set",
-        "doc_cmd_t": "~/mower_1/set",
+        "p": "lawn_mower",
+        "activity_state_topic": "~/mower_1/state",
+        "start_mowing_command_topic": "~/mower_1/set",
+        "pause_command_topic": "~/mower_1/set",
+        "dock_command_topic": "~/mower_1/set",
     }
 
 
@@ -368,7 +368,7 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"lawn_mower": {"mower_1": mower.discovery_config()}}
+    assert payload["cmps"] == {"mower_1": mower.discovery_config()}
 
 
 async def _noop() -> None:

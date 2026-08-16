@@ -191,6 +191,7 @@ async def test_discovery_config_defaults() -> None:
     # pl_prs is omitted because it matches the discovery default.
     assert button.discovery_config() == {
         "uniq_id": "restart_1",
+        "p": "button",
         "cmd_t": "~/restart_1/command",
     }
 
@@ -205,6 +206,7 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
 
     assert button.discovery_config() == {
         "uniq_id": "restart_1",
+        "p": "button",
         "cmd_t": "~/restart_1/command",
         "name": "Restart",
         "dev_cla": "restart",
@@ -218,6 +220,7 @@ async def test_discovery_config_includes_custom_payload() -> None:
 
     assert button.discovery_config() == {
         "uniq_id": "restart_1",
+        "p": "button",
         "cmd_t": "~/restart_1/command",
         "pl_prs": "R",
     }
@@ -235,7 +238,7 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"button": {"restart_1": button.discovery_config()}}
+    assert payload["cmps"] == {"restart_1": button.discovery_config()}
 
 
 async def _noop() -> None:

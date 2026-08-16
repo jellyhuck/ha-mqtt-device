@@ -136,6 +136,7 @@ class DeviceTracker(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this tracker's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
+        config["stat_t"] = self.state_topic
         if self.payload_home != DEFAULT_PAYLOAD_HOME:
             config["pl_home"] = self.payload_home
         if self.payload_not_home != DEFAULT_PAYLOAD_NOT_HOME:

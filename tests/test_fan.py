@@ -588,6 +588,7 @@ async def test_discovery_config_defaults() -> None:
     # the discovery defaults; percentage control is enabled by default.
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
+        "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
         "pct_stat_t": "~/ceiling_fan/percentage_state",
@@ -605,6 +606,7 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
 
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
+        "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
         "pct_stat_t": "~/ceiling_fan/percentage_state",
@@ -627,6 +629,7 @@ async def test_discovery_config_includes_custom_payloads() -> None:
 
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
+        "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
         "pct_stat_t": "~/ceiling_fan/percentage_state",
@@ -651,12 +654,13 @@ async def test_discovery_config_with_all_features_enabled() -> None:
 
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
+        "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
         "pct_stat_t": "~/ceiling_fan/percentage_state",
         "pct_cmd_t": "~/ceiling_fan/percentage_command",
-        "prst_mode_stat_t": "~/ceiling_fan/preset_mode_state",
-        "prst_mode_cmd_t": "~/ceiling_fan/preset_mode_command",
+        "pr_mode_stat_t": "~/ceiling_fan/preset_mode_state",
+        "pr_mode_cmd_t": "~/ceiling_fan/preset_mode_command",
         "osc_stat_t": "~/ceiling_fan/oscillation_state",
         "osc_cmd_t": "~/ceiling_fan/oscillation_command",
         "dir_stat_t": "~/ceiling_fan/direction_state",
@@ -676,6 +680,7 @@ async def test_discovery_config_with_all_features_disabled() -> None:
 
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
+        "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
     }
@@ -694,13 +699,14 @@ async def test_discovery_config_includes_custom_modes_and_speed_range() -> None:
 
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
+        "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
         "pct_stat_t": "~/ceiling_fan/percentage_state",
         "pct_cmd_t": "~/ceiling_fan/percentage_command",
-        "prst_mode_stat_t": "~/ceiling_fan/preset_mode_state",
-        "prst_mode_cmd_t": "~/ceiling_fan/preset_mode_command",
-        "prst_modes": ["low", "medium", "high"],
+        "pr_mode_stat_t": "~/ceiling_fan/preset_mode_state",
+        "pr_mode_cmd_t": "~/ceiling_fan/preset_mode_command",
+        "pr_modes": ["low", "medium", "high"],
         "pl_rst_pct": "speed",
         "spd_rng_min": 0,
         "spd_rng_max": 10,
@@ -712,6 +718,7 @@ async def test_discovery_config_includes_optimistic() -> None:
 
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
+        "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
         "pct_stat_t": "~/ceiling_fan/percentage_state",
@@ -737,7 +744,7 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"fan": {"ceiling_fan": fan.discovery_config()}}
+    assert payload["cmps"] == {"ceiling_fan": fan.discovery_config()}
 
 
 async def _noop() -> None:

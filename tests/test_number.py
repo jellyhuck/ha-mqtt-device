@@ -219,7 +219,8 @@ async def test_discovery_config_defaults() -> None:
     # min/max/step/mode are omitted because they match the discovery defaults.
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
-        "p": "~/dimmer/state",
+        "p": "number",
+        "stat_t": "~/dimmer/state",
         "cmd_t": "~/dimmer/command",
     }
 
@@ -234,7 +235,8 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
 
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
-        "p": "~/dimmer/state",
+        "p": "number",
+        "stat_t": "~/dimmer/state",
         "cmd_t": "~/dimmer/command",
         "name": "Dimmer",
         "dev_cla": "power",
@@ -253,7 +255,8 @@ async def test_discovery_config_includes_bounds_step_and_mode() -> None:
 
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
-        "p": "~/dimmer/state",
+        "p": "number",
+        "stat_t": "~/dimmer/state",
         "cmd_t": "~/dimmer/command",
         "min": 0.5,
         "max": 50.0,
@@ -275,7 +278,8 @@ async def test_discovery_config_omits_default_bounds_step_and_mode() -> None:
     # Every value matches a discovery default and is omitted.
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
-        "p": "~/dimmer/state",
+        "p": "number",
+        "stat_t": "~/dimmer/state",
         "cmd_t": "~/dimmer/command",
     }
 
@@ -285,7 +289,8 @@ async def test_discovery_config_includes_optimistic() -> None:
 
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
-        "p": "~/dimmer/state",
+        "p": "number",
+        "stat_t": "~/dimmer/state",
         "cmd_t": "~/dimmer/command",
         "opt": True,
     }
@@ -296,9 +301,10 @@ async def test_discovery_config_includes_payload_reset() -> None:
 
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
-        "p": "~/dimmer/state",
+        "p": "number",
+        "stat_t": "~/dimmer/state",
         "cmd_t": "~/dimmer/command",
-        "pl_reset": "0",
+        "pl_rst": "0",
     }
 
 
@@ -307,10 +313,11 @@ async def test_discovery_config_omits_default_payload_reset() -> None:
         RecordingProvider(), unique_id="dimmer", payload_reset="None"
     )
 
-    # pl_reset matches the discovery default and is omitted.
+    # pl_rst matches the discovery default and is omitted.
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
-        "p": "~/dimmer/state",
+        "p": "number",
+        "stat_t": "~/dimmer/state",
         "cmd_t": "~/dimmer/command",
     }
 
@@ -326,7 +333,8 @@ async def test_discovery_config_includes_unit_and_expiry_fields() -> None:
 
     assert number.discovery_config() == {
         "uniq_id": "temperature",
-        "p": "~/temperature/state",
+        "p": "number",
+        "stat_t": "~/temperature/state",
         "cmd_t": "~/temperature/command",
         "unit_of_meas": "°C",
         "exp_aft": 300,
@@ -346,7 +354,7 @@ async def test_configure_includes_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"number": {"dimmer": number.discovery_config()}}
+    assert payload["cmps"] == {"dimmer": number.discovery_config()}
 
 
 async def _noop() -> None:

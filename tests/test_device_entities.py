@@ -95,9 +95,9 @@ async def test_all_regular_sprint_entities_bind_and_join_cmps() -> None:
     await device.configure()
 
     payload = json.loads(provider.published[0][1])
-    assert set(payload["cmps"]) == {entity.component for entity in entities}
+    assert set(payload["cmps"]) == {entity.unique_id for entity in entities}
     assert all(
-        payload["cmps"][entity.component][entity.unique_id] == entity.discovery_config()
+        payload["cmps"][entity.unique_id] == entity.discovery_config()
         for entity in entities
     )
 
@@ -132,7 +132,7 @@ async def test_each_sprint_entity_rejects_duplicate_component_and_unique_id(
     first = factory("duplicate")
     second = factory("duplicate")
 
-    with pytest.raises(ValueError, match="duplicate entity component/unique_id"):
+    with pytest.raises(ValueError, match="duplicate entity unique_id"):
         Device(
             provider,
             DeviceInfo(device_id="dev-1", name="Device"),

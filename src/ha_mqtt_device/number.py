@@ -87,7 +87,7 @@ class Number(Entity):
         optimistic: Whether Home Assistant should assume commands take effect
             immediately (``opt``). Defaults to ``False``.
         payload_reset: Payload that resets the value to unknown
-            (``pl_reset``). Omitted when unset or equal to the discovery
+            (``pl_rst``). Omitted when unset or equal to the discovery
             default ``"None"``.
         expire_after: Seconds after which Home Assistant marks the number as
             unavailable without a state update (``exp_aft``). Omitted when
@@ -216,6 +216,7 @@ class Number(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this number's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
+        config["stat_t"] = self.state_topic
         config["cmd_t"] = self.command_topic
         if self.min_value != DEFAULT_MIN:
             config["min"] = self.min_value
@@ -231,7 +232,7 @@ class Number(Entity):
             self.payload_reset is not None
             and self.payload_reset != DEFAULT_PAYLOAD_RESET
         ):
-            config["pl_reset"] = self.payload_reset
+            config["pl_rst"] = self.payload_reset
         if self.unit_of_measurement is not None:
             config["unit_of_meas"] = self.unit_of_measurement
         if self.device_class is not None:

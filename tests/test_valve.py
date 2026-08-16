@@ -58,7 +58,8 @@ async def test_default_discovery_and_state_commands() -> None:
 
     assert valve.discovery_config() == {
         "uniq_id": "valve",
-        "p": "~/valve/state",
+        "p": "valve",
+        "stat_t": "~/valve/state",
         "cmd_t": "~/valve/command",
     }
     await valve.set_state("open")
@@ -86,8 +87,9 @@ async def test_custom_discovery_and_optional_stop() -> None:
     )
     assert valve.discovery_config() == {
         "uniq_id": "valve",
+        "p": "valve",
         "name": "Water valve",
-        "p": "~/valve/state",
+        "stat_t": "~/valve/state",
         "cmd_t": "~/valve/command",
         "pl_open": "OPEN_VALVE",
         "pl_cls": None,
@@ -110,7 +112,8 @@ async def test_position_mode_publishes_and_parses_numeric_and_json() -> None:
     )
     assert valve.discovery_config() == {
         "uniq_id": "valve",
-        "p": "~/valve/state",
+        "p": "valve",
+        "stat_t": "~/valve/state",
         "cmd_t": "~/valve/command",
         "pos": True,
         "pos_clsd": 10,
@@ -170,4 +173,4 @@ async def test_validation_and_device_configure() -> None:
 
     await device.configure()
     payload = json.loads(provider.published[0][1])
-    assert payload["cmps"] == {"valve": {"valve": valve.discovery_config()}}
+    assert payload["cmps"] == {"valve": valve.discovery_config()}

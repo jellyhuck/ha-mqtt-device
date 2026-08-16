@@ -48,7 +48,7 @@ _EVENT_TYPE_COMMAND = "command"
 _TOPIC_TYPE_COMMAND = "command_topic"
 
 #: Discovery config field for the schema (emitter/receiver).
-_SCHEMA_FIELD = "sch"
+_SCHEMA_FIELD = "schema"
 
 
 @dataclass
@@ -168,7 +168,7 @@ class InfraredEmitter(Entity):
         """Return this emitter's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
         # Emitters have no state topic; the single topic is the command topic.
-        config.pop("p")
+        config.pop("stat_t")
         config["cmd_t"] = self.command_topic
         config[_SCHEMA_FIELD] = "emitter"
         return config
@@ -220,5 +220,6 @@ class InfraredReceiver(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this receiver's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
+        config["stat_t"] = self.state_topic
         config[_SCHEMA_FIELD] = "receiver"
         return config

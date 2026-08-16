@@ -140,8 +140,9 @@ class AlarmControlPanel(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this panel's device discovery component configuration."""
         config = super().discovery_config()
-        config.pop("p")
         config["cmd_t"] = self.command_topic
+        if not self.state_enabled:
+            config.pop("stat_t")
         if self.state_enabled:
             config["stat_t"] = self.state_topic
         if self.payload_arm_away != DEFAULT_PAYLOAD_ARM_AWAY:
