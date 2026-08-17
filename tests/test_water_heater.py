@@ -6,36 +6,13 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.event import Event, EventCallback
-from ha_mqtt_device.provider import Message, MqttMessageCallback
 from ha_mqtt_device.valve import Valve
 from ha_mqtt_device.water_heater import WaterHeater
-
-
-class RecordingProvider:
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-        self.subscriptions: dict[str, list[MqttMessageCallback]] = {}
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        self.subscriptions.setdefault(topic, []).append(callback)
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
-
-    async def deliver(self, topic: str, payload: str | bytes) -> None:
-        raw = payload.encode() if isinstance(payload, str) else payload
-        for callback in self.subscriptions.get(topic, []):
-            await callback(Message(topic=topic, payload=raw))
 
 
 def bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, WaterHeater]:
@@ -81,14 +58,11 @@ async def test_publish_temperature_mode_and_power() -> None:
     await heater.set_power(True)
     await heater.set_power(False)
     assert provider.published == [
-        (
-            "homeassistant/device/dev-1/boiler/state/current_temperature",
-            "55.5",
-        ),
-        ("homeassistant/device/dev-1/boiler/state/temperature", "60"),
-        ("homeassistant/device/dev-1/boiler/state/mode", "eco"),
-        ("homeassistant/device/dev-1/boiler/command/power", "ON"),
-        ("homeassistant/device/dev-1/boiler/command/power", "OFF"),
+        ("homeassistant/device/dev-1/boiler/state/current_temperature", "55.5", False),
+        ("homeassistant/device/dev-1/boiler/state/temperature", "60", False),
+        ("homeassistant/device/dev-1/boiler/state/mode", "eco", False),
+        ("homeassistant/device/dev-1/boiler/command/power", "ON", False),
+        ("homeassistant/device/dev-1/boiler/command/power", "OFF", False),
     ]
 
 

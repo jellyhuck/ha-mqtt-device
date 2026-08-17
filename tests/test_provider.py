@@ -10,7 +10,9 @@ from ha_mqtt_device.provider import Message, MqttMessageCallback, MqttProvider
 class DummyProvider:
     """A minimal structural implementation of MqttProvider."""
 
-    async def publish(self, topic: str, message: str | bytes) -> None:
+    async def publish(
+        self, topic: str, message: str | bytes, retain: bool = False
+    ) -> None:
         return None
 
     async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
@@ -42,6 +44,11 @@ def test_message_equality() -> None:
 
 def test_dummy_provider_satisfies_protocol() -> None:
     assert isinstance(DummyProvider(), MqttProvider)
+
+
+@pytest.mark.asyncio
+async def test_dummy_provider_accepts_retain_option() -> None:
+    await DummyProvider().publish("home/device/state", "on", retain=True)
 
 
 def test_mqtt_message_callback_alias() -> None:

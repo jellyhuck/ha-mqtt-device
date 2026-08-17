@@ -6,31 +6,9 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device import Device, DeviceInfo, Event, Text
-from ha_mqtt_device.provider import Message, MqttMessageCallback
-
-
-class RecordingProvider:
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-        self.subscriptions: dict[str, list[MqttMessageCallback]] = {}
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        self.subscriptions.setdefault(topic, []).append(callback)
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
-
-    async def deliver(self, topic: str, payload: str) -> None:
-        for callback in self.subscriptions.get(topic, []):
-            await callback(Message(topic, payload.encode()))
 
 
 def bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, Text]:
@@ -44,7 +22,9 @@ async def test_set_state_validates_and_publishes_text() -> None:
 
     await text.set_state("hello")
 
-    assert provider.published == [("homeassistant/device/dev-1/label/state", "hello")]
+    assert provider.published == [
+        ("homeassistant/device/dev-1/label/state", "hello", False)
+    ]
     with pytest.raises(ValueError, match="length"):
         await text.set_state("x")
     with pytest.raises(ValueError, match="length"):

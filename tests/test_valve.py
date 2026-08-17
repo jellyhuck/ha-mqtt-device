@@ -6,35 +6,12 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.event import Event, EventCallback
-from ha_mqtt_device.provider import Message, MqttMessageCallback
 from ha_mqtt_device.valve import Valve
-
-
-class RecordingProvider:
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-        self.subscriptions: dict[str, list[MqttMessageCallback]] = {}
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        self.subscriptions.setdefault(topic, []).append(callback)
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
-
-    async def deliver(self, topic: str, payload: str | bytes) -> None:
-        raw = payload.encode() if isinstance(payload, str) else payload
-        for callback in self.subscriptions.get(topic, []):
-            await callback(Message(topic=topic, payload=raw))
 
 
 def bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, Valve]:
@@ -66,9 +43,9 @@ async def test_default_discovery_and_state_commands() -> None:
     await valve.open()
     await valve.close()
     assert provider.published == [
-        ("homeassistant/device/dev-1/valve/state", "open"),
-        ("homeassistant/device/dev-1/valve/command", "OPEN"),
-        ("homeassistant/device/dev-1/valve/command", "CLOSE"),
+        ("homeassistant/device/dev-1/valve/state", "open", False),
+        ("homeassistant/device/dev-1/valve/command", "OPEN", False),
+        ("homeassistant/device/dev-1/valve/command", "CLOSE", False),
     ]
 
 
@@ -123,9 +100,9 @@ async def test_position_mode_publishes_and_parses_numeric_and_json() -> None:
     await valve.close()
     await valve.set_position(50)
     assert provider.published == [
-        ("homeassistant/device/dev-1/valve/command", "90"),
-        ("homeassistant/device/dev-1/valve/command", "10"),
-        ("homeassistant/device/dev-1/valve/command", "50"),
+        ("homeassistant/device/dev-1/valve/command", "90", False),
+        ("homeassistant/device/dev-1/valve/command", "10", False),
+        ("homeassistant/device/dev-1/valve/command", "50", False),
     ]
 
     events: list[Event] = []

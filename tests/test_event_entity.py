@@ -6,30 +6,11 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.event_entity import EventEntity
-from ha_mqtt_device.provider import MqttMessageCallback
-
-
-class RecordingProvider:
-    """Minimal structural MqttProvider that records published messages."""
-
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        return None
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
 
 
 def make_bound(
@@ -57,8 +38,8 @@ async def test_set_event_publishes_to_state_topic() -> None:
     await doorbell.set_event("doorbell_long_press")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/doorbell/state", "doorbell_pressed"),
-        ("homeassistant/device/dev-1/doorbell/state", "doorbell_long_press"),
+        ("homeassistant/device/dev-1/doorbell/state", "doorbell_pressed", False),
+        ("homeassistant/device/dev-1/doorbell/state", "doorbell_long_press", False),
     ]
 
 

@@ -6,30 +6,11 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.device_tracker import DeviceTracker
-from ha_mqtt_device.provider import MqttMessageCallback
-
-
-class RecordingProvider:
-    """Minimal structural MqttProvider that records published messages."""
-
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        return None
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
 
 
 def make_bound(
@@ -53,8 +34,8 @@ async def test_set_state_publishes_payloads_to_state_topic() -> None:
     await tracker.set_state(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/phone/state", "home"),
-        ("homeassistant/device/dev-1/phone/state", "not_home"),
+        ("homeassistant/device/dev-1/phone/state", "home", False),
+        ("homeassistant/device/dev-1/phone/state", "not_home", False),
     ]
 
 
@@ -68,8 +49,8 @@ async def test_set_state_uses_custom_payloads() -> None:
     await tracker.set_state(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/phone/state", "in"),
-        ("homeassistant/device/dev-1/phone/state", "out"),
+        ("homeassistant/device/dev-1/phone/state", "in", False),
+        ("homeassistant/device/dev-1/phone/state", "out", False),
     ]
 
 
@@ -86,12 +67,13 @@ async def test_set_location_publishes_json_report_to_state_topic() -> None:
 
     await tracker.set_location(32.87336, -117.22743)
 
-    topic, message = provider.published[0]
+    topic, message, retain = provider.published[0]
     assert topic == "homeassistant/device/dev-1/phone/state"
     assert json.loads(message) == {
         "latitude": 32.87336,
         "longitude": -117.22743,
     }
+    assert retain is False
 
 
 async def test_set_location_includes_extra_fields() -> None:
@@ -102,7 +84,7 @@ async def test_set_location_includes_extra_fields() -> None:
         32.87336, -117.22743, gps_accuracy=50, battery_level=82, source_type="gps"
     )
 
-    _, message = provider.published[0]
+    _, message, _ = provider.published[0]
     assert json.loads(message) == {
         "latitude": 32.87336,
         "longitude": -117.22743,
@@ -124,7 +106,7 @@ async def test_set_location_falls_back_to_configured_extras() -> None:
 
     await tracker.set_location(32.87336, -117.22743)
 
-    _, message = provider.published[0]
+    _, message, _ = provider.published[0]
     assert json.loads(message) == {
         "latitude": 32.87336,
         "longitude": -117.22743,

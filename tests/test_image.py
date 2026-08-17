@@ -6,31 +6,11 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.image import Image
-from ha_mqtt_device.provider import MqttMessageCallback
-
-
-class RecordingProvider:
-    """Minimal structural MqttProvider that records publishes and subscriptions."""
-
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-        self.subscriptions: dict[str, list[MqttMessageCallback]] = {}
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        self.subscriptions.setdefault(topic, []).append(callback)
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
 
 
 def make_bound(
@@ -59,7 +39,9 @@ async def test_set_image_publishes_payload_verbatim() -> None:
 
     await image.set_image(payload)
 
-    assert provider.published == [("homeassistant/device/dev-1/camera/image", payload)]
+    assert provider.published == [
+        ("homeassistant/device/dev-1/camera/image", payload, False)
+    ]
 
 
 async def test_set_image_publishes_verbatim_for_any_encoding() -> None:
@@ -69,7 +51,9 @@ async def test_set_image_publishes_verbatim_for_any_encoding() -> None:
 
     await image.set_image(payload)
 
-    assert provider.published == [("homeassistant/device/dev-1/camera/image", payload)]
+    assert provider.published == [
+        ("homeassistant/device/dev-1/camera/image", payload, False)
+    ]
 
 
 async def test_set_image_requires_binding() -> None:

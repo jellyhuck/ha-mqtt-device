@@ -6,31 +6,9 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device import Device, DeviceInfo, Event, Vacuum
-from ha_mqtt_device.provider import Message, MqttMessageCallback
-
-
-class RecordingProvider:
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-        self.subscriptions: dict[str, list[MqttMessageCallback]] = {}
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        self.subscriptions.setdefault(topic, []).append(callback)
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
-
-    async def deliver(self, topic: str, payload: str) -> None:
-        for callback in self.subscriptions.get(topic, []):
-            await callback(Message(topic, payload.encode()))
 
 
 def bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, Vacuum]:
@@ -62,7 +40,11 @@ async def test_default_discovery_and_json_state() -> None:
         "segments": {"1": "Kitchen", "2": "Living room"},
     }
     await entity.reset_state()
-    assert provider.published[1] == ("homeassistant/device/dev-1/cleaner/state", "null")
+    assert provider.published[1] == (
+        "homeassistant/device/dev-1/cleaner/state",
+        "null",
+        False,
+    )
 
 
 async def test_optional_features_and_payload_mappings() -> None:
@@ -142,21 +124,23 @@ async def test_all_command_paths_publish_documented_payloads() -> None:
     await entity.clean_segments(["1", "2"])
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/cleaner/command", "start"),
-        ("homeassistant/device/dev-1/cleaner/command", "pause"),
-        ("homeassistant/device/dev-1/cleaner/command", "stop"),
-        ("homeassistant/device/dev-1/cleaner/command", "return_to_base"),
-        ("homeassistant/device/dev-1/cleaner/command", "locate"),
-        ("homeassistant/device/dev-1/cleaner/command", "clean_spot"),
-        ("homeassistant/device/dev-1/cleaner/command/fan_speed", "max"),
-        ("homeassistant/device/dev-1/cleaner/command/send", "custom"),
+        ("homeassistant/device/dev-1/cleaner/command", "start", False),
+        ("homeassistant/device/dev-1/cleaner/command", "pause", False),
+        ("homeassistant/device/dev-1/cleaner/command", "stop", False),
+        ("homeassistant/device/dev-1/cleaner/command", "return_to_base", False),
+        ("homeassistant/device/dev-1/cleaner/command", "locate", False),
+        ("homeassistant/device/dev-1/cleaner/command", "clean_spot", False),
+        ("homeassistant/device/dev-1/cleaner/command/fan_speed", "max", False),
+        ("homeassistant/device/dev-1/cleaner/command/send", "custom", False),
         (
             "homeassistant/device/dev-1/cleaner/command/send",
             json.dumps({"command": "custom", "param": "value"}),
+            False,
         ),
         (
             "homeassistant/device/dev-1/cleaner/command/clean_segments",
             '["1", "2"]',
+            False,
         ),
     ]
 

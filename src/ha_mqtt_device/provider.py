@@ -35,8 +35,13 @@ class MqttProvider(Protocol):
     exception when the underlying operation fails.
     """
 
-    async def publish(self, topic: str, message: str | bytes) -> None:
+    async def publish(
+        self, topic: str, message: str | bytes, retain: bool = False
+    ) -> None:
         """Publish ``message`` to ``topic``.
+
+        Set ``retain`` to ``True`` to ask the broker to retain the message
+        for future subscribers.
 
         Raises:
             Exception: If the message could not be published.

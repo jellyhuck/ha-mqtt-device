@@ -6,38 +6,12 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.number import Number
-from ha_mqtt_device.provider import Message, MqttMessageCallback
-
-
-class RecordingProvider:
-    """Minimal structural MqttProvider that records publishes and subscriptions."""
-
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-        self.subscriptions: dict[str, list[MqttMessageCallback]] = {}
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        self.subscriptions.setdefault(topic, []).append(callback)
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
-
-    async def deliver(self, topic: str, payload: str | bytes) -> None:
-        """Invoke every callback registered for ``topic`` with ``payload``."""
-        raw = payload.encode() if isinstance(payload, str) else payload
-        for callback in self.subscriptions.get(topic, []):
-            await callback(Message(topic=topic, payload=raw))
 
 
 def make_bound(
@@ -71,9 +45,9 @@ async def test_set_state_publishes_stringified_values_to_state_topic() -> None:
     await number.set_state(21.5)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/dimmer/state", "75.0"),
-        ("homeassistant/device/dev-1/dimmer/state", "42"),
-        ("homeassistant/device/dev-1/dimmer/state", "21.5"),
+        ("homeassistant/device/dev-1/dimmer/state", "75.0", False),
+        ("homeassistant/device/dev-1/dimmer/state", "42", False),
+        ("homeassistant/device/dev-1/dimmer/state", "21.5", False),
     ]
 
 

@@ -61,7 +61,7 @@ class FakeClient:
     def __init__(self, **config: Any) -> None:
         self.config = config
         self.subscribed: list[str] = []
-        self.published: list[tuple[str, str | bytes]] = []
+        self.published: list[tuple[str, str | bytes, bool]] = []
         self.inbox: asyncio.Queue[FakeMessage | None] = asyncio.Queue()
         self.entered = False
         self.exited = False
@@ -114,8 +114,10 @@ class FakeClient:
     async def subscribe(self, topic: str) -> None:
         self.subscribed.append(topic)
 
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
+    async def publish(
+        self, topic: str, message: str | bytes, retain: bool = False
+    ) -> None:
+        self.published.append((topic, message, retain))
 
     @property
     def messages(self) -> AsyncIterator[FakeMessage]:
@@ -159,7 +161,7 @@ async def test_publish_uses_short_lived_connection(
     client = FakeClient.instances[-1]
     assert client.entered
     assert client.exited
-    assert client.published == [("home/device/state", b"on")]
+    assert client.published == [("home/device/state", b"on", False)]
     assert client.config == {"hostname": "localhost", "port": 1883}
     assert provider.is_running is False
 
@@ -167,9 +169,22 @@ async def test_publish_uses_short_lived_connection(
 async def test_publish_accepts_str_payload(fake_aiomqtt: types.SimpleNamespace) -> None:
     provider = AioMqttProvider(hostname="localhost")
 
-    await provider.publish("home/device/state", "on")
+    await provider.publish("home/device/state", "on", retain=True)
 
-    assert FakeClient.instances[-1].published == [("home/device/state", "on")]
+    assert FakeClient.instances[-1].published == [("home/device/state", "on", True)]
+
+
+async def test_publish_forwards_retain_to_running_connection(
+    fake_aiomqtt: types.SimpleNamespace,
+) -> None:
+    provider = AioMqttProvider(hostname="localhost")
+    provider.run()
+    await wait_for_running(provider)
+
+    await provider.publish("home/device/state", "on", retain=True)
+
+    assert FakeClient.instances[-1].published == [("home/device/state", "on", True)]
+    await provider.stop()
 
 
 async def test_subscribe_before_run_registers_callback(

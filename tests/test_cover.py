@@ -6,38 +6,12 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device.cover import Cover
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.event import Event, EventCallback
-from ha_mqtt_device.provider import Message, MqttMessageCallback
-
-
-class RecordingProvider:
-    """Minimal structural MqttProvider that records publishes and subscriptions."""
-
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-        self.subscriptions: dict[str, list[MqttMessageCallback]] = {}
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        self.subscriptions.setdefault(topic, []).append(callback)
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
-
-    async def deliver(self, topic: str, payload: str | bytes) -> None:
-        """Invoke every callback registered for ``topic`` with ``payload``."""
-        raw = payload.encode() if isinstance(payload, str) else payload
-        for callback in self.subscriptions.get(topic, []):
-            await callback(Message(topic=topic, payload=raw))
 
 
 def make_bound(
@@ -71,9 +45,9 @@ async def test_set_state_publishes_default_payloads_to_state_topic() -> None:
     await cover.set_state("closed")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/blinds/state", "open"),
-        ("homeassistant/device/dev-1/blinds/state", "closing"),
-        ("homeassistant/device/dev-1/blinds/state", "closed"),
+        ("homeassistant/device/dev-1/blinds/state", "open", False),
+        ("homeassistant/device/dev-1/blinds/state", "closing", False),
+        ("homeassistant/device/dev-1/blinds/state", "closed", False),
     ]
 
 
@@ -90,8 +64,8 @@ async def test_set_state_uses_custom_state_payloads() -> None:
     await cover.set_state("closed")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/blinds/state", "OPENED"),
-        ("homeassistant/device/dev-1/blinds/state", "SHUT"),
+        ("homeassistant/device/dev-1/blinds/state", "OPENED", False),
+        ("homeassistant/device/dev-1/blinds/state", "SHUT", False),
     ]
 
 
@@ -127,8 +101,8 @@ async def test_set_position_publishes_stringified_value_to_position_topic() -> N
     await cover.set_position(0)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/blinds/state/position", "75"),
-        ("homeassistant/device/dev-1/blinds/state/position", "0"),
+        ("homeassistant/device/dev-1/blinds/state/position", "75", False),
+        ("homeassistant/device/dev-1/blinds/state/position", "0", False),
     ]
 
 
@@ -283,7 +257,9 @@ async def test_dispatch_delivers_unknown_payloads_with_null_state() -> None:
     await cover.on_event(collector(received))
 
     await provider.deliver("homeassistant/device/dev-1/blinds/command", "TOGGLE")
-    await provider.deliver("homeassistant/device/dev-1/blinds/command/position", "RESET")
+    await provider.deliver(
+        "homeassistant/device/dev-1/blinds/command/position", "RESET"
+    )
     await provider.deliver("homeassistant/device/dev-1/blinds/command/position", "12.5")
 
     assert len(received) == 3

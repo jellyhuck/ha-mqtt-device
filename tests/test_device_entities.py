@@ -6,6 +6,7 @@ import json
 from collections.abc import Callable
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device import (
     AlarmControlPanel,
@@ -25,26 +26,6 @@ from ha_mqtt_device import (
     Valve,
     WaterHeater,
 )
-from ha_mqtt_device.provider import MqttMessageCallback
-
-
-class RecordingProvider:
-    """Minimal provider for discovery-only Device tests."""
-
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        return None
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
 
 
 def regular_entities() -> list[Entity]:

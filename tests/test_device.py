@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device.binary_sensor import BinarySensor
 from ha_mqtt_device.device import Device
@@ -14,29 +15,12 @@ from ha_mqtt_device.provider import MqttMessageCallback
 from ha_mqtt_device.sensor import Sensor
 
 
-class RecordingProvider:
-    """Minimal structural MqttProvider that records published messages."""
-
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        return None
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
-
-
 class FailingProvider:
     """MqttProvider whose publish always raises."""
 
-    async def publish(self, topic: str, message: str | bytes) -> None:
+    async def publish(
+        self, topic: str, message: str | bytes, retain: bool = False
+    ) -> None:
         raise RuntimeError("broker down")
 
     async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
@@ -65,6 +49,7 @@ async def test_configure_publishes_discovery_payload() -> None:
         (
             "homeassistant/device/dev-1/config",
             json.dumps(device.info.discovery_payload()),
+            False,
         )
     ]
     payload = json.loads(provider.published[0][1])
@@ -83,8 +68,8 @@ async def test_set_availability_publishes_online_and_offline() -> None:
     await device.set_availability(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/status", "online"),
-        ("homeassistant/device/dev-1/status", "offline"),
+        ("homeassistant/device/dev-1/status", "online", False),
+        ("homeassistant/device/dev-1/status", "offline", False),
     ]
 
 
@@ -102,8 +87,8 @@ async def test_set_availability_uses_custom_topic_and_payloads() -> None:
     await device.set_availability(False)
 
     assert provider.published == [
-        ("home/dev/state", "up"),
-        ("home/dev/state", "down"),
+        ("home/dev/state", "up", False),
+        ("home/dev/state", "down", False),
     ]
 
 
@@ -113,7 +98,7 @@ async def test_remove_publishes_empty_config() -> None:
 
     await device.remove()
 
-    assert provider.published == [("homeassistant/device/dev-1/config", "")]
+    assert provider.published == [("homeassistant/device/dev-1/config", "", False)]
 
 
 async def test_close_publishes_offline() -> None:
@@ -122,7 +107,9 @@ async def test_close_publishes_offline() -> None:
 
     await device.close()
 
-    assert provider.published == [("homeassistant/device/dev-1/status", "offline")]
+    assert provider.published == [
+        ("homeassistant/device/dev-1/status", "offline", False)
+    ]
 
 
 async def test_aenter_returns_self_and_brings_device_online() -> None:
@@ -136,8 +123,9 @@ async def test_aenter_returns_self_and_brings_device_online() -> None:
         (
             "homeassistant/device/dev-1/config",
             json.dumps(device.info.discovery_payload()),
+            False,
         ),
-        ("homeassistant/device/dev-1/status", "online"),
+        ("homeassistant/device/dev-1/status", "online", False),
     ]
 
 
@@ -147,7 +135,9 @@ async def test_aexit_publishes_offline() -> None:
 
     await device.__aexit__(None, None, None)
 
-    assert provider.published == [("homeassistant/device/dev-1/status", "offline")]
+    assert provider.published == [
+        ("homeassistant/device/dev-1/status", "offline", False)
+    ]
 
 
 async def test_async_context_manager_manages_lifecycle() -> None:
@@ -159,13 +149,15 @@ async def test_async_context_manager_manages_lifecycle() -> None:
             (
                 "homeassistant/device/dev-1/config",
                 json.dumps(device.info.discovery_payload()),
+                False,
             ),
-            ("homeassistant/device/dev-1/status", "online"),
+            ("homeassistant/device/dev-1/status", "online", False),
         ]
 
     assert provider.published[-1] == (
         "homeassistant/device/dev-1/status",
         "offline",
+        False,
     )
     assert len(provider.published) == 3
 
@@ -181,6 +173,7 @@ async def test_async_context_manager_publishes_offline_on_exception() -> None:
     assert provider.published[-1] == (
         "homeassistant/device/dev-1/status",
         "offline",
+        False,
     )
     assert len(provider.published) == 3
 
@@ -256,7 +249,9 @@ async def test_constructor_binds_entities() -> None:
 
     await sensor.set_state(True)
 
-    assert provider.published == [("homeassistant/device/dev-1/is_led_on/state", "ON")]
+    assert provider.published == [
+        ("homeassistant/device/dev-1/is_led_on/state", "ON", False)
+    ]
 
 
 async def test_constructor_rejects_duplicate_entity_keys() -> None:

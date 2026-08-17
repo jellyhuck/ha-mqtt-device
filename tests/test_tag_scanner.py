@@ -6,31 +6,9 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device import Device, DeviceInfo, Event, TagScanner
-from ha_mqtt_device.provider import Message, MqttMessageCallback
-
-
-class RecordingProvider:
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-        self.subscriptions: dict[str, list[MqttMessageCallback]] = {}
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        self.subscriptions.setdefault(topic, []).append(callback)
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
-
-    async def deliver(self, topic: str, payload: str) -> None:
-        for callback in self.subscriptions.get(topic, []):
-            await callback(Message(topic, payload.encode()))
 
 
 def bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, TagScanner]:
@@ -46,7 +24,9 @@ async def test_scan_publishes_to_resolved_topic() -> None:
 
     await scanner.scan("E9F35959")
 
-    assert provider.published == [("homeassistant/device/dev-1/tags", "E9F35959")]
+    assert provider.published == [
+        ("homeassistant/device/dev-1/tags", "E9F35959", False)
+    ]
 
 
 async def test_standalone_discovery_contains_tag_topic_template_and_device() -> None:
@@ -74,13 +54,11 @@ async def test_standalone_discovery_contains_tag_topic_template_and_device() -> 
         "dev": {"ids": ["dev-1"], "name": "Device"},
     }
     await device.remove()
-    assert provider.published[2] == (
-        "homeassistant/device/dev-1/config",
-        "",
-    )
+    assert provider.published[2] == ("homeassistant/device/dev-1/config", "", False)
     assert provider.published[3] == (
         "homeassistant/tag/node-1/scanner/config",
         "",
+        False,
     )
     assert scanner.standalone_discovery is True
 

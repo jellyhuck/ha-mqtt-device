@@ -83,8 +83,13 @@ class AioMqttProvider:
         """
         await self.stop()
 
-    async def publish(self, topic: str, message: str | bytes) -> None:
+    async def publish(
+        self, topic: str, message: str | bytes, retain: bool = False
+    ) -> None:
         """Publish ``message`` to ``topic``.
+
+        Set ``retain`` to ``True`` to ask the broker to retain the message
+        for future subscribers.
 
         When :meth:`run` is active the long-lived connection is reused;
         otherwise a short-lived connection is opened for the publish.
@@ -103,12 +108,12 @@ class AioMqttProvider:
             Exception: If the message could not be published.
         """
         if self._client is not None:
-            await self._client.publish(topic, message)
+            await self._client.publish(topic, message, retain=retain)
             return
         client = self._new_client()
         try:
             await client.__aenter__()
-            await client.publish(topic, message)
+            await client.publish(topic, message, retain=retain)
         finally:
             await client.__aexit__(None, None, None)
 

@@ -7,38 +7,12 @@ from datetime import UTC, date, datetime
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device.date_time import DateTime
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.event import Event, EventCallback
-from ha_mqtt_device.provider import Message, MqttMessageCallback
-
-
-class RecordingProvider:
-    """Minimal structural MqttProvider that records publishes and subscriptions."""
-
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-        self.subscriptions: dict[str, list[MqttMessageCallback]] = {}
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        self.subscriptions.setdefault(topic, []).append(callback)
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
-
-    async def deliver(self, topic: str, payload: str | bytes) -> None:
-        """Invoke every callback registered for ``topic`` with ``payload``."""
-        raw = payload.encode() if isinstance(payload, str) else payload
-        for callback in self.subscriptions.get(topic, []):
-            await callback(Message(topic=topic, payload=raw))
 
 
 def make_bound(
@@ -72,9 +46,9 @@ async def test_set_state_publishes_iso_datetimes_to_state_topic() -> None:
     await entity.set_state(datetime(2024, 12, 31, 23, 59, 59, tzinfo=UTC))
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/alarm/state", "2024-02-14 10:30:00"),
-        ("homeassistant/device/dev-1/alarm/state", "2024-02-14 10:30:00"),
-        ("homeassistant/device/dev-1/alarm/state", "2024-12-31 23:59:59"),
+        ("homeassistant/device/dev-1/alarm/state", "2024-02-14 10:30:00", False),
+        ("homeassistant/device/dev-1/alarm/state", "2024-02-14 10:30:00", False),
+        ("homeassistant/device/dev-1/alarm/state", "2024-12-31 23:59:59", False),
     ]
 
 
@@ -86,7 +60,7 @@ async def test_set_state_publishes_timezone_aware_datetime_verbatim() -> None:
     await entity.set_state(datetime(2024, 2, 14, 10, 30, 15, tzinfo=UTC))
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/alarm/state", "2024-02-14 10:30:15"),
+        ("homeassistant/device/dev-1/alarm/state", "2024-02-14 10:30:15", False),
     ]
 
 

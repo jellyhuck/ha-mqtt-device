@@ -6,31 +6,9 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device import Device, DeviceInfo, Event, Siren
-from ha_mqtt_device.provider import Message, MqttMessageCallback
-
-
-class RecordingProvider:
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-        self.subscriptions: dict[str, list[MqttMessageCallback]] = {}
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        self.subscriptions.setdefault(topic, []).append(callback)
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
-
-    async def deliver(self, topic: str, payload: str) -> None:
-        for callback in self.subscriptions.get(topic, []):
-            await callback(Message(topic, payload.encode()))
 
 
 def bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, Siren]:
@@ -60,7 +38,7 @@ async def test_state_and_feature_commands_publish_json_to_resolved_topics() -> N
         "duration": 10,
         "volume_level": 0.5,
     }
-    assert [topic for topic, _ in provider.published[1:]] == [
+    assert [topic for topic, _, _ in provider.published[1:]] == [
         "homeassistant/device/dev-1/alarm/command",
         "homeassistant/device/dev-1/alarm/command",
         "homeassistant/device/dev-1/alarm/command",

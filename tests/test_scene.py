@@ -6,31 +6,9 @@ import json
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device import Device, DeviceInfo, Event, Scene
-from ha_mqtt_device.provider import Message, MqttMessageCallback
-
-
-class RecordingProvider:
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-        self.subscriptions: dict[str, list[MqttMessageCallback]] = {}
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        self.subscriptions.setdefault(topic, []).append(callback)
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
-
-    async def deliver(self, topic: str, payload: str) -> None:
-        for callback in self.subscriptions.get(topic, []):
-            await callback(Message(topic, payload.encode()))
 
 
 def bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, Scene]:
@@ -46,7 +24,9 @@ async def test_activate_publishes_to_resolved_command_topic() -> None:
 
     await scene.activate()
 
-    assert provider.published == [("homeassistant/device/dev-1/party/command", "ON")]
+    assert provider.published == [
+        ("homeassistant/device/dev-1/party/command", "ON", False)
+    ]
 
 
 async def test_discovery_is_command_only_and_omits_defaults() -> None:

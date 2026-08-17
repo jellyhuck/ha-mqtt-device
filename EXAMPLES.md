@@ -28,6 +28,7 @@ from ha_mqtt_device import AioMqttProvider
 
 provider = AioMqttProvider(hostname="localhost", port=1883)
 await provider.publish("home/device/state", "ON")
+await provider.publish("home/device/state", "ON", retain=True)
 
 async with provider:
     await asyncio.Event().wait()  # provider.run() keeps MQTT callbacks active

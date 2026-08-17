@@ -7,31 +7,9 @@ from datetime import time
 from typing import Any
 
 import pytest
+from recording_provider import RecordingProvider
 
 from ha_mqtt_device import Device, DeviceInfo, Event, Time
-from ha_mqtt_device.provider import Message, MqttMessageCallback
-
-
-class RecordingProvider:
-    def __init__(self) -> None:
-        self.published: list[tuple[str, str | bytes]] = []
-        self.subscriptions: dict[str, list[MqttMessageCallback]] = {}
-
-    async def publish(self, topic: str, message: str | bytes) -> None:
-        self.published.append((topic, message))
-
-    async def subscribe(self, topic: str, callback: MqttMessageCallback) -> None:
-        self.subscriptions.setdefault(topic, []).append(callback)
-
-    async def run(self) -> None:
-        return None
-
-    async def stop(self) -> None:
-        return None
-
-    async def deliver(self, topic: str, payload: str) -> None:
-        for callback in self.subscriptions.get(topic, []):
-            await callback(Message(topic, payload.encode()))
 
 
 def bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, Time]:
@@ -50,9 +28,9 @@ async def test_set_state_serializes_time_values_deterministically() -> None:
     await entity.set_state("03:06:07")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/alarm/state", "03:04:00"),
-        ("homeassistant/device/dev-1/alarm/state", "03:05:00"),
-        ("homeassistant/device/dev-1/alarm/state", "03:06:07"),
+        ("homeassistant/device/dev-1/alarm/state", "03:04:00", False),
+        ("homeassistant/device/dev-1/alarm/state", "03:05:00", False),
+        ("homeassistant/device/dev-1/alarm/state", "03:06:07", False),
     ]
 
 
