@@ -36,7 +36,8 @@ class Entity:
         unique_id: Globally unique id of the entity. Used as the ``uniq_id``
             in the discovery config and as the topic segment of every entity
             topic (for example ``~/<unique_id>/state``). Must consist of
-            ``[a-zA-Z0-9_-]`` characters.
+        ``[a-zA-Z0-9_-]`` characters. Entity subclasses that publish state
+        expose a ``state_topic`` property; command-only entities do not.
         name: Name of the entity as shown in Home Assistant. Omitted from the
             discovery config when unset.
     """
@@ -59,11 +60,6 @@ class Entity:
                 "unique_id must be a non-empty string of [a-zA-Z0-9_-] "
                 f"characters, got {self.unique_id!r}"
             )
-
-    @property
-    def state_topic(self) -> str:
-        """State topic as ``~`` shorthand, ``~/<unique_id>/state``."""
-        return self.state_topic_for(self.unique_id)
 
     @staticmethod
     def command_topic_for(unique_id: str, suffix: str | None = None) -> str:
@@ -106,7 +102,6 @@ class Entity:
         config: dict[str, Any] = {
             "uniq_id": self.unique_id,
             "p": self.component,
-            "stat_t": self.state_topic,
         }
         if self.name is not None:
             config["name"] = self.name

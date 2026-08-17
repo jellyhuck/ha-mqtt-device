@@ -197,6 +197,10 @@ class Date(Entity):
         except ValueError:
             raise ValueError(f"date value {value!r} is not a valid date") from None
 
+    @property
+    def state_topic(self) -> str:
+        return Entity.state_topic_for(self.unique_id)
+
     def discovery_config(self) -> dict[str, object]:
         """Return this date's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()

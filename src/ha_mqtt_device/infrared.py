@@ -168,7 +168,6 @@ class InfraredEmitter(Entity):
         """Return this emitter's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
         # Emitters have no state topic; the single topic is the command topic.
-        config.pop("stat_t")
         config["cmd_t"] = self.command_topic
         config[_SCHEMA_FIELD] = "emitter"
         return config
@@ -195,6 +194,10 @@ class InfraredReceiver(Entity):
     """
 
     component = "infrared"
+
+    @property
+    def state_topic(self) -> str:
+        return Entity.state_topic_for(self.unique_id)
 
     async def set_state(self, signal: dict[str, Any]) -> None:
         """Publish a received IR signal to Home Assistant.

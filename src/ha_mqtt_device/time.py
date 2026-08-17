@@ -107,11 +107,13 @@ class Time(Entity):
             raise ValueError(f"time value {value!r} is invalid") from None
         return parsed.strftime(_TIME_FORMAT)
 
+    @property
+    def state_topic(self) -> str:
+        return Entity.state_topic_for(self.unique_id)
+
     def discovery_config(self) -> dict[str, object]:
         """Return this time entity's abbreviated discovery configuration."""
         config = super().discovery_config()
-        if not self.state_enabled:
-            config.pop("stat_t")
         if self.state_enabled:
             config["stat_t"] = self.state_topic
         config["cmd_t"] = self.command_topic

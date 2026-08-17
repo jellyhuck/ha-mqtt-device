@@ -90,7 +90,6 @@ class Notify(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this notify service's device discovery configuration."""
         config = super().discovery_config()
-        config.pop("stat_t")
         config["cmd_t"] = self.command_topic
         if self.command_template is not None:
             config["cmd_tpl"] = self.command_template

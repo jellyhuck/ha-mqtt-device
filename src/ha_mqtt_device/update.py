@@ -212,6 +212,10 @@ class Update(Entity):
         if not isinstance(value, str) or not value:
             raise ValueError(f"{name} must be a non-empty string")
 
+    @property
+    def state_topic(self) -> str:
+        return Entity.state_topic_for(self.unique_id)
+
     def discovery_config(self) -> dict[str, object]:
         """Return this update entity's abbreviated discovery configuration."""
         config = super().discovery_config()

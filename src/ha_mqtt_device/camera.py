@@ -82,7 +82,6 @@ class Camera(Entity):
         # Cameras have no state topic; the single topic is the image topic
         # (the Home Assistant camera discovery key is ``topic``, abbreviated
         # as ``t`` in the new-format payload).
-        config.pop("stat_t")
         config["t"] = self.image_topic
         if self.encoding is not None:
             config["img_e"] = self.encoding

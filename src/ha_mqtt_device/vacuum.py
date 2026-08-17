@@ -354,6 +354,10 @@ class Vacuum(Entity):
         if speed not in self._fan_speeds:
             raise ValueError(f"unsupported fan speed: {speed!r}")
 
+    @property
+    def state_topic(self) -> str:
+        return Entity.state_topic_for(self.unique_id)
+
     def discovery_config(self) -> dict[str, object]:
         """Return this vacuum's abbreviated discovery configuration."""
         config = super().discovery_config()

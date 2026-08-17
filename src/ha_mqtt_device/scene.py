@@ -85,7 +85,6 @@ class Scene(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this scene's command-only discovery configuration."""
         config = super().discovery_config()
-        config.pop("stat_t")
         config["cmd_t"] = self.command_topic
         if self.payload_on != DEFAULT_PAYLOAD_ON:
             config["pl_on"] = self.payload_on

@@ -201,11 +201,13 @@ class Siren(Entity):
         if not 0 <= volume_level <= 1:
             raise ValueError("volume_level must be between 0 and 1")
 
+    @property
+    def state_topic(self) -> str:
+        return Entity.state_topic_for(self.unique_id)
+
     def discovery_config(self) -> dict[str, object]:
         """Return this siren's abbreviated MQTT discovery configuration."""
         config = super().discovery_config()
-        if not self.state_enabled:
-            config.pop("stat_t")
         if self.state_enabled:
             config["stat_t"] = self.state_topic
         config["cmd_t"] = self.command_topic

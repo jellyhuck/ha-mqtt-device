@@ -288,6 +288,10 @@ class Humidifier(Entity):
     def _humidity_in_range(self, humidity: float) -> bool:
         return self.min_humidity <= humidity <= self.max_humidity
 
+    @property
+    def state_topic(self) -> str:
+        return Entity.state_topic_for(self.unique_id)
+
     def discovery_config(self) -> dict[str, object]:
         """Return this humidifier's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()

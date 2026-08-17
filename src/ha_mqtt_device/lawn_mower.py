@@ -240,7 +240,6 @@ class LawnMower(Entity):
     def discovery_config(self) -> dict[str, object]:
         """Return this lawn mower's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
-        config.pop("stat_t")
 
         # State topic
         config[_TOPIC_TYPE_ACTIVITY_STATE] = self.state_topic

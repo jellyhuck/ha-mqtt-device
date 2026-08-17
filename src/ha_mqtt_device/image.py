@@ -77,7 +77,6 @@ class Image(Entity):
         """Return this entity's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
         # Images have no state topic; the single topic is the image topic.
-        config.pop("stat_t")
         config["img_t"] = self.image_topic
         if self.encoding is not None:
             config["img_e"] = self.encoding

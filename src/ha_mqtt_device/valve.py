@@ -237,6 +237,10 @@ class Valve(Entity):
     def _number_payload(value: float) -> str:
         return str(value)
 
+    @property
+    def state_topic(self) -> str:
+        return Entity.state_topic_for(self.unique_id)
+
     def discovery_config(self) -> dict[str, object]:
         """Return this valve's compact MQTT discovery configuration."""
         config = super().discovery_config()

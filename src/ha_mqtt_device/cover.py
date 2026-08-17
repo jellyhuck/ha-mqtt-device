@@ -334,6 +334,10 @@ class Cover(Entity):
     def _position_in_range(self, position: int) -> bool:
         return self.position_closed <= position <= self.position_open
 
+    @property
+    def state_topic(self) -> str:
+        return Entity.state_topic_for(self.unique_id)
+
     def discovery_config(self) -> dict[str, object]:
         """Return this cover's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()

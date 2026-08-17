@@ -81,6 +81,10 @@ class Lock(Entity):
                 raise ValueError(f"invalid code_format: {error}") from error
 
     @property
+    def state_topic(self) -> str:
+        return Entity.state_topic_for(self.unique_id)
+
+    @property
     def command_topic(self) -> str:
         """Command topic as ``~`` shorthand."""
         return Entity.command_topic_for(self.unique_id)
@@ -159,8 +163,6 @@ class Lock(Entity):
         """Return this lock's device discovery component configuration."""
         config = super().discovery_config()
         config["cmd_t"] = self.command_topic
-        if not self.state_enabled:
-            config.pop("stat_t")
         if self.state_enabled:
             config["stat_t"] = self.state_topic
         if self.payload_lock != DEFAULT_PAYLOAD_LOCK:

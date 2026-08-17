@@ -213,6 +213,10 @@ class Number(Entity):
     def _value_in_range(self, value: float) -> bool:
         return self.min_value <= value <= self.max_value
 
+    @property
+    def state_topic(self) -> str:
+        return Entity.state_topic_for(self.unique_id)
+
     def discovery_config(self) -> dict[str, object]:
         """Return this number's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()

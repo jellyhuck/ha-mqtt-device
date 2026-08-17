@@ -133,6 +133,10 @@ class DeviceTracker(Entity):
         topic = device.info.resolve_topic(self.state_topic)
         await device.provider.publish(topic, json.dumps(payload))
 
+    @property
+    def state_topic(self) -> str:
+        return Entity.state_topic_for(self.unique_id)
+
     def discovery_config(self) -> dict[str, object]:
         """Return this tracker's ``cmps`` config entry for the discovery payload."""
         config = super().discovery_config()
