@@ -40,7 +40,7 @@ class SelectEntity(Entity):
     @property
     def command_topic(self) -> str:
         """Command topic as ``~`` shorthand."""
-        return f"~/{self.unique_id}/command"
+        return Entity.command_topic_for(self.unique_id)
 
     async def set_state(self, option: str) -> None:
         """Publish a selected option to the state topic."""

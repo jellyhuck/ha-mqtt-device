@@ -99,7 +99,7 @@ class Valve(Entity):
     @property
     def command_topic(self) -> str:
         """Command topic as ``~/<unique_id>/command``."""
-        return f"~/{self.unique_id}/command"
+        return Entity.command_topic_for(self.unique_id)
 
     async def set_state(self, state: str) -> None:
         """Publish a valve state to the state topic."""

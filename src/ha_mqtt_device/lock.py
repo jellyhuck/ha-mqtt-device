@@ -83,7 +83,7 @@ class Lock(Entity):
     @property
     def command_topic(self) -> str:
         """Command topic as ``~`` shorthand."""
-        return f"~/{self.unique_id}/command"
+        return Entity.command_topic_for(self.unique_id)
 
     async def set_state(self, state: str) -> None:
         """Publish a lock state using its configured state payload."""

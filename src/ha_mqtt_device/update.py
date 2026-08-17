@@ -65,12 +65,12 @@ class Update(Entity):
     @property
     def command_topic(self) -> str:
         """Install command topic as ``~`` shorthand."""
-        return f"~/{self.unique_id}/command"
+        return Entity.command_topic_for(self.unique_id)
 
     @property
     def latest_version_topic(self) -> str:
         """Latest-version topic as ``~`` shorthand."""
-        return f"~/{self.unique_id}/state/latest"
+        return Entity.state_topic_for(self.unique_id, "latest")
 
     async def set_state(
         self,

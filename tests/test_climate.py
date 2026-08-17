@@ -69,7 +69,7 @@ async def test_set_current_temperature_publishes_to_topic() -> None:
     await climate.set_current_temperature(21.5)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/thermostat/current_temperature", "21.5")
+        ("homeassistant/device/dev-1/thermostat/state/current_temperature", "21.5")
     ]
 
 
@@ -80,7 +80,7 @@ async def test_set_target_temperature_publishes_to_state_topic() -> None:
     await climate.set_target_temperature(21.5)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/thermostat/temperature", "21.5")
+        ("homeassistant/device/dev-1/thermostat/state/temperature", "21.5")
     ]
 
 
@@ -91,7 +91,7 @@ async def test_set_mode_publishes_verbatim() -> None:
     await climate.set_mode("heat")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/thermostat/mode", "heat")
+        ("homeassistant/device/dev-1/thermostat/state/mode", "heat")
     ]
 
 
@@ -112,7 +112,7 @@ async def test_set_mode_without_modes_accepts_any_mode() -> None:
     await climate.set_mode("fan_only")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/thermostat/mode", "fan_only")
+        ("homeassistant/device/dev-1/thermostat/state/mode", "fan_only")
     ]
 
 
@@ -123,7 +123,7 @@ async def test_set_action_publishes_verbatim() -> None:
     await climate.set_action("heating")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/thermostat/action", "heating")
+        ("homeassistant/device/dev-1/thermostat/state/action", "heating")
     ]
 
 
@@ -144,12 +144,12 @@ async def test_set_mode_requires_binding() -> None:
 async def test_topics_shorthand() -> None:
     _, climate = make_bound(RecordingProvider(), unique_id="thermostat")
 
-    assert climate.current_temperature_topic == "~/thermostat/current_temperature"
-    assert climate.temperature_state_topic == "~/thermostat/temperature"
-    assert climate.temperature_command_topic == "~/thermostat/temperature_command"
-    assert climate.mode_state_topic == "~/thermostat/mode"
-    assert climate.mode_command_topic == "~/thermostat/mode_command"
-    assert climate.action_topic == "~/thermostat/action"
+    assert climate.current_temperature_topic == "~/thermostat/state/current_temperature"
+    assert climate.temperature_state_topic == "~/thermostat/state/temperature"
+    assert climate.temperature_command_topic == "~/thermostat/command/temperature"
+    assert climate.mode_state_topic == "~/thermostat/state/mode"
+    assert climate.mode_command_topic == "~/thermostat/command/mode"
+    assert climate.action_topic == "~/thermostat/state/action"
 
 
 async def test_publish_methods_do_not_subscribe() -> None:
@@ -169,8 +169,8 @@ async def test_on_event_subscribes_to_both_resolved_command_topics() -> None:
     await climate.on_event(lambda event: _noop())
 
     assert list(provider.subscriptions) == [
-        "homeassistant/device/dev-1/thermostat/temperature_command",
-        "homeassistant/device/dev-1/thermostat/mode_command",
+        "homeassistant/device/dev-1/thermostat/command/temperature",
+        "homeassistant/device/dev-1/thermostat/command/mode",
     ]
 
 
@@ -189,10 +189,10 @@ async def test_on_event_subscribes_once_for_multiple_callbacks() -> None:
     await climate.on_event(lambda event: _noop())
 
     assert provider.subscriptions == {
-        "homeassistant/device/dev-1/thermostat/temperature_command": [
+        "homeassistant/device/dev-1/thermostat/command/temperature": [
             climate._dispatch_temperature
         ],
-        "homeassistant/device/dev-1/thermostat/mode_command": [climate._dispatch_mode],
+        "homeassistant/device/dev-1/thermostat/command/mode": [climate._dispatch_mode],
     }
 
 
@@ -203,14 +203,14 @@ async def test_dispatch_delivers_temperature_event() -> None:
     await climate.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/thermostat/temperature_command", "21.5"
+        "homeassistant/device/dev-1/thermostat/command/temperature", "21.5"
     )
 
     assert len(received) == 1
     event = received[0]
     assert event.event_type == "temperature"
     assert event.topic_type == "temperature_command_topic"
-    assert event.topic == "homeassistant/device/dev-1/thermostat/temperature_command"
+    assert event.topic == "homeassistant/device/dev-1/thermostat/command/temperature"
     assert event.message == "21.5"
     assert event.state == "21.5"
 
@@ -222,10 +222,10 @@ async def test_dispatch_temperature_unknown_payload_has_null_state() -> None:
     await climate.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/thermostat/temperature_command", "hot"
+        "homeassistant/device/dev-1/thermostat/command/temperature", "hot"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/thermostat/temperature_command", ""
+        "homeassistant/device/dev-1/thermostat/command/temperature", ""
     )
 
     assert [event.state for event in received] == [None, None]
@@ -237,14 +237,14 @@ async def test_dispatch_delivers_mode_event() -> None:
     received: list[Event] = []
     await climate.on_event(collector(received))
 
-    await provider.deliver("homeassistant/device/dev-1/thermostat/mode_command", "heat")
-    await provider.deliver("homeassistant/device/dev-1/thermostat/mode_command", "auto")
+    await provider.deliver("homeassistant/device/dev-1/thermostat/command/mode", "heat")
+    await provider.deliver("homeassistant/device/dev-1/thermostat/command/mode", "auto")
 
     assert len(received) == 2
     first, second = received
     assert first.event_type == "mode"
     assert first.topic_type == "mode_command_topic"
-    assert first.topic == "homeassistant/device/dev-1/thermostat/mode_command"
+    assert first.topic == "homeassistant/device/dev-1/thermostat/command/mode"
     assert first.message == "heat"
     assert first.state == "heat"
     assert second.state == "auto"
@@ -256,7 +256,7 @@ async def test_dispatch_mode_unknown_payload_is_delivered_verbatim() -> None:
     received: list[Event] = []
     await climate.on_event(collector(received))
 
-    await provider.deliver("homeassistant/device/dev-1/thermostat/mode_command", "eco")
+    await provider.deliver("homeassistant/device/dev-1/thermostat/command/mode", "eco")
 
     assert len(received) == 1
     assert received[0].message == "eco"
@@ -269,7 +269,7 @@ async def test_dispatch_mode_rejects_unconfigured_mode() -> None:
     received: list[Event] = []
     await climate.on_event(collector(received))
 
-    await provider.deliver("homeassistant/device/dev-1/thermostat/mode_command", "eco")
+    await provider.deliver("homeassistant/device/dev-1/thermostat/command/mode", "eco")
 
     assert received[0].message == "eco"
     assert received[0].state is None
@@ -284,10 +284,10 @@ async def test_dispatch_temperature_rejects_non_finite_and_out_of_range_values()
     await climate.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/thermostat/temperature_command", "nan"
+        "homeassistant/device/dev-1/thermostat/command/temperature", "nan"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/thermostat/temperature_command", "31"
+        "homeassistant/device/dev-1/thermostat/command/temperature", "31"
     )
 
     assert [event.state for event in received] == [None, None]
@@ -300,7 +300,7 @@ async def test_dispatch_decodes_utf8_payload() -> None:
     await climate.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/thermostat/temperature_command", b"21.5"
+        "homeassistant/device/dev-1/thermostat/command/temperature", b"21.5"
     )
 
     assert received[0].message == "21.5"
@@ -315,7 +315,7 @@ async def test_dispatch_invokes_all_callbacks() -> None:
     await climate.on_event(collector(first))
     await climate.on_event(collector(second))
 
-    await provider.deliver("homeassistant/device/dev-1/thermostat/mode_command", "heat")
+    await provider.deliver("homeassistant/device/dev-1/thermostat/command/mode", "heat")
 
     assert len(first) == 1
     assert len(second) == 1
@@ -335,7 +335,7 @@ async def test_dispatch_logs_callback_exception(
 
     with caplog.at_level("ERROR", logger="ha_mqtt_device.climate"):
         await provider.deliver(
-            "homeassistant/device/dev-1/thermostat/mode_command", "heat"
+            "homeassistant/device/dev-1/thermostat/command/mode", "heat"
         )
 
     assert "callback exploded" in caplog.text
@@ -347,12 +347,12 @@ async def test_discovery_config_defaults() -> None:
     assert climate.discovery_config() == {
         "uniq_id": "thermostat",
         "p": "climate",
-        "curr_temp_t": "~/thermostat/current_temperature",
-        "temp_stat_t": "~/thermostat/temperature",
-        "temp_cmd_t": "~/thermostat/temperature_command",
-        "mode_stat_t": "~/thermostat/mode",
-        "mode_cmd_t": "~/thermostat/mode_command",
-        "act_t": "~/thermostat/action",
+        "curr_temp_t": "~/thermostat/state/current_temperature",
+        "temp_stat_t": "~/thermostat/state/temperature",
+        "temp_cmd_t": "~/thermostat/command/temperature",
+        "mode_stat_t": "~/thermostat/state/mode",
+        "mode_cmd_t": "~/thermostat/command/mode",
+        "act_t": "~/thermostat/state/action",
     }
 
 
@@ -378,12 +378,12 @@ async def test_discovery_config_includes_modes_unit_and_bounds() -> None:
     assert climate.discovery_config() == {
         "uniq_id": "thermostat",
         "p": "climate",
-        "curr_temp_t": "~/thermostat/current_temperature",
-        "temp_stat_t": "~/thermostat/temperature",
-        "temp_cmd_t": "~/thermostat/temperature_command",
-        "mode_stat_t": "~/thermostat/mode",
-        "mode_cmd_t": "~/thermostat/mode_command",
-        "act_t": "~/thermostat/action",
+        "curr_temp_t": "~/thermostat/state/current_temperature",
+        "temp_stat_t": "~/thermostat/state/temperature",
+        "temp_cmd_t": "~/thermostat/command/temperature",
+        "mode_stat_t": "~/thermostat/state/mode",
+        "mode_cmd_t": "~/thermostat/command/mode",
+        "act_t": "~/thermostat/state/action",
         "modes": ["off", "heat", "cool", "auto"],
         "temp_unit": "F",
         "min_temp": 60,

@@ -27,6 +27,11 @@ The project is managed with [uv](https://docs.astral.sh/uv/). Always use `uv`-pr
 - **Format after editing**: `uv format` keeps style consistent. Run it on any touched files.
 - **Keep the library thin**: avoid adding heavy dependencies or framework-like abstractions. Prefer small, focused public APIs that model a device and its entities.
 - **Tests belong in `tests/`**: add or update tests alongside any behavior change. Use pytest-style tests.
+- Entity topics use the canonical `~/<unique_id>/state[/<suffix>]` and
+  `~/<unique_id>/command[/<suffix>]` schemas. Use `Entity.state_topic_for()` and
+  `Entity.command_topic_for()` for topic construction; an empty or `None`
+  suffix produces the base state or command topic. Tests and examples should
+  follow this schema when asserting or documenting topics.
 - **Type hints**: annotate public functions and methods. The project targets Python 3.14+, so modern typing features are available.
 - **Follow the existing package layout**: source lives under `src/ha_mqtt_device/`; keep it organized by device/entity concerns.
 

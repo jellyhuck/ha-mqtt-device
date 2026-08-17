@@ -106,7 +106,7 @@ class LawnMower(Entity):
     @property
     def state_topic(self) -> str:
         """State topic as ``~`` shorthand, ``~/<unique_id>/state``."""
-        return f"~/{self.unique_id}/state"
+        return Entity.state_topic_for(self.unique_id)
 
     @property
     def command_topic(self) -> str:
@@ -115,7 +115,7 @@ class LawnMower(Entity):
         All three command types (start_mowing, pause, dock) use this same topic.
         Home Assistant distinguishes them via different payload templates.
         """
-        return f"~/{self.unique_id}/set"
+        return Entity.command_topic_for(self.unique_id)
 
     async def set_state(self, activity: str) -> None:
         """Publish the lawn mower's activity state.

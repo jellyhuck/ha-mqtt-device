@@ -116,32 +116,32 @@ class Climate(Entity):
     @property
     def current_temperature_topic(self) -> str:
         """Current-temperature topic, ``~/<unique_id>/current_temperature``."""
-        return f"~/{self.unique_id}/current_temperature"
+        return Entity.state_topic_for(self.unique_id, "current_temperature")
 
     @property
     def temperature_state_topic(self) -> str:
         """Target-temperature state topic, ``~/<unique_id>/temperature``."""
-        return f"~/{self.unique_id}/temperature"
+        return Entity.state_topic_for(self.unique_id, "temperature")
 
     @property
     def temperature_command_topic(self) -> str:
         """Target-temperature command topic, ``~/<unique_id>/temperature_command``."""
-        return f"~/{self.unique_id}/temperature_command"
+        return Entity.command_topic_for(self.unique_id, "temperature")
 
     @property
     def mode_state_topic(self) -> str:
         """Mode state topic, ``~/<unique_id>/mode``."""
-        return f"~/{self.unique_id}/mode"
+        return Entity.state_topic_for(self.unique_id, "mode")
 
     @property
     def mode_command_topic(self) -> str:
         """Mode command topic, ``~/<unique_id>/mode_command``."""
-        return f"~/{self.unique_id}/mode_command"
+        return Entity.command_topic_for(self.unique_id, "mode")
 
     @property
     def action_topic(self) -> str:
         """Action topic, ``~/<unique_id>/action``."""
-        return f"~/{self.unique_id}/action"
+        return Entity.state_topic_for(self.unique_id, "action")
 
     async def set_current_temperature(self, temperature: float) -> None:
         """Publish the current temperature.

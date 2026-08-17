@@ -37,7 +37,7 @@ class Time(Entity):
     @property
     def command_topic(self) -> str:
         """Command topic as ``~`` shorthand."""
-        return f"~/{self.unique_id}/command"
+        return Entity.command_topic_for(self.unique_id)
 
     async def set_state(self, value: time_value | str) -> None:
         """Normalize and publish a time value to the state topic."""

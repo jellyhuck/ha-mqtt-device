@@ -118,7 +118,7 @@ async def test_state_and_command_topic_shorthand() -> None:
     _, mower = make_bound(RecordingProvider(), unique_id="mower_1")
 
     assert mower.state_topic == "~/mower_1/state"
-    assert mower.command_topic == "~/mower_1/set"
+    assert mower.command_topic == "~/mower_1/command"
 
 
 async def test_on_event_subscribes_to_resolved_command_topic() -> None:
@@ -127,7 +127,7 @@ async def test_on_event_subscribes_to_resolved_command_topic() -> None:
 
     await mower.on_event(lambda event: _noop())
 
-    assert list(provider.subscriptions) == ["homeassistant/device/dev-1/mower_1/set"]
+    assert list(provider.subscriptions) == ["homeassistant/device/dev-1/mower_1/command"]
 
 
 async def test_on_event_requires_binding() -> None:
@@ -145,7 +145,7 @@ async def test_on_event_subscribes_once_for_multiple_callbacks() -> None:
     await mower.on_event(lambda event: _noop())
 
     assert provider.subscriptions == {
-        "homeassistant/device/dev-1/mower_1/set": [mower._dispatch]
+        "homeassistant/device/dev-1/mower_1/command": [mower._dispatch]
     }
 
 
@@ -155,9 +155,9 @@ async def test_dispatch_delivers_plain_command_events() -> None:
     received: list[Event] = []
     await mower.on_event(collector(received))
 
-    await provider.deliver("homeassistant/device/dev-1/mower_1/set", "start_mowing")
-    await provider.deliver("homeassistant/device/dev-1/mower_1/set", "pause")
-    await provider.deliver("homeassistant/device/dev-1/mower_1/set", "dock")
+    await provider.deliver("homeassistant/device/dev-1/mower_1/command", "start_mowing")
+    await provider.deliver("homeassistant/device/dev-1/mower_1/command", "pause")
+    await provider.deliver("homeassistant/device/dev-1/mower_1/command", "dock")
 
     assert len(received) == 3
     states = [event.state for event in received]
@@ -170,7 +170,7 @@ async def test_dispatch_delivers_plain_command_events() -> None:
     ]
     first = received[0]
     assert first.event_type == "command"
-    assert first.topic == "homeassistant/device/dev-1/mower_1/set"
+    assert first.topic == "homeassistant/device/dev-1/mower_1/command"
     assert first.message == "start_mowing"
 
 
@@ -181,9 +181,9 @@ async def test_dispatch_delivers_unknown_payload_with_null_state() -> None:
     await mower.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/mower_1/set", '{"activity": "unknown"}'
+        "homeassistant/device/dev-1/mower_1/command", '{"activity": "unknown"}'
     )
-    await provider.deliver("homeassistant/device/dev-1/mower_1/set", "not json")
+    await provider.deliver("homeassistant/device/dev-1/mower_1/command", "not json")
 
     assert len(received) == 2
     assert received[0].message == '{"activity": "unknown"}'
@@ -198,7 +198,7 @@ async def test_dispatch_accepts_legacy_json_command_payload() -> None:
     await mower.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/mower_1/set",
+        "homeassistant/device/dev-1/mower_1/command",
         '{"activity": "start_mowing"}',
     )
 
@@ -212,7 +212,7 @@ async def test_dispatch_decodes_utf8_payload() -> None:
     await mower.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/mower_1/set",
+        "homeassistant/device/dev-1/mower_1/command",
         b'{"activity": "start_mowing"}',
     )
 
@@ -229,7 +229,7 @@ async def test_dispatch_invokes_all_callbacks() -> None:
     await mower.on_event(collector(second))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/mower_1/set",
+        "homeassistant/device/dev-1/mower_1/command",
         '{"activity": "pause"}',
     )
 
@@ -251,7 +251,7 @@ async def test_dispatch_logs_callback_exception(
 
     with caplog.at_level("ERROR", logger="ha_mqtt_device.lawn_mower"):
         await provider.deliver(
-            "homeassistant/device/dev-1/mower_1/set",
+            "homeassistant/device/dev-1/mower_1/command",
             '{"activity": "dock"}',
         )
 
@@ -267,9 +267,9 @@ async def test_discovery_config_defaults() -> None:
         "uniq_id": "mower_1",
         "p": "lawn_mower",
         "activity_state_topic": "~/mower_1/state",
-        "start_mowing_command_topic": "~/mower_1/set",
-        "pause_command_topic": "~/mower_1/set",
-        "dock_command_topic": "~/mower_1/set",
+        "start_mowing_command_topic": "~/mower_1/command",
+        "pause_command_topic": "~/mower_1/command",
+        "dock_command_topic": "~/mower_1/command",
     }
 
 
@@ -284,9 +284,9 @@ async def test_discovery_config_includes_name() -> None:
         "uniq_id": "mower_1",
         "p": "lawn_mower",
         "activity_state_topic": "~/mower_1/state",
-        "start_mowing_command_topic": "~/mower_1/set",
-        "pause_command_topic": "~/mower_1/set",
-        "dock_command_topic": "~/mower_1/set",
+        "start_mowing_command_topic": "~/mower_1/command",
+        "pause_command_topic": "~/mower_1/command",
+        "dock_command_topic": "~/mower_1/command",
         "name": "Lawn Mower",
     }
 
@@ -304,9 +304,9 @@ async def test_discovery_config_includes_custom_payloads() -> None:
         "uniq_id": "mower_1",
         "p": "lawn_mower",
         "activity_state_topic": "~/mower_1/state",
-        "start_mowing_command_topic": "~/mower_1/set",
-        "pause_command_topic": "~/mower_1/set",
-        "dock_command_topic": "~/mower_1/set",
+        "start_mowing_command_topic": "~/mower_1/command",
+        "pause_command_topic": "~/mower_1/command",
+        "dock_command_topic": "~/mower_1/command",
         "pl_strt": '{"cmd": "start"}',
         "pl_pau": '{"cmd": "pause"}',
         "pl_doc": '{"cmd": "dock"}',
@@ -327,9 +327,9 @@ async def test_discovery_config_includes_custom_states() -> None:
         "uniq_id": "mower_1",
         "p": "lawn_mower",
         "activity_state_topic": "~/mower_1/state",
-        "start_mowing_command_topic": "~/mower_1/set",
-        "pause_command_topic": "~/mower_1/set",
-        "dock_command_topic": "~/mower_1/set",
+        "start_mowing_command_topic": "~/mower_1/command",
+        "pause_command_topic": "~/mower_1/command",
+        "dock_command_topic": "~/mower_1/command",
         "sta_mow": "MOWING",
         "sta_pau": "PAUSED",
         "sta_doc": "DOCKED",
@@ -350,9 +350,9 @@ async def test_discovery_config_omits_states_matching_defaults() -> None:
         "uniq_id": "mower_1",
         "p": "lawn_mower",
         "activity_state_topic": "~/mower_1/state",
-        "start_mowing_command_topic": "~/mower_1/set",
-        "pause_command_topic": "~/mower_1/set",
-        "dock_command_topic": "~/mower_1/set",
+        "start_mowing_command_topic": "~/mower_1/command",
+        "pause_command_topic": "~/mower_1/command",
+        "dock_command_topic": "~/mower_1/command",
     }
 
 

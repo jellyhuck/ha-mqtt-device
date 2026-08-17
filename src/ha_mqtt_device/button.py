@@ -70,7 +70,7 @@ class Button(Entity):
     @property
     def command_topic(self) -> str:
         """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return f"~/{self.unique_id}/command"
+        return Entity.command_topic_for(self.unique_id)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every press received from Home Assistant.

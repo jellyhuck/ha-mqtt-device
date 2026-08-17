@@ -96,7 +96,7 @@ class Switch(Entity):
     @property
     def command_topic(self) -> str:
         """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return f"~/{self.unique_id}/command"
+        return Entity.command_topic_for(self.unique_id)
 
     async def set_state(self, state: bool) -> None:
         """Publish the switch's state.

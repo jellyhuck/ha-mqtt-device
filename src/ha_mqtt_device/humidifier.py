@@ -113,17 +113,17 @@ class Humidifier(Entity):
     @property
     def command_topic(self) -> str:
         """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return f"~/{self.unique_id}/command"
+        return Entity.command_topic_for(self.unique_id)
 
     @property
     def target_humidity_state_topic(self) -> str:
         """Target-humidity state topic, ``~/<unique_id>/target_humidity``."""
-        return f"~/{self.unique_id}/target_humidity"
+        return Entity.state_topic_for(self.unique_id, "target_humidity")
 
     @property
     def target_humidity_command_topic(self) -> str:
         """Target-humidity command topic, ``~/<unique_id>/target_humidity_command``."""
-        return f"~/{self.unique_id}/target_humidity_command"
+        return Entity.command_topic_for(self.unique_id, "target_humidity")
 
     async def set_state(self, state: bool) -> None:
         """Publish the humidifier's on/off state.

@@ -103,8 +103,8 @@ async def test_set_percentage_publishes_stringified_value() -> None:
     await fan.set_percentage(1)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/percentage_state", "60"),
-        ("homeassistant/device/dev-1/ceiling_fan/percentage_state", "1"),
+        ("homeassistant/device/dev-1/ceiling_fan/state/percentage", "60"),
+        ("homeassistant/device/dev-1/ceiling_fan/state/percentage", "1"),
     ]
 
 
@@ -138,7 +138,7 @@ async def test_set_preset_mode_publishes_preset() -> None:
     await fan.set_preset_mode("auto")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/preset_mode_state", "auto")
+        ("homeassistant/device/dev-1/ceiling_fan/state/preset_mode", "auto")
     ]
 
 
@@ -150,7 +150,7 @@ async def test_set_preset_mode_none_publishes_reset_payload() -> None:
 
     assert provider.published == [
         (
-            "homeassistant/device/dev-1/ceiling_fan/preset_mode_state",
+            "homeassistant/device/dev-1/ceiling_fan/state/preset_mode",
             "reset_percentage",
         )
     ]
@@ -168,7 +168,7 @@ async def test_set_preset_mode_uses_custom_reset_payload() -> None:
     await fan.set_preset_mode(None)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/preset_mode_state", "speed")
+        ("homeassistant/device/dev-1/ceiling_fan/state/preset_mode", "speed")
     ]
 
 
@@ -196,8 +196,8 @@ async def test_set_oscillation_publishes_payloads() -> None:
     await fan.set_oscillation(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/oscillation_state", "oscillate_on"),
-        ("homeassistant/device/dev-1/ceiling_fan/oscillation_state", "oscillate_off"),
+        ("homeassistant/device/dev-1/ceiling_fan/state/oscillation", "oscillate_on"),
+        ("homeassistant/device/dev-1/ceiling_fan/state/oscillation", "oscillate_off"),
     ]
 
 
@@ -215,8 +215,8 @@ async def test_set_oscillation_uses_custom_payloads() -> None:
     await fan.set_oscillation(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/oscillation_state", "yes"),
-        ("homeassistant/device/dev-1/ceiling_fan/oscillation_state", "no"),
+        ("homeassistant/device/dev-1/ceiling_fan/state/oscillation", "yes"),
+        ("homeassistant/device/dev-1/ceiling_fan/state/oscillation", "no"),
     ]
 
 
@@ -236,8 +236,8 @@ async def test_set_direction_publishes_direction() -> None:
     await fan.set_direction("reverse")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/direction_state", "forward"),
-        ("homeassistant/device/dev-1/ceiling_fan/direction_state", "reverse"),
+        ("homeassistant/device/dev-1/ceiling_fan/state/direction", "forward"),
+        ("homeassistant/device/dev-1/ceiling_fan/state/direction", "reverse"),
     ]
 
 
@@ -275,29 +275,29 @@ async def test_command_topic_shorthand() -> None:
 async def test_percentage_topic_shorthands() -> None:
     _, fan = make_bound(RecordingProvider(), unique_id="ceiling_fan")
 
-    assert fan.percentage_state_topic == "~/ceiling_fan/percentage_state"
-    assert fan.percentage_command_topic == "~/ceiling_fan/percentage_command"
+    assert fan.percentage_state_topic == "~/ceiling_fan/state/percentage"
+    assert fan.percentage_command_topic == "~/ceiling_fan/command/percentage"
 
 
 async def test_preset_mode_topic_shorthands() -> None:
     _, fan = make_bound(RecordingProvider(), unique_id="ceiling_fan")
 
-    assert fan.preset_mode_state_topic == "~/ceiling_fan/preset_mode_state"
-    assert fan.preset_mode_command_topic == "~/ceiling_fan/preset_mode_command"
+    assert fan.preset_mode_state_topic == "~/ceiling_fan/state/preset_mode"
+    assert fan.preset_mode_command_topic == "~/ceiling_fan/command/preset_mode"
 
 
 async def test_oscillation_topic_shorthands() -> None:
     _, fan = make_bound(RecordingProvider(), unique_id="ceiling_fan")
 
-    assert fan.oscillation_state_topic == "~/ceiling_fan/oscillation_state"
-    assert fan.oscillation_command_topic == "~/ceiling_fan/oscillation_command"
+    assert fan.oscillation_state_topic == "~/ceiling_fan/state/oscillation"
+    assert fan.oscillation_command_topic == "~/ceiling_fan/command/oscillation"
 
 
 async def test_direction_topic_shorthands() -> None:
     _, fan = make_bound(RecordingProvider(), unique_id="ceiling_fan")
 
-    assert fan.direction_state_topic == "~/ceiling_fan/direction_state"
-    assert fan.direction_command_topic == "~/ceiling_fan/direction_command"
+    assert fan.direction_state_topic == "~/ceiling_fan/state/direction"
+    assert fan.direction_command_topic == "~/ceiling_fan/command/direction"
 
 
 async def test_on_event_subscribes_to_command_and_enabled_feature_topics() -> None:
@@ -309,7 +309,7 @@ async def test_on_event_subscribes_to_command_and_enabled_feature_topics() -> No
     # Percentage control is enabled by default; preset/oscillation/direction are off.
     assert list(provider.subscriptions) == [
         "homeassistant/device/dev-1/ceiling_fan/command",
-        "homeassistant/device/dev-1/ceiling_fan/percentage_command",
+        "homeassistant/device/dev-1/ceiling_fan/command/percentage",
     ]
 
 
@@ -327,10 +327,10 @@ async def test_on_event_subscribes_to_every_enabled_command_topic() -> None:
 
     assert list(provider.subscriptions) == [
         "homeassistant/device/dev-1/ceiling_fan/command",
-        "homeassistant/device/dev-1/ceiling_fan/percentage_command",
-        "homeassistant/device/dev-1/ceiling_fan/preset_mode_command",
-        "homeassistant/device/dev-1/ceiling_fan/oscillation_command",
-        "homeassistant/device/dev-1/ceiling_fan/direction_command",
+        "homeassistant/device/dev-1/ceiling_fan/command/percentage",
+        "homeassistant/device/dev-1/ceiling_fan/command/preset_mode",
+        "homeassistant/device/dev-1/ceiling_fan/command/oscillation",
+        "homeassistant/device/dev-1/ceiling_fan/command/direction",
     ]
 
 
@@ -368,7 +368,7 @@ async def test_on_event_subscribes_once_for_multiple_callbacks() -> None:
 
     assert provider.subscriptions == {
         "homeassistant/device/dev-1/ceiling_fan/command": [fan._dispatch_command],
-        "homeassistant/device/dev-1/ceiling_fan/percentage_command": [
+        "homeassistant/device/dev-1/ceiling_fan/command/percentage": [
             fan._dispatch_percentage
         ],
     }
@@ -418,16 +418,16 @@ async def test_dispatch_delivers_percentage_event() -> None:
     await fan.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/percentage_command", "60"
+        "homeassistant/device/dev-1/ceiling_fan/command/percentage", "60"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/percentage_command", "fast"
+        "homeassistant/device/dev-1/ceiling_fan/command/percentage", "fast"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/percentage_command", "nan"
+        "homeassistant/device/dev-1/ceiling_fan/command/percentage", "nan"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/percentage_command", "101"
+        "homeassistant/device/dev-1/ceiling_fan/command/percentage", "101"
     )
 
     assert len(received) == 4
@@ -448,13 +448,13 @@ async def test_dispatch_delivers_preset_mode_event() -> None:
     await fan.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/preset_mode_command", "auto"
+        "homeassistant/device/dev-1/ceiling_fan/command/preset_mode", "auto"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/preset_mode_command", "reset_percentage"
+        "homeassistant/device/dev-1/ceiling_fan/command/preset_mode", "reset_percentage"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/preset_mode_command", "turbo"
+        "homeassistant/device/dev-1/ceiling_fan/command/preset_mode", "turbo"
     )
 
     assert len(received) == 3
@@ -478,10 +478,10 @@ async def test_dispatch_preset_mode_uses_custom_modes() -> None:
     await fan.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/preset_mode_command", "high"
+        "homeassistant/device/dev-1/ceiling_fan/command/preset_mode", "high"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/preset_mode_command", "auto"
+        "homeassistant/device/dev-1/ceiling_fan/command/preset_mode", "auto"
     )
 
     assert [event.state for event in received] == ["high", None]
@@ -494,13 +494,13 @@ async def test_dispatch_delivers_oscillation_event() -> None:
     await fan.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/oscillation_command", "oscillate_on"
+        "homeassistant/device/dev-1/ceiling_fan/command/oscillation", "oscillate_on"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/oscillation_command", "oscillate_off"
+        "homeassistant/device/dev-1/ceiling_fan/command/oscillation", "oscillate_off"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/oscillation_command", "maybe"
+        "homeassistant/device/dev-1/ceiling_fan/command/oscillation", "maybe"
     )
 
     assert len(received) == 3
@@ -519,13 +519,13 @@ async def test_dispatch_delivers_direction_event() -> None:
     await fan.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/direction_command", "forward"
+        "homeassistant/device/dev-1/ceiling_fan/command/direction", "forward"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/direction_command", "reverse"
+        "homeassistant/device/dev-1/ceiling_fan/command/direction", "reverse"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/ceiling_fan/direction_command", "sideways"
+        "homeassistant/device/dev-1/ceiling_fan/command/direction", "sideways"
     )
 
     assert len(received) == 3
@@ -591,8 +591,8 @@ async def test_discovery_config_defaults() -> None:
         "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
-        "pct_stat_t": "~/ceiling_fan/percentage_state",
-        "pct_cmd_t": "~/ceiling_fan/percentage_command",
+        "pct_stat_t": "~/ceiling_fan/state/percentage",
+        "pct_cmd_t": "~/ceiling_fan/command/percentage",
     }
 
 
@@ -609,8 +609,8 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
         "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
-        "pct_stat_t": "~/ceiling_fan/percentage_state",
-        "pct_cmd_t": "~/ceiling_fan/percentage_command",
+        "pct_stat_t": "~/ceiling_fan/state/percentage",
+        "pct_cmd_t": "~/ceiling_fan/command/percentage",
         "name": "Ceiling fan",
         "dev_cla": "ceiling",
     }
@@ -632,12 +632,12 @@ async def test_discovery_config_includes_custom_payloads() -> None:
         "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
-        "pct_stat_t": "~/ceiling_fan/percentage_state",
-        "pct_cmd_t": "~/ceiling_fan/percentage_command",
+        "pct_stat_t": "~/ceiling_fan/state/percentage",
+        "pct_cmd_t": "~/ceiling_fan/command/percentage",
         "pl_on": "1",
         "pl_off": "0",
-        "osc_stat_t": "~/ceiling_fan/oscillation_state",
-        "osc_cmd_t": "~/ceiling_fan/oscillation_command",
+        "osc_stat_t": "~/ceiling_fan/state/oscillation",
+        "osc_cmd_t": "~/ceiling_fan/command/oscillation",
         "pl_osc_on": "yes",
         "pl_osc_off": "no",
     }
@@ -657,14 +657,14 @@ async def test_discovery_config_with_all_features_enabled() -> None:
         "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
-        "pct_stat_t": "~/ceiling_fan/percentage_state",
-        "pct_cmd_t": "~/ceiling_fan/percentage_command",
-        "pr_mode_stat_t": "~/ceiling_fan/preset_mode_state",
-        "pr_mode_cmd_t": "~/ceiling_fan/preset_mode_command",
-        "osc_stat_t": "~/ceiling_fan/oscillation_state",
-        "osc_cmd_t": "~/ceiling_fan/oscillation_command",
-        "dir_stat_t": "~/ceiling_fan/direction_state",
-        "dir_cmd_t": "~/ceiling_fan/direction_command",
+        "pct_stat_t": "~/ceiling_fan/state/percentage",
+        "pct_cmd_t": "~/ceiling_fan/command/percentage",
+        "pr_mode_stat_t": "~/ceiling_fan/state/preset_mode",
+        "pr_mode_cmd_t": "~/ceiling_fan/command/preset_mode",
+        "osc_stat_t": "~/ceiling_fan/state/oscillation",
+        "osc_cmd_t": "~/ceiling_fan/command/oscillation",
+        "dir_stat_t": "~/ceiling_fan/state/direction",
+        "dir_cmd_t": "~/ceiling_fan/command/direction",
     }
 
 
@@ -702,10 +702,10 @@ async def test_discovery_config_includes_custom_modes_and_speed_range() -> None:
         "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
-        "pct_stat_t": "~/ceiling_fan/percentage_state",
-        "pct_cmd_t": "~/ceiling_fan/percentage_command",
-        "pr_mode_stat_t": "~/ceiling_fan/preset_mode_state",
-        "pr_mode_cmd_t": "~/ceiling_fan/preset_mode_command",
+        "pct_stat_t": "~/ceiling_fan/state/percentage",
+        "pct_cmd_t": "~/ceiling_fan/command/percentage",
+        "pr_mode_stat_t": "~/ceiling_fan/state/preset_mode",
+        "pr_mode_cmd_t": "~/ceiling_fan/command/preset_mode",
         "pr_modes": ["low", "medium", "high"],
         "pl_rst_pct": "speed",
         "spd_rng_min": 0,
@@ -721,8 +721,8 @@ async def test_discovery_config_includes_optimistic() -> None:
         "p": "fan",
         "stat_t": "~/ceiling_fan/state",
         "cmd_t": "~/ceiling_fan/command",
-        "pct_stat_t": "~/ceiling_fan/percentage_state",
-        "pct_cmd_t": "~/ceiling_fan/percentage_command",
+        "pct_stat_t": "~/ceiling_fan/state/percentage",
+        "pct_cmd_t": "~/ceiling_fan/command/percentage",
         "opt": True,
     }
 

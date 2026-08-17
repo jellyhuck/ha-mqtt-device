@@ -63,7 +63,19 @@ class Entity:
     @property
     def state_topic(self) -> str:
         """State topic as ``~`` shorthand, ``~/<unique_id>/state``."""
-        return f"~/{self.unique_id}/state"
+        return self.state_topic_for(self.unique_id)
+
+    @staticmethod
+    def command_topic_for(unique_id: str, suffix: str | None = None) -> str:
+        """Build a command topic for ``unique_id`` and an optional suffix."""
+        topic = f"~/{unique_id}/command"
+        return f"{topic}/{suffix}" if suffix else topic
+
+    @staticmethod
+    def state_topic_for(unique_id: str, suffix: str | None = None) -> str:
+        """Build a state topic for ``unique_id`` and an optional suffix."""
+        topic = f"~/{unique_id}/state"
+        return f"{topic}/{suffix}" if suffix else topic
 
     def bind(self, device: Device) -> None:
         """Bind this entity to ``device``, giving it access to provider and info.

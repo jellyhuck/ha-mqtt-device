@@ -42,7 +42,7 @@ class Scene(Entity):
     @property
     def command_topic(self) -> str:
         """Command topic as ``~`` shorthand."""
-        return f"~/{self.unique_id}/command"
+        return Entity.command_topic_for(self.unique_id)
 
     async def activate(self) -> None:
         """Publish the configured payload to activate the scene."""

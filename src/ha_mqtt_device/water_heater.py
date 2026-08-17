@@ -98,32 +98,32 @@ class WaterHeater(Entity):
     @property
     def current_temperature_topic(self) -> str:
         """Current-temperature state topic."""
-        return f"~/{self.unique_id}/state/current_temperature"
+        return Entity.state_topic_for(self.unique_id, "current_temperature")
 
     @property
     def temperature_state_topic(self) -> str:
         """Target-temperature state topic."""
-        return f"~/{self.unique_id}/state/temperature"
+        return Entity.state_topic_for(self.unique_id, "temperature")
 
     @property
     def temperature_command_topic(self) -> str:
         """Target-temperature command topic."""
-        return f"~/{self.unique_id}/command/temperature"
+        return Entity.command_topic_for(self.unique_id, "temperature")
 
     @property
     def mode_state_topic(self) -> str:
         """Operation-mode state topic."""
-        return f"~/{self.unique_id}/state/mode"
+        return Entity.state_topic_for(self.unique_id, "mode")
 
     @property
     def mode_command_topic(self) -> str:
         """Operation-mode command topic."""
-        return f"~/{self.unique_id}/command/mode"
+        return Entity.command_topic_for(self.unique_id, "mode")
 
     @property
     def power_command_topic(self) -> str:
         """Optional power command topic."""
-        return f"~/{self.unique_id}/command/power"
+        return Entity.command_topic_for(self.unique_id, "power")
 
     async def set_current_temperature(self, temperature: float) -> None:
         """Publish the current water temperature."""

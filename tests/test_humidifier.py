@@ -104,7 +104,7 @@ async def test_set_target_humidity_publishes_to_topic() -> None:
     await humidifier.set_target_humidity(50)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/bedroom/target_humidity", "50")
+        ("homeassistant/device/dev-1/bedroom/state/target_humidity", "50")
     ]
 
 
@@ -115,7 +115,7 @@ async def test_set_target_humidity_publishes_float() -> None:
     await humidifier.set_target_humidity(50.5)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/bedroom/target_humidity", "50.5")
+        ("homeassistant/device/dev-1/bedroom/state/target_humidity", "50.5")
     ]
 
 
@@ -163,9 +163,9 @@ async def test_topics_shorthand() -> None:
 
     assert humidifier.state_topic == "~/bedroom/state"
     assert humidifier.command_topic == "~/bedroom/command"
-    assert humidifier.target_humidity_state_topic == "~/bedroom/target_humidity"
+    assert humidifier.target_humidity_state_topic == "~/bedroom/state/target_humidity"
     assert (
-        humidifier.target_humidity_command_topic == "~/bedroom/target_humidity_command"
+        humidifier.target_humidity_command_topic == "~/bedroom/command/target_humidity"
     )
 
 
@@ -177,7 +177,7 @@ async def test_on_event_subscribes_to_both_resolved_command_topics() -> None:
 
     assert list(provider.subscriptions) == [
         "homeassistant/device/dev-1/bedroom/command",
-        "homeassistant/device/dev-1/bedroom/target_humidity_command",
+        "homeassistant/device/dev-1/bedroom/command/target_humidity",
     ]
 
 
@@ -210,7 +210,7 @@ async def test_on_event_subscribes_once_for_multiple_callbacks() -> None:
 
     assert provider.subscriptions == {
         "homeassistant/device/dev-1/bedroom/command": [humidifier._dispatch_command],
-        "homeassistant/device/dev-1/bedroom/target_humidity_command": [
+        "homeassistant/device/dev-1/bedroom/command/target_humidity": [
             humidifier._dispatch_target_humidity
         ],
     }
@@ -270,14 +270,14 @@ async def test_dispatch_delivers_target_humidity_event() -> None:
     await humidifier.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/bedroom/target_humidity_command", "50"
+        "homeassistant/device/dev-1/bedroom/command/target_humidity", "50"
     )
 
     assert len(received) == 1
     event = received[0]
     assert event.event_type == "target_humidity"
     assert event.topic_type == "target_humidity_command_topic"
-    assert event.topic == "homeassistant/device/dev-1/bedroom/target_humidity_command"
+    assert event.topic == "homeassistant/device/dev-1/bedroom/command/target_humidity"
     assert event.message == "50"
     assert event.state == "50"
 
@@ -289,10 +289,10 @@ async def test_dispatch_target_humidity_unknown_payload_has_null_state() -> None
     await humidifier.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/bedroom/target_humidity_command", "high"
+        "homeassistant/device/dev-1/bedroom/command/target_humidity", "high"
     )
     await provider.deliver(
-        "homeassistant/device/dev-1/bedroom/target_humidity_command", ""
+        "homeassistant/device/dev-1/bedroom/command/target_humidity", ""
     )
 
     assert [event.state for event in received] == [None, None]
@@ -305,7 +305,7 @@ async def test_dispatch_decodes_utf8_payload() -> None:
     await humidifier.on_event(collector(received))
 
     await provider.deliver(
-        "homeassistant/device/dev-1/bedroom/target_humidity_command", b"50"
+        "homeassistant/device/dev-1/bedroom/command/target_humidity", b"50"
     )
 
     assert received[0].message == "50"
@@ -354,8 +354,8 @@ async def test_discovery_config_defaults() -> None:
         "p": "humidifier",
         "stat_t": "~/bedroom/state",
         "cmd_t": "~/bedroom/command",
-        "hum_stat_t": "~/bedroom/target_humidity",
-        "hum_cmd_t": "~/bedroom/target_humidity_command",
+        "hum_stat_t": "~/bedroom/state/target_humidity",
+        "hum_cmd_t": "~/bedroom/command/target_humidity",
     }
 
 
@@ -389,8 +389,8 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
         "p": "humidifier",
         "stat_t": "~/bedroom/state",
         "cmd_t": "~/bedroom/command",
-        "hum_stat_t": "~/bedroom/target_humidity",
-        "hum_cmd_t": "~/bedroom/target_humidity_command",
+        "hum_stat_t": "~/bedroom/state/target_humidity",
+        "hum_cmd_t": "~/bedroom/command/target_humidity",
         "name": "Bedroom humidifier",
         "dev_cla": "humidifier",
     }
@@ -409,8 +409,8 @@ async def test_discovery_config_includes_custom_payloads() -> None:
         "p": "humidifier",
         "stat_t": "~/bedroom/state",
         "cmd_t": "~/bedroom/command",
-        "hum_stat_t": "~/bedroom/target_humidity",
-        "hum_cmd_t": "~/bedroom/target_humidity_command",
+        "hum_stat_t": "~/bedroom/state/target_humidity",
+        "hum_cmd_t": "~/bedroom/command/target_humidity",
         "pl_on": "1",
         "pl_off": "0",
     }
@@ -429,8 +429,8 @@ async def test_discovery_config_includes_humidity_range() -> None:
         "p": "humidifier",
         "stat_t": "~/bedroom/state",
         "cmd_t": "~/bedroom/command",
-        "hum_stat_t": "~/bedroom/target_humidity",
-        "hum_cmd_t": "~/bedroom/target_humidity_command",
+        "hum_stat_t": "~/bedroom/state/target_humidity",
+        "hum_cmd_t": "~/bedroom/command/target_humidity",
         "min_hum": 30,
         "max_hum": 80,
     }
@@ -446,8 +446,8 @@ async def test_discovery_config_includes_optimistic() -> None:
         "p": "humidifier",
         "stat_t": "~/bedroom/state",
         "cmd_t": "~/bedroom/command",
-        "hum_stat_t": "~/bedroom/target_humidity",
-        "hum_cmd_t": "~/bedroom/target_humidity_command",
+        "hum_stat_t": "~/bedroom/state/target_humidity",
+        "hum_cmd_t": "~/bedroom/command/target_humidity",
         "opt": True,
     }
 

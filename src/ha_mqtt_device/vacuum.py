@@ -111,22 +111,22 @@ class Vacuum(Entity):
     @property
     def command_topic(self) -> str:
         """Basic command topic as ``~`` shorthand."""
-        return f"~/{self.unique_id}/command"
+        return Entity.command_topic_for(self.unique_id)
 
     @property
     def fan_speed_topic(self) -> str:
         """Fan speed command topic as ``~`` shorthand."""
-        return f"~/{self.unique_id}/command/fan_speed"
+        return Entity.command_topic_for(self.unique_id, "fan_speed")
 
     @property
     def send_command_topic(self) -> str:
         """Custom command topic as ``~`` shorthand."""
-        return f"~/{self.unique_id}/command/send"
+        return Entity.command_topic_for(self.unique_id, "send")
 
     @property
     def clean_segments_topic(self) -> str:
         """Clean-segments command topic as ``~`` shorthand."""
-        return f"~/{self.unique_id}/command/clean_segments"
+        return Entity.command_topic_for(self.unique_id, "clean_segments")
 
     async def set_state(
         self,

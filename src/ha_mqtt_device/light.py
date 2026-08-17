@@ -52,14 +52,16 @@ class Light(Entity):
 
     @property
     def power_state_topic(self) -> str:
-        return f"~/{self.unique_id}/state/power"
+        return Entity.state_topic_for(self.unique_id, "power")
 
     @property
     def command_topic(self) -> str:
-        return f"~/{self.unique_id}/command/power"
+        return Entity.command_topic_for(self.unique_id, "power")
 
     def _topic(self, name: str, command: bool = False) -> str:
-        return f"~/{self.unique_id}/{'command' if command else 'state'}/{name}"
+        return (Entity.command_topic_for if command else Entity.state_topic_for)(
+            self.unique_id, name
+        )
 
     @property
     def brightness_state_topic(self) -> str:

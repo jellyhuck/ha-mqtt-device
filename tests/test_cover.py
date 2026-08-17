@@ -127,8 +127,8 @@ async def test_set_position_publishes_stringified_value_to_position_topic() -> N
     await cover.set_position(0)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/blinds/position", "75"),
-        ("homeassistant/device/dev-1/blinds/position", "0"),
+        ("homeassistant/device/dev-1/blinds/state/position", "75"),
+        ("homeassistant/device/dev-1/blinds/state/position", "0"),
     ]
 
 
@@ -153,7 +153,7 @@ async def test_dispatch_rejects_position_outside_documented_range() -> None:
     received: list[Event] = []
     await cover.on_event(collector(received))
 
-    await provider.deliver("homeassistant/device/dev-1/blinds/set_position", "101")
+    await provider.deliver("homeassistant/device/dev-1/blinds/command/position", "101")
 
     assert received[0].state is None
 
@@ -173,13 +173,13 @@ async def test_command_topic_shorthand() -> None:
 async def test_position_topic_shorthand() -> None:
     _, cover = make_bound(RecordingProvider(), unique_id="blinds")
 
-    assert cover.position_topic == "~/blinds/position"
+    assert cover.position_topic == "~/blinds/state/position"
 
 
 async def test_set_position_topic_shorthand() -> None:
     _, cover = make_bound(RecordingProvider(), unique_id="blinds")
 
-    assert cover.set_position_topic == "~/blinds/set_position"
+    assert cover.set_position_topic == "~/blinds/command/position"
 
 
 async def test_on_event_subscribes_to_resolved_command_and_set_position_topics() -> (
@@ -192,7 +192,7 @@ async def test_on_event_subscribes_to_resolved_command_and_set_position_topics()
 
     assert list(provider.subscriptions) == [
         "homeassistant/device/dev-1/blinds/command",
-        "homeassistant/device/dev-1/blinds/set_position",
+        "homeassistant/device/dev-1/blinds/command/position",
     ]
 
 
@@ -212,7 +212,7 @@ async def test_on_event_subscribes_once_for_multiple_callbacks() -> None:
 
     assert provider.subscriptions == {
         "homeassistant/device/dev-1/blinds/command": [cover._dispatch_command],
-        "homeassistant/device/dev-1/blinds/set_position": [
+        "homeassistant/device/dev-1/blinds/command/position": [
             cover._dispatch_set_position
         ],
     }
@@ -265,13 +265,13 @@ async def test_dispatch_delivers_set_position_event() -> None:
     received: list[Event] = []
     await cover.on_event(collector(received))
 
-    await provider.deliver("homeassistant/device/dev-1/blinds/set_position", "75")
+    await provider.deliver("homeassistant/device/dev-1/blinds/command/position", "75")
 
     assert len(received) == 1
     event = received[0]
     assert event.event_type == "set_position"
     assert event.topic_type == "set_position_topic"
-    assert event.topic == "homeassistant/device/dev-1/blinds/set_position"
+    assert event.topic == "homeassistant/device/dev-1/blinds/command/position"
     assert event.message == "75"
     assert event.state == "75"
 
@@ -283,8 +283,8 @@ async def test_dispatch_delivers_unknown_payloads_with_null_state() -> None:
     await cover.on_event(collector(received))
 
     await provider.deliver("homeassistant/device/dev-1/blinds/command", "TOGGLE")
-    await provider.deliver("homeassistant/device/dev-1/blinds/set_position", "RESET")
-    await provider.deliver("homeassistant/device/dev-1/blinds/set_position", "12.5")
+    await provider.deliver("homeassistant/device/dev-1/blinds/command/position", "RESET")
+    await provider.deliver("homeassistant/device/dev-1/blinds/command/position", "12.5")
 
     assert len(received) == 3
     assert [event.state for event in received] == [None, None, None]
@@ -315,7 +315,7 @@ async def test_dispatch_invokes_all_callbacks() -> None:
     await cover.on_event(collector(first))
     await cover.on_event(collector(second))
 
-    await provider.deliver("homeassistant/device/dev-1/blinds/set_position", "50")
+    await provider.deliver("homeassistant/device/dev-1/blinds/command/position", "50")
 
     assert len(first) == 1
     assert len(second) == 1
@@ -350,8 +350,8 @@ async def test_discovery_config_defaults() -> None:
         "p": "cover",
         "stat_t": "~/blinds/state",
         "cmd_t": "~/blinds/command",
-        "pos_t": "~/blinds/position",
-        "set_pos_t": "~/blinds/set_position",
+        "pos_t": "~/blinds/state/position",
+        "set_pos_t": "~/blinds/command/position",
     }
 
 
@@ -368,8 +368,8 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
         "p": "cover",
         "stat_t": "~/blinds/state",
         "cmd_t": "~/blinds/command",
-        "pos_t": "~/blinds/position",
-        "set_pos_t": "~/blinds/set_position",
+        "pos_t": "~/blinds/state/position",
+        "set_pos_t": "~/blinds/command/position",
         "name": "Blinds",
         "dev_cla": "blind",
     }
@@ -389,8 +389,8 @@ async def test_discovery_config_includes_custom_payloads() -> None:
         "p": "cover",
         "stat_t": "~/blinds/state",
         "cmd_t": "~/blinds/command",
-        "pos_t": "~/blinds/position",
-        "set_pos_t": "~/blinds/set_position",
+        "pos_t": "~/blinds/state/position",
+        "set_pos_t": "~/blinds/command/position",
         "pl_open": "UP",
         "pl_cls": "DOWN",
         "pl_stop": "HALT",
@@ -413,8 +413,8 @@ async def test_discovery_config_includes_custom_state_payloads() -> None:
         "p": "cover",
         "stat_t": "~/blinds/state",
         "cmd_t": "~/blinds/command",
-        "pos_t": "~/blinds/position",
-        "set_pos_t": "~/blinds/set_position",
+        "pos_t": "~/blinds/state/position",
+        "set_pos_t": "~/blinds/command/position",
         "stat_open": "OPENED",
         "stat_opening": "OPENING_",
         "stat_clsd": "SHUT",
@@ -433,8 +433,8 @@ async def test_discovery_config_includes_position_bounds() -> None:
         "p": "cover",
         "stat_t": "~/blinds/state",
         "cmd_t": "~/blinds/command",
-        "pos_t": "~/blinds/position",
-        "set_pos_t": "~/blinds/set_position",
+        "pos_t": "~/blinds/state/position",
+        "set_pos_t": "~/blinds/command/position",
         "pos_open": 50,
         "pos_clsd": 1,
     }
@@ -448,8 +448,8 @@ async def test_discovery_config_includes_optimistic() -> None:
         "p": "cover",
         "stat_t": "~/blinds/state",
         "cmd_t": "~/blinds/command",
-        "pos_t": "~/blinds/position",
-        "set_pos_t": "~/blinds/set_position",
+        "pos_t": "~/blinds/state/position",
+        "set_pos_t": "~/blinds/command/position",
         "opt": True,
     }
 

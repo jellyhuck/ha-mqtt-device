@@ -144,17 +144,17 @@ class Cover(Entity):
     @property
     def command_topic(self) -> str:
         """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return f"~/{self.unique_id}/command"
+        return Entity.command_topic_for(self.unique_id)
 
     @property
     def position_topic(self) -> str:
         """Position topic as ``~`` shorthand, ``~/<unique_id>/position``."""
-        return f"~/{self.unique_id}/position"
+        return Entity.state_topic_for(self.unique_id, "position")
 
     @property
     def set_position_topic(self) -> str:
         """Set-position topic as ``~`` shorthand, ``~/<unique_id>/set_position``."""
-        return f"~/{self.unique_id}/set_position"
+        return Entity.command_topic_for(self.unique_id, "position")
 
     async def set_state(self, state: str) -> None:
         """Publish the cover's state.

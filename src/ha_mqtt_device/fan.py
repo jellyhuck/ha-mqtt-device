@@ -183,47 +183,47 @@ class Fan(Entity):
     @property
     def command_topic(self) -> str:
         """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return f"~/{self.unique_id}/command"
+        return Entity.command_topic_for(self.unique_id)
 
     @property
     def percentage_state_topic(self) -> str:
         """Percentage state topic as ``~`` shorthand, ``~/<unique_id>/percentage_state``."""
-        return f"~/{self.unique_id}/percentage_state"
+        return Entity.state_topic_for(self.unique_id, "percentage")
 
     @property
     def percentage_command_topic(self) -> str:
         """Percentage command topic, ``~/<unique_id>/percentage_command``."""
-        return f"~/{self.unique_id}/percentage_command"
+        return Entity.command_topic_for(self.unique_id, "percentage")
 
     @property
     def preset_mode_state_topic(self) -> str:
         """Preset-mode state topic, ``~/<unique_id>/preset_mode_state``."""
-        return f"~/{self.unique_id}/preset_mode_state"
+        return Entity.state_topic_for(self.unique_id, "preset_mode")
 
     @property
     def preset_mode_command_topic(self) -> str:
         """Preset-mode command topic, ``~/<unique_id>/preset_mode_command``."""
-        return f"~/{self.unique_id}/preset_mode_command"
+        return Entity.command_topic_for(self.unique_id, "preset_mode")
 
     @property
     def oscillation_state_topic(self) -> str:
         """Oscillation state topic, ``~/<unique_id>/oscillation_state``."""
-        return f"~/{self.unique_id}/oscillation_state"
+        return Entity.state_topic_for(self.unique_id, "oscillation")
 
     @property
     def oscillation_command_topic(self) -> str:
         """Oscillation command topic, ``~/<unique_id>/oscillation_command``."""
-        return f"~/{self.unique_id}/oscillation_command"
+        return Entity.command_topic_for(self.unique_id, "oscillation")
 
     @property
     def direction_state_topic(self) -> str:
         """Direction state topic, ``~/<unique_id>/direction_state``."""
-        return f"~/{self.unique_id}/direction_state"
+        return Entity.state_topic_for(self.unique_id, "direction")
 
     @property
     def direction_command_topic(self) -> str:
         """Direction command topic, ``~/<unique_id>/direction_command``."""
-        return f"~/{self.unique_id}/direction_command"
+        return Entity.command_topic_for(self.unique_id, "direction")
 
     async def set_state(self, state: bool) -> None:
         """Publish the fan's on/off state.
