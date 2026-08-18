@@ -291,7 +291,7 @@ class Light(Entity):
                     name: (int(value) if event_type == "rgb" else value)
                     for name, value in zip(names, values)
                 }
-            except ValueError, KeyError:
+            except (ValueError, KeyError):
                 return None
         if event_type == "effect":
             return (

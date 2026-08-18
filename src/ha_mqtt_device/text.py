@@ -91,7 +91,7 @@ class Text(Entity):
         state: str | None
         try:
             self._validate_value(payload)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             state = None
         else:
             state = payload

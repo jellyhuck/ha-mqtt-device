@@ -155,7 +155,7 @@ class InfraredEmitter(Entity):
             return None
         try:
             _validate_signal(data)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return None
         result: dict[str, Any] = {"timings": data["timings"]}
         if "modulation" in data:

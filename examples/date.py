@@ -83,7 +83,7 @@ def run_cli(
     logging.basicConfig(level=logging.INFO)
     try:
         asyncio.run(main(host=host, port=port, username=username, password=password))
-    except KeyboardInterrupt, asyncio.CancelledError:
+    except (KeyboardInterrupt, asyncio.CancelledError):
         logger.info("Interrupted")
 
 
