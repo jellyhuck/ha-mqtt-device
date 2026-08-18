@@ -102,7 +102,7 @@ wheels = [
 
 [[package]]
 name = "ha-mqtt-device"
-version = "1.0.0rc2"
+version = "1.0.0"
 source = { editable = "." }
 
 [package.optional-dependencies]

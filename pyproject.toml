@@ -1,11 +1,11 @@
 [project]
 name = "ha-mqtt-device"
-version = "1.0.0-rc2"
+version = "1.0.0"
 description = "Thin library for Home Assistant devices discoverable via MQTT device discovery"
 readme = "README.md"
 license = "MIT"
 authors = [
-    { name = "jellyhuck", email = "jellyhuck@gmail.com" }
+    { name = "jellyhuck", email = "64114609+jellyhuck@users.noreply.github.com" }
 ]
 requires-python = ">=3.11"
 dependencies = []
