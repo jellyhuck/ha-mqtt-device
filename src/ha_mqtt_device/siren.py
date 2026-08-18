@@ -73,15 +73,15 @@ class Siren(Entity):
         volume_level: float | None = None,
     ) -> None:
         """Publish a siren state and optional turn-on parameters."""
-        device = self._require_device()
         if not self.state_enabled:
             raise ValueError("state reporting is disabled")
         payload: dict[str, Any] = {
             "state": self.payload_on if state else self.payload_off
         }
         self._add_parameters(payload, tone, duration, volume_level)
-        await device.provider.publish(
-            device.info.resolve_topic(self.state_topic), json.dumps(payload)
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True),
+            json.dumps(payload),
         )
 
     async def set_tone(self, tone: str) -> None:
@@ -104,9 +104,10 @@ class Siren(Entity):
         await self._publish_command({"volume_level": volume_level})
 
     async def _publish_command(self, payload: dict[str, Any]) -> None:
-        device = self._require_device()
-        await device.provider.publish(
-            device.info.resolve_topic(self.command_topic), json.dumps(payload)
+        self._require_device()
+        await self._publish(
+            self._register_publish_topic(self.command_topic, retain=False),
+            json.dumps(payload),
         )
 
     async def on_event(self, callback: EventCallback) -> None:

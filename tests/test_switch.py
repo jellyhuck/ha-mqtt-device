@@ -44,8 +44,8 @@ async def test_set_state_publishes_payloads_to_state_topic() -> None:
     await switch.set_state(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/relay_1/state", "ON", False),
-        ("homeassistant/device/dev-1/relay_1/state", "OFF", False),
+        ("homeassistant/device/dev-1/relay_1/state", "ON", True),
+        ("homeassistant/device/dev-1/relay_1/state", "OFF", True),
     ]
 
 
@@ -59,8 +59,8 @@ async def test_set_state_uses_custom_payloads() -> None:
     await switch.set_state(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/relay_1/state", "1", False),
-        ("homeassistant/device/dev-1/relay_1/state", "0", False),
+        ("homeassistant/device/dev-1/relay_1/state", "1", True),
+        ("homeassistant/device/dev-1/relay_1/state", "0", True),
     ]
 
 

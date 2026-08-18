@@ -26,7 +26,7 @@ async def test_state_and_discovery_defaults() -> None:
     await panel.set_state("armed_home")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/alarm/state", "armed_home", False)
+        ("homeassistant/device/dev-1/alarm/state", "armed_home", True)
     ]
     assert panel.discovery_config() == {
         "uniq_id": "alarm",

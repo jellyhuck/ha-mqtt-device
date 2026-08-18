@@ -44,8 +44,8 @@ async def test_set_state_publishes_plain_activity_to_state_topic() -> None:
     await mower.set_state("docked")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/mower_1/state", "mowing", False),
-        ("homeassistant/device/dev-1/mower_1/state", "docked", False),
+        ("homeassistant/device/dev-1/mower_1/state", "mowing", True),
+        ("homeassistant/device/dev-1/mower_1/state", "docked", True),
     ]
 
 
@@ -67,8 +67,8 @@ async def test_set_state_uses_custom_state_payloads() -> None:
     await mower.set_state("docked")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/mower_1/state", "MOWING", False),
-        ("homeassistant/device/dev-1/mower_1/state", "DOCKED", False),
+        ("homeassistant/device/dev-1/mower_1/state", "MOWING", True),
+        ("homeassistant/device/dev-1/mower_1/state", "DOCKED", True),
     ]
 
 

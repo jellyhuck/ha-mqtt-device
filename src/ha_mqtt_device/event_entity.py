@@ -74,13 +74,13 @@ class EventEntity(Entity):
             ValueError: If ``event_type`` is not in :attr:`event_types`.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
         if event_type not in self.event_types:
             raise ValueError(
                 f"event_type {event_type!r} is not in event_types {self.event_types!r}"
             )
-        topic = device.info.resolve_topic(self.state_topic)
-        await device.provider.publish(topic, event_type)
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=False), event_type
+        )
 
     @property
     def state_topic(self) -> str:

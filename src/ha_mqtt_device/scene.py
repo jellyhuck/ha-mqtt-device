@@ -46,9 +46,9 @@ class Scene(Entity):
 
     async def activate(self) -> None:
         """Publish the configured payload to activate the scene."""
-        device = self._require_device()
-        await device.provider.publish(
-            device.info.resolve_topic(self.command_topic), self.payload_on
+        await self._publish(
+            self._register_publish_topic(self.command_topic, retain=False),
+            self.payload_on,
         )
 
     async def on_event(self, callback: EventCallback) -> None:

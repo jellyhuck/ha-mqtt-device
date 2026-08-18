@@ -26,8 +26,8 @@ async def test_topics_and_publish() -> None:
     await light.set_state(True)
     await light.set_brightness(50)
     assert provider.published == [
-        ("homeassistant/device/dev-1/lamp/state/power", "ON", False),
-        ("homeassistant/device/dev-1/lamp/state/brightness", "50", False),
+        ("homeassistant/device/dev-1/lamp/state/power", "ON", True),
+        ("homeassistant/device/dev-1/lamp/state/brightness", "50", True),
     ]
 
 

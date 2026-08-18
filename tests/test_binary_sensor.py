@@ -34,8 +34,8 @@ async def test_set_state_publishes_payloads_to_state_topic() -> None:
     await sensor.set_state(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/is_led_on/state", "ON", False),
-        ("homeassistant/device/dev-1/is_led_on/state", "OFF", False),
+        ("homeassistant/device/dev-1/is_led_on/state", "ON", True),
+        ("homeassistant/device/dev-1/is_led_on/state", "OFF", True),
     ]
 
 
@@ -49,8 +49,8 @@ async def test_set_state_uses_custom_payloads() -> None:
     await sensor.set_state(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/motion/state", "1", False),
-        ("homeassistant/device/dev-1/motion/state", "0", False),
+        ("homeassistant/device/dev-1/motion/state", "1", True),
+        ("homeassistant/device/dev-1/motion/state", "0", True),
     ]
 
 

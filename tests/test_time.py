@@ -28,9 +28,9 @@ async def test_set_state_serializes_time_values_deterministically() -> None:
     await entity.set_state("03:06:07")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/alarm/state", "03:04:00", False),
-        ("homeassistant/device/dev-1/alarm/state", "03:05:00", False),
-        ("homeassistant/device/dev-1/alarm/state", "03:06:07", False),
+        ("homeassistant/device/dev-1/alarm/state", "03:04:00", True),
+        ("homeassistant/device/dev-1/alarm/state", "03:05:00", True),
+        ("homeassistant/device/dev-1/alarm/state", "03:06:07", True),
     ]
 
 

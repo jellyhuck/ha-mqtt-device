@@ -48,7 +48,7 @@ async def test_state_publishes_documented_json_fields() -> None:
                     "update_percentage": 78,
                 }
             ),
-            False,
+            True,
         )
     ]
 
@@ -105,7 +105,7 @@ async def test_latest_version_and_install_publish_to_resolved_topics() -> None:
     await entity.install()
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/firmware/state/latest", "1.22.0", False),
+        ("homeassistant/device/dev-1/firmware/state/latest", "1.22.0", True),
         ("homeassistant/device/dev-1/firmware/command", "update_fw", False),
     ]
 

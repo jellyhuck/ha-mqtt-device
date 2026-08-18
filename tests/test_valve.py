@@ -43,7 +43,7 @@ async def test_default_discovery_and_state_commands() -> None:
     await valve.open()
     await valve.close()
     assert provider.published == [
-        ("homeassistant/device/dev-1/valve/state", "open", False),
+        ("homeassistant/device/dev-1/valve/state", "open", True),
         ("homeassistant/device/dev-1/valve/command", "OPEN", False),
         ("homeassistant/device/dev-1/valve/command", "CLOSE", False),
     ]

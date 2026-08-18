@@ -44,8 +44,8 @@ async def test_set_state_publishes_payloads_to_state_topic() -> None:
     await humidifier.set_state(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/bedroom/state", "ON", False),
-        ("homeassistant/device/dev-1/bedroom/state", "OFF", False),
+        ("homeassistant/device/dev-1/bedroom/state", "ON", True),
+        ("homeassistant/device/dev-1/bedroom/state", "OFF", True),
     ]
 
 
@@ -59,8 +59,8 @@ async def test_set_state_uses_custom_payloads() -> None:
     await humidifier.set_state(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/bedroom/state", "1", False),
-        ("homeassistant/device/dev-1/bedroom/state", "0", False),
+        ("homeassistant/device/dev-1/bedroom/state", "1", True),
+        ("homeassistant/device/dev-1/bedroom/state", "0", True),
     ]
 
 
@@ -78,7 +78,7 @@ async def test_set_target_humidity_publishes_to_topic() -> None:
     await humidifier.set_target_humidity(50)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/bedroom/state/target_humidity", "50", False)
+        ("homeassistant/device/dev-1/bedroom/state/target_humidity", "50", True)
     ]
 
 
@@ -89,7 +89,7 @@ async def test_set_target_humidity_publishes_float() -> None:
     await humidifier.set_target_humidity(50.5)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/bedroom/state/target_humidity", "50.5", False)
+        ("homeassistant/device/dev-1/bedroom/state/target_humidity", "50.5", True)
     ]
 
 

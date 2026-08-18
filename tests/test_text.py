@@ -23,7 +23,7 @@ async def test_set_state_validates_and_publishes_text() -> None:
     await text.set_state("hello")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/label/state", "hello", False)
+        ("homeassistant/device/dev-1/label/state", "hello", True)
     ]
     with pytest.raises(ValueError, match="length"):
         await text.set_state("x")

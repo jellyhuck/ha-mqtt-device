@@ -91,7 +91,6 @@ class Lock(Entity):
 
     async def set_state(self, state: str) -> None:
         """Publish a lock state using its configured state payload."""
-        device = self._require_device()
         if not self.state_enabled:
             raise ValueError("state reporting is disabled")
         if state == "unknown":
@@ -108,8 +107,9 @@ class Lock(Entity):
                 payload = states[state]
             except KeyError:
                 raise ValueError(f"unknown lock state {state!r}") from None
-        topic = device.info.resolve_topic(self.state_topic)
-        await device.provider.publish(topic, payload)
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True), payload
+        )
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for commands received from Home Assistant."""

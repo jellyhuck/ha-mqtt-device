@@ -46,9 +46,9 @@ async def test_set_state_publishes_iso_datetimes_to_state_topic() -> None:
     await entity.set_state(datetime(2024, 12, 31, 23, 59, 59, tzinfo=UTC))
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/alarm/state", "2024-02-14 10:30:00", False),
-        ("homeassistant/device/dev-1/alarm/state", "2024-02-14 10:30:00", False),
-        ("homeassistant/device/dev-1/alarm/state", "2024-12-31 23:59:59", False),
+        ("homeassistant/device/dev-1/alarm/state", "2024-02-14 10:30:00", True),
+        ("homeassistant/device/dev-1/alarm/state", "2024-02-14 10:30:00", True),
+        ("homeassistant/device/dev-1/alarm/state", "2024-12-31 23:59:59", True),
     ]
 
 
@@ -60,7 +60,7 @@ async def test_set_state_publishes_timezone_aware_datetime_verbatim() -> None:
     await entity.set_state(datetime(2024, 2, 14, 10, 30, 15, tzinfo=UTC))
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/alarm/state", "2024-02-14 10:30:15", False),
+        ("homeassistant/device/dev-1/alarm/state", "2024-02-14 10:30:15", True),
     ]
 
 

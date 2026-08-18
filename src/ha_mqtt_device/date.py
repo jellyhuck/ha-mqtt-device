@@ -94,10 +94,10 @@ class Date(Entity):
                 than a :class:`datetime.date`.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
         payload = self._date_payload(value)
-        topic = device.info.resolve_topic(self.state_topic)
-        await device.provider.publish(topic, payload)
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True), payload
+        )
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

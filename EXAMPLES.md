@@ -539,9 +539,9 @@ await update.install()
 
 HA Integration: [MQTT Tag Scanner](https://www.home-assistant.io/integrations/tag.mqtt/).
 
-[`TagScanner`](src/ha_mqtt_device/tag_scanner.py) uses Home Assistant's
-standalone `tag` discovery topic. An optional `node_id` must be a single path
-segment. `scan()` publishes a tag ID and `on_event()` receives scans. See [`examples/tag_scanner.py`](examples/tag_scanner.py).
+[`TagScanner`](src/ha_mqtt_device/tag_scanner.py) is included in the device
+discovery component map. `scan()` publishes a tag ID and `on_event()` receives
+scans. See [`examples/tag_scanner.py`](examples/tag_scanner.py).
 
 ```python
 from ha_mqtt_device import TagScanner

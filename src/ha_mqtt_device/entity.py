@@ -17,9 +17,10 @@ import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from ha_mqtt_device.publish_topic import PublishTopic
+
 if TYPE_CHECKING:
     from ha_mqtt_device.device import Device
-    from ha_mqtt_device.device_info import DeviceInfo
 
 __all__ = ["Entity"]
 
@@ -47,12 +48,12 @@ class Entity:
     #: The device this entity is bound to; set by :meth:`bind` when the entity
     #: is passed to the ``Device`` constructor.
     device: Device | None = field(default=None, init=False, repr=False)
+    _publish_topics: dict[str, PublishTopic] = field(
+        default_factory=dict, init=False, repr=False
+    )
 
     #: Home Assistant MQTT component name, e.g. ``"binary_sensor"``.
     component: ClassVar[str] = ""
-    #: Whether this entity publishes a standalone discovery message rather
-    #: than appearing in the device discovery payload's ``cmps`` mapping.
-    standalone_discovery: ClassVar[bool] = False
 
     def __post_init__(self) -> None:
         if not _UNIQUE_ID_RE.fullmatch(self.unique_id):
@@ -88,6 +89,37 @@ class Entity:
             )
         self.device = device
 
+    def _register_publish_topic(self, topic: str, *, retain: bool) -> PublishTopic:
+        """Register and return a resolved topic descriptor.
+
+        Raises:
+            ValueError: If the topic was already registered with another
+                retention policy.
+        """
+        device = self._require_device()
+        resolved_topic = device.info.resolve_topic(topic)
+        descriptor = PublishTopic(resolved_topic, retain)
+        existing = self._publish_topics.get(resolved_topic)
+        if existing is not None and existing.retain != retain:
+            raise ValueError(
+                f"topic {resolved_topic!r} was registered with conflicting "
+                "retention policies"
+            )
+        self._publish_topics[resolved_topic] = descriptor
+        return existing or descriptor
+
+    async def _publish(self, topic: PublishTopic, message: str | bytes) -> None:
+        """Publish a payload using a registered topic descriptor."""
+        device = self._require_device()
+        await device.provider.publish(topic.topic, message, retain=topic.retain)
+
+    async def _on_remove(self) -> None:
+        """Clear every retained topic registered by this entity."""
+        device = self._require_device()
+        for descriptor in self._publish_topics.values():
+            if descriptor.retain:
+                await device.provider.publish(descriptor.topic, "", retain=True)
+
     def _require_device(self) -> Device:
         """Return the bound device or raise a helpful error."""
         if self.device is None:
@@ -106,11 +138,3 @@ class Entity:
         if self.name is not None:
             config["name"] = self.name
         return config
-
-    def standalone_discovery_config(
-        self, info: DeviceInfo
-    ) -> tuple[str, dict[str, Any]]:
-        """Return a standalone discovery message for special entities."""
-        raise NotImplementedError(
-            f"{type(self).__name__} does not provide standalone discovery"
-        )

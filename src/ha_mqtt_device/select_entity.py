@@ -44,12 +44,11 @@ class SelectEntity(Entity):
 
     async def set_state(self, option: str) -> None:
         """Publish a selected option to the state topic."""
-        device = self._require_device()
         self._validate_option(option)
         if not self.state_enabled:
             raise ValueError("state reporting is disabled")
-        await device.provider.publish(
-            device.info.resolve_topic(self.state_topic), option
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True), option
         )
 
     async def on_event(self, callback: EventCallback) -> None:

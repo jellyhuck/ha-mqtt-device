@@ -103,11 +103,10 @@ class Valve(Entity):
 
     async def set_state(self, state: str) -> None:
         """Publish a valve state to the state topic."""
-        device = self._require_device()
         if state not in self._state_values:
             raise ValueError(f"unsupported valve state: {state!r}")
-        await device.provider.publish(
-            device.info.resolve_topic(self.state_topic), state
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True), state
         )
 
     async def set_position(self, position: float) -> None:
@@ -116,10 +115,9 @@ class Valve(Entity):
         Position publishing is available only when ``reports_position`` is
         enabled and accepts values within the configured closed/open range.
         """
-        device = self._require_device()
         self._validate_position(position)
-        await device.provider.publish(
-            device.info.resolve_topic(self.command_topic),
+        await self._publish(
+            self._register_publish_topic(self.command_topic, retain=False),
             self._number_payload(position),
         )
 
@@ -148,9 +146,9 @@ class Valve(Entity):
         await self._publish_command(self.payload_stop)
 
     async def _publish_command(self, payload: str) -> None:
-        device = self._require_device()
-        await device.provider.publish(
-            device.info.resolve_topic(self.command_topic), payload
+        self._require_device()
+        await self._publish(
+            self._register_publish_topic(self.command_topic, retain=False), payload
         )
 
     async def on_event(self, callback: EventCallback) -> None:

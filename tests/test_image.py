@@ -40,7 +40,7 @@ async def test_set_image_publishes_payload_verbatim() -> None:
     await image.set_image(payload)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/camera/image", payload, False)
+        ("homeassistant/device/dev-1/camera/image", payload, True)
     ]
 
 
@@ -52,7 +52,7 @@ async def test_set_image_publishes_verbatim_for_any_encoding() -> None:
     await image.set_image(payload)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/camera/image", payload, False)
+        ("homeassistant/device/dev-1/camera/image", payload, True)
     ]
 
 

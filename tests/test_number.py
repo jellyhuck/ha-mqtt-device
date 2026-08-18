@@ -45,9 +45,9 @@ async def test_set_state_publishes_stringified_values_to_state_topic() -> None:
     await number.set_state(21.5)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/dimmer/state", "75.0", False),
-        ("homeassistant/device/dev-1/dimmer/state", "42", False),
-        ("homeassistant/device/dev-1/dimmer/state", "21.5", False),
+        ("homeassistant/device/dev-1/dimmer/state", "75.0", True),
+        ("homeassistant/device/dev-1/dimmer/state", "42", True),
+        ("homeassistant/device/dev-1/dimmer/state", "21.5", True),
     ]
 
 

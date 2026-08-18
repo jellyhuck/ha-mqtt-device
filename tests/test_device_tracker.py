@@ -34,8 +34,8 @@ async def test_set_state_publishes_payloads_to_state_topic() -> None:
     await tracker.set_state(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/phone/state", "home", False),
-        ("homeassistant/device/dev-1/phone/state", "not_home", False),
+        ("homeassistant/device/dev-1/phone/state", "home", True),
+        ("homeassistant/device/dev-1/phone/state", "not_home", True),
     ]
 
 
@@ -49,8 +49,8 @@ async def test_set_state_uses_custom_payloads() -> None:
     await tracker.set_state(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/phone/state", "in", False),
-        ("homeassistant/device/dev-1/phone/state", "out", False),
+        ("homeassistant/device/dev-1/phone/state", "in", True),
+        ("homeassistant/device/dev-1/phone/state", "out", True),
     ]
 
 
@@ -73,7 +73,7 @@ async def test_set_location_publishes_json_report_to_state_topic() -> None:
         "latitude": 32.87336,
         "longitude": -117.22743,
     }
-    assert retain is False
+    assert retain is True
 
 
 async def test_set_location_includes_extra_fields() -> None:

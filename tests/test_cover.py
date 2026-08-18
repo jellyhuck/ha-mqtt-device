@@ -45,9 +45,9 @@ async def test_set_state_publishes_default_payloads_to_state_topic() -> None:
     await cover.set_state("closed")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/blinds/state", "open", False),
-        ("homeassistant/device/dev-1/blinds/state", "closing", False),
-        ("homeassistant/device/dev-1/blinds/state", "closed", False),
+        ("homeassistant/device/dev-1/blinds/state", "open", True),
+        ("homeassistant/device/dev-1/blinds/state", "closing", True),
+        ("homeassistant/device/dev-1/blinds/state", "closed", True),
     ]
 
 
@@ -64,8 +64,8 @@ async def test_set_state_uses_custom_state_payloads() -> None:
     await cover.set_state("closed")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/blinds/state", "OPENED", False),
-        ("homeassistant/device/dev-1/blinds/state", "SHUT", False),
+        ("homeassistant/device/dev-1/blinds/state", "OPENED", True),
+        ("homeassistant/device/dev-1/blinds/state", "SHUT", True),
     ]
 
 
@@ -101,8 +101,8 @@ async def test_set_position_publishes_stringified_value_to_position_topic() -> N
     await cover.set_position(0)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/blinds/state/position", "75", False),
-        ("homeassistant/device/dev-1/blinds/state/position", "0", False),
+        ("homeassistant/device/dev-1/blinds/state/position", "75", True),
+        ("homeassistant/device/dev-1/blinds/state/position", "0", True),
     ]
 
 

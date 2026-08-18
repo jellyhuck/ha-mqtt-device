@@ -58,9 +58,9 @@ async def test_publish_temperature_mode_and_power() -> None:
     await heater.set_power(True)
     await heater.set_power(False)
     assert provider.published == [
-        ("homeassistant/device/dev-1/boiler/state/current_temperature", "55.5", False),
-        ("homeassistant/device/dev-1/boiler/state/temperature", "60", False),
-        ("homeassistant/device/dev-1/boiler/state/mode", "eco", False),
+        ("homeassistant/device/dev-1/boiler/state/current_temperature", "55.5", True),
+        ("homeassistant/device/dev-1/boiler/state/temperature", "60", True),
+        ("homeassistant/device/dev-1/boiler/state/mode", "eco", True),
         ("homeassistant/device/dev-1/boiler/command/power", "ON", False),
         ("homeassistant/device/dev-1/boiler/command/power", "OFF", False),
     ]

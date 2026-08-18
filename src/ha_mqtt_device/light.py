@@ -119,13 +119,10 @@ class Light(Entity):
     def white_command_topic(self) -> str:
         return self._topic("white", True)
 
-    async def _publish(self, topic: str, payload: str) -> None:
-        device = self._require_device()
-        await device.provider.publish(device.info.resolve_topic(topic), payload)
-
     async def set_state(self, state: bool) -> None:
         await self._publish(
-            self.power_state_topic, self.payload_on if state else self.payload_off
+            self._register_publish_topic(self.power_state_topic, retain=True),
+            self.payload_on if state else self.payload_off,
         )
 
     async def set_brightness(self, brightness: int) -> None:
@@ -134,40 +131,60 @@ class Light(Entity):
             raise ValueError(
                 f"brightness must be between 0 and {self.brightness_scale}"
             )
-        await self._publish(self.brightness_state_topic, str(brightness))
+        await self._publish(
+            self._register_publish_topic(self.brightness_state_topic, retain=True),
+            str(brightness),
+        )
 
     async def set_color_temp(self, value: int) -> None:
         self._require_enabled(self.color_temp_enabled, "color_temp")
         self._validate_integer(value, "color_temp")
-        await self._publish(self.color_temp_state_topic, str(value))
+        await self._publish(
+            self._register_publish_topic(self.color_temp_state_topic, retain=True),
+            str(value),
+        )
 
     async def set_rgb(self, rgb: tuple[int, int, int]) -> None:
         self._require_enabled(self.rgb_enabled, "rgb")
         if len(rgb) != 3 or any(not 0 <= value <= 255 for value in rgb):
             raise ValueError("rgb must contain three values between 0 and 255")
-        await self._publish(self.rgb_state_topic, ",".join(map(str, rgb)))
+        await self._publish(
+            self._register_publish_topic(self.rgb_state_topic, retain=True),
+            ",".join(map(str, rgb)),
+        )
 
     async def set_hs(self, hs: tuple[float, float]) -> None:
         self._require_enabled(self.hs_enabled, "hs")
         self._validate_hs(hs)
-        await self._publish(self.hs_state_topic, f"{hs[0]},{hs[1]}")
+        await self._publish(
+            self._register_publish_topic(self.hs_state_topic, retain=True),
+            f"{hs[0]},{hs[1]}",
+        )
 
     async def set_xy(self, xy: tuple[float, float]) -> None:
         self._require_enabled(self.xy_enabled, "xy")
         self._validate_xy(xy)
-        await self._publish(self.xy_state_topic, f"{xy[0]},{xy[1]}")
+        await self._publish(
+            self._register_publish_topic(self.xy_state_topic, retain=True),
+            f"{xy[0]},{xy[1]}",
+        )
 
     async def set_effect(self, effect: str) -> None:
         self._require_enabled(self.effect_enabled, "effect")
         if self.effect_list and effect not in self.effect_list:
             raise ValueError(f"effect {effect!r} is not in effect_list")
-        await self._publish(self.effect_state_topic, effect)
+        await self._publish(
+            self._register_publish_topic(self.effect_state_topic, retain=True), effect
+        )
 
     async def set_white(self, value: int) -> None:
         self._require_enabled(self.white_enabled, "white")
         if not 0 <= value <= self.white_scale:
             raise ValueError(f"white must be between 0 and {self.white_scale}")
-        await self._publish(self.white_state_topic, str(value))
+        await self._publish(
+            self._register_publish_topic(self.white_state_topic, retain=True),
+            str(value),
+        )
 
     async def on_event(self, callback: EventCallback) -> None:
         device = self._require_device()

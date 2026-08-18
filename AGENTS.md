@@ -32,6 +32,13 @@ The project is managed with [uv](https://docs.astral.sh/uv/). Always use `uv`-pr
   `Entity.command_topic_for()` for topic construction; an empty or `None`
   suffix produces the base state or command topic. Tests and examples should
   follow this schema when asserting or documenting topics.
+- MQTT discovery, device availability, and durable entity state or snapshot
+  publications use retained messages so Home Assistant can recover after a
+  restart. Commands and transient payloads such as events, scans, camera
+  frames, received infrared signals, and climate action updates are not
+  retained. Retained topics are represented by the internal `PublishTopic`
+  descriptor and are cleared during device removal by publishing an empty
+  retained payload. LWT-based offline publication remains future work.
 - **Type hints**: annotate public functions and methods. The project targets Python 3.14+, so modern typing features are available.
 - **Follow the existing package layout**: source lives under `src/ha_mqtt_device/`; keep it organized by device/entity concerns.
 

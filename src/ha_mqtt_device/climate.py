@@ -155,10 +155,11 @@ class Climate(Entity):
             RuntimeError: If the climate is not bound to a device.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
         self._validate_finite(temperature, "temperature")
-        topic = device.info.resolve_topic(self.current_temperature_topic)
-        await device.provider.publish(topic, str(temperature))
+        await self._publish(
+            self._register_publish_topic(self.current_temperature_topic, retain=True),
+            str(temperature),
+        )
 
     async def set_target_temperature(self, temperature: float) -> None:
         """Publish the target temperature.
@@ -173,10 +174,11 @@ class Climate(Entity):
             RuntimeError: If the climate is not bound to a device.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
         self._validate_target_temperature(temperature)
-        topic = device.info.resolve_topic(self.temperature_state_topic)
-        await device.provider.publish(topic, str(temperature))
+        await self._publish(
+            self._register_publish_topic(self.temperature_state_topic, retain=True),
+            str(temperature),
+        )
 
     async def set_mode(self, mode: str) -> None:
         """Publish the HVAC mode.
@@ -191,11 +193,11 @@ class Climate(Entity):
             ValueError: If :attr:`modes` is set and ``mode`` is not in it.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
         if self.modes is not None and mode not in self.modes:
             raise ValueError(f"mode {mode!r} is not in modes {self.modes!r}")
-        topic = device.info.resolve_topic(self.mode_state_topic)
-        await device.provider.publish(topic, mode)
+        await self._publish(
+            self._register_publish_topic(self.mode_state_topic, retain=True), mode
+        )
 
     async def set_action(self, action: str) -> None:
         """Publish the current action.
@@ -211,9 +213,9 @@ class Climate(Entity):
             RuntimeError: If the climate is not bound to a device.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
-        topic = device.info.resolve_topic(self.action_topic)
-        await device.provider.publish(topic, action)
+        await self._publish(
+            self._register_publish_topic(self.action_topic, retain=False), action
+        )
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

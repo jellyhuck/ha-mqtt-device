@@ -149,17 +149,16 @@ class Vacuum(Entity):
 
     async def reset_state(self) -> None:
         """Publish ``null`` to reset Home Assistant's vacuum state."""
-        device = self._require_device()
-        await device.provider.publish(
-            device.info.resolve_topic(self.state_topic), "null"
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True), "null"
         )
 
     async def publish_state(self, state: Mapping[str, object]) -> None:
         """Publish a validated JSON state mapping."""
-        device = self._require_device()
         payload = self._validated_state(state)
-        await device.provider.publish(
-            device.info.resolve_topic(self.state_topic), json.dumps(payload)
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True),
+            json.dumps(payload),
         )
 
     async def start(self) -> None:
@@ -190,7 +189,9 @@ class Vacuum(Entity):
         """Publish a configured fan speed."""
         self._require_feature("fan_speed")
         self._validate_fan_speed(speed)
-        await self._publish(self.fan_speed_topic, speed)
+        await self._publish(
+            self._register_publish_topic(self.fan_speed_topic, retain=False), speed
+        )
 
     async def send_command(
         self, command: str, params: Mapping[str, object] | None = None
@@ -210,7 +211,10 @@ class Vacuum(Entity):
                     )
                 payload_map[key] = value
             payload = json.dumps(payload_map)
-        await self._publish(self.send_command_topic, payload)
+        await self._publish(
+            self._register_publish_topic(self.send_command_topic, retain=False),
+            payload,
+        )
 
     async def clean_segments(self, segments: Sequence[str]) -> None:
         """Publish the JSON list of segment IDs to clean."""
@@ -220,7 +224,10 @@ class Vacuum(Entity):
             not isinstance(segment, str) or not segment for segment in segments
         ):
             raise ValueError("segments must contain non-empty strings")
-        await self._publish(self.clean_segments_topic, json.dumps(list(segments)))
+        await self._publish(
+            self._register_publish_topic(self.clean_segments_topic, retain=False),
+            json.dumps(list(segments)),
+        )
 
     async def on_event(self, callback: EventCallback) -> None:
         """Subscribe once to each enabled Home Assistant command topic."""
@@ -259,11 +266,10 @@ class Vacuum(Entity):
 
     async def _publish_basic(self, feature: str) -> None:
         self._require_feature(feature)
-        await self._publish(self.command_topic, self._payload_for(feature))
-
-    async def _publish(self, topic: str, payload: str) -> None:
-        device = self._require_device()
-        await device.provider.publish(device.info.resolve_topic(topic), payload)
+        await self._publish(
+            self._register_publish_topic(self.command_topic, retain=False),
+            self._payload_for(feature),
+        )
 
     def _require_feature(self, feature: str) -> None:
         if feature not in self._features:

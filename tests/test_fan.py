@@ -42,8 +42,8 @@ async def test_set_state_publishes_payloads_to_state_topic() -> None:
     await fan.set_state(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/state", "ON", False),
-        ("homeassistant/device/dev-1/ceiling_fan/state", "OFF", False),
+        ("homeassistant/device/dev-1/ceiling_fan/state", "ON", True),
+        ("homeassistant/device/dev-1/ceiling_fan/state", "OFF", True),
     ]
 
 
@@ -57,8 +57,8 @@ async def test_set_state_uses_custom_payloads() -> None:
     await fan.set_state(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/state", "1", False),
-        ("homeassistant/device/dev-1/ceiling_fan/state", "0", False),
+        ("homeassistant/device/dev-1/ceiling_fan/state", "1", True),
+        ("homeassistant/device/dev-1/ceiling_fan/state", "0", True),
     ]
 
 
@@ -77,8 +77,8 @@ async def test_set_percentage_publishes_stringified_value() -> None:
     await fan.set_percentage(1)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/state/percentage", "60", False),
-        ("homeassistant/device/dev-1/ceiling_fan/state/percentage", "1", False),
+        ("homeassistant/device/dev-1/ceiling_fan/state/percentage", "60", True),
+        ("homeassistant/device/dev-1/ceiling_fan/state/percentage", "1", True),
     ]
 
 
@@ -112,7 +112,7 @@ async def test_set_preset_mode_publishes_preset() -> None:
     await fan.set_preset_mode("auto")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/state/preset_mode", "auto", False)
+        ("homeassistant/device/dev-1/ceiling_fan/state/preset_mode", "auto", True)
     ]
 
 
@@ -126,7 +126,7 @@ async def test_set_preset_mode_none_publishes_reset_payload() -> None:
         (
             "homeassistant/device/dev-1/ceiling_fan/state/preset_mode",
             "reset_percentage",
-            False,
+            True,
         )
     ]
 
@@ -143,7 +143,7 @@ async def test_set_preset_mode_uses_custom_reset_payload() -> None:
     await fan.set_preset_mode(None)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/state/preset_mode", "speed", False)
+        ("homeassistant/device/dev-1/ceiling_fan/state/preset_mode", "speed", True)
     ]
 
 
@@ -174,12 +174,12 @@ async def test_set_oscillation_publishes_payloads() -> None:
         (
             "homeassistant/device/dev-1/ceiling_fan/state/oscillation",
             "oscillate_on",
-            False,
+            True,
         ),
         (
             "homeassistant/device/dev-1/ceiling_fan/state/oscillation",
             "oscillate_off",
-            False,
+            True,
         ),
     ]
 
@@ -198,8 +198,8 @@ async def test_set_oscillation_uses_custom_payloads() -> None:
     await fan.set_oscillation(False)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/state/oscillation", "yes", False),
-        ("homeassistant/device/dev-1/ceiling_fan/state/oscillation", "no", False),
+        ("homeassistant/device/dev-1/ceiling_fan/state/oscillation", "yes", True),
+        ("homeassistant/device/dev-1/ceiling_fan/state/oscillation", "no", True),
     ]
 
 
@@ -219,8 +219,8 @@ async def test_set_direction_publishes_direction() -> None:
     await fan.set_direction("reverse")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/ceiling_fan/state/direction", "forward", False),
-        ("homeassistant/device/dev-1/ceiling_fan/state/direction", "reverse", False),
+        ("homeassistant/device/dev-1/ceiling_fan/state/direction", "forward", True),
+        ("homeassistant/device/dev-1/ceiling_fan/state/direction", "reverse", True),
     ]
 
 

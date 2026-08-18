@@ -69,12 +69,11 @@ class Text(Entity):
 
     async def set_state(self, value: str) -> None:
         """Validate and publish a text state to the state topic."""
-        device = self._require_device()
         if not self.state_enabled:
             raise ValueError("state reporting is disabled")
         self._validate_value(value)
-        await device.provider.publish(
-            device.info.resolve_topic(self.state_topic), value
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True), value
         )
 
     async def on_event(self, callback: EventCallback) -> None:

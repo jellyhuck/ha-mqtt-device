@@ -1,4 +1,4 @@
-"""MQTT tag scanner support for Home Assistant standalone discovery."""
+"""MQTT tag scanner support."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
@@ -19,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TagScanner(Entity):
-    """A tag scanner discovered on Home Assistant's standalone ``tag`` topic.
+    """A tag scanner represented in a device's MQTT discovery config.
 
     ``topic`` is the MQTT topic carrying scans. ``scan`` publishes a tag ID
     for hardware integrations, while ``on_event`` subscribes to the same topic
@@ -29,11 +28,8 @@ class TagScanner(Entity):
     """
 
     component = "tag"
-    standalone_discovery = True
-
     topic: str = ""
     value_template: str | None = None
-    node_id: str | None = None
 
     _event_callbacks: list[EventCallback] = field(
         default_factory=list, init=False, repr=False
@@ -44,17 +40,14 @@ class TagScanner(Entity):
         super().__post_init__()
         if not self.topic:
             raise ValueError("topic is required")
-        if self.node_id is not None and (
-            not isinstance(self.node_id, str) or not self.node_id or "/" in self.node_id
-        ):
-            raise ValueError("node_id must be a non-empty path segment")
 
     async def scan(self, tag_id: str) -> None:
         """Publish a scanned tag ID to the configured scan topic."""
-        device = self._require_device()
         if not isinstance(tag_id, str):
             raise TypeError("tag_id must be a string")
-        await device.provider.publish(device.info.resolve_topic(self.topic), tag_id)
+        await self._publish(
+            self._register_publish_topic(self.topic, retain=False), tag_id
+        )
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for tag scans received on ``topic``."""
@@ -88,21 +81,9 @@ class TagScanner(Entity):
                 )
 
     def discovery_config(self) -> dict[str, Any]:
-        """Return the standalone tag discovery payload, without ``device``."""
-        config: dict[str, Any] = {"t": self.topic}
+        """Return the tag scanner's device discovery payload."""
+        config = super().discovery_config()
+        config["t"] = self.topic
         if self.value_template is not None:
             config["val_tpl"] = self.value_template
         return config
-
-    def standalone_discovery_config(
-        self, info: DeviceInfo
-    ) -> tuple[str, dict[str, Any]]:
-        """Return this scanner's standalone discovery topic and payload."""
-        object_path = (
-            f"{info.discovery_prefix}/tag/{self.node_id}/{self.unique_id}/config"
-            if self.node_id is not None
-            else f"{info.discovery_prefix}/tag/{self.unique_id}/config"
-        )
-        config = self.discovery_config()
-        config["dev"] = info.discovery_payload()["dev"]
-        return object_path, config

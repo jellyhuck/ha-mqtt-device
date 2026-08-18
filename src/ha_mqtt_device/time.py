@@ -41,12 +41,11 @@ class Time(Entity):
 
     async def set_state(self, value: time_value | str) -> None:
         """Normalize and publish a time value to the state topic."""
-        device = self._require_device()
         if not self.state_enabled:
             raise ValueError("state reporting is disabled")
         payload = self._time_payload(value)
-        await device.provider.publish(
-            device.info.resolve_topic(self.state_topic), payload
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True), payload
         )
 
     async def on_event(self, callback: EventCallback) -> None:

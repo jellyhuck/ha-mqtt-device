@@ -129,28 +129,32 @@ class WaterHeater(Entity):
         """Publish the current water temperature."""
         self._validate_number(temperature, "temperature")
         await self._publish(
-            self.current_temperature_topic, self._number_payload(temperature)
+            self._register_publish_topic(self.current_temperature_topic, retain=True),
+            self._number_payload(temperature),
         )
 
     async def set_target_temperature(self, temperature: float) -> None:
         """Publish the current target temperature."""
         self._validate_temperature(temperature)
         await self._publish(
-            self.temperature_state_topic, self._number_payload(temperature)
+            self._register_publish_topic(self.temperature_state_topic, retain=True),
+            self._number_payload(temperature),
         )
 
     async def set_mode(self, mode: str) -> None:
         """Publish the current operation mode."""
         if mode not in self._effective_modes:
             raise ValueError(f"unsupported water heater mode: {mode!r}")
-        await self._publish(self.mode_state_topic, mode)
+        await self._publish(
+            self._register_publish_topic(self.mode_state_topic, retain=True), mode
+        )
 
     async def set_power(self, enabled: bool) -> None:
         """Publish a power payload to the optional power command topic."""
         if not self.power_enabled:
             raise ValueError("power commands are not enabled")
         await self._publish(
-            self.power_command_topic,
+            self._register_publish_topic(self.power_command_topic, retain=False),
             self.payload_on if enabled else self.payload_off,
         )
 
@@ -269,10 +273,6 @@ class WaterHeater(Entity):
     @staticmethod
     def _number_payload(value: float) -> str:
         return str(value)
-
-    async def _publish(self, topic: str, payload: str) -> None:
-        device = self._require_device()
-        await device.provider.publish(device.info.resolve_topic(topic), payload)
 
     def discovery_config(self) -> dict[str, object]:
         """Return this water heater's compact MQTT discovery configuration."""

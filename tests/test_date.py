@@ -46,9 +46,9 @@ async def test_set_state_publishes_iso_dates_to_state_topic() -> None:
     await entity.set_state(date(2024, 12, 31))
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/vacation/state", "2024-02-14", False),
-        ("homeassistant/device/dev-1/vacation/state", "2024-02-14", False),
-        ("homeassistant/device/dev-1/vacation/state", "2024-12-31", False),
+        ("homeassistant/device/dev-1/vacation/state", "2024-02-14", True),
+        ("homeassistant/device/dev-1/vacation/state", "2024-02-14", True),
+        ("homeassistant/device/dev-1/vacation/state", "2024-12-31", True),
     ]
 
 

@@ -27,6 +27,10 @@ appropriate.
   the documented discovery keys, topics, defaults, and omissions. Exact
   recording-provider regressions cover each correction.
 
+- **TODO-12 — Reliable retained removal:** Publish topics now carry their
+  retention policy, and device/entity removal clears every retained topic with
+  an empty retained payload.
+
 ## Discovery configuration
 
 - **TODO-04 — Improve shared availability support**
@@ -65,10 +69,6 @@ appropriate.
 
 ## Provider and lifecycle behavior
 
-- **TODO-12 — Support reliable retained removal**
-  Extend the provider contract as needed so device and entity removal can clear
-  retained discovery messages reliably.
-
 - **TODO-13 — Fix Device Tracker location publication**
   Publish location and attributes through a documented MQTT state/attributes
   arrangement while preserving presence-state behavior.
@@ -85,7 +85,7 @@ appropriate.
 
 - **TODO-16 — Add exact discovery regression coverage**
   Test component maps, key names, topic fields, defaults, omissions, and
-  standalone discovery for every supported platform.
+  discovery behavior for every supported platform.
 
 - **TODO-17 — Add lifecycle and failure-path tests**
   Cover retained removal, availability, location attributes, subscription
@@ -98,3 +98,7 @@ appropriate.
 - **TODO-20 — Keep examples synchronized with the public API**
   Add runnable examples for newly supported capabilities and avoid documenting
   fields that are not implemented and tested.
+
+- **TODO-21 — Add LWT-based offline publication**
+  Configure provider/client last-will support so an unexpected process or
+  connection failure publishes the device's unavailable payload automatically.

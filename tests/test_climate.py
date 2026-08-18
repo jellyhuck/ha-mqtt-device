@@ -46,7 +46,7 @@ async def test_set_current_temperature_publishes_to_topic() -> None:
         (
             "homeassistant/device/dev-1/thermostat/state/current_temperature",
             "21.5",
-            False,
+            True,
         )
     ]
 
@@ -58,7 +58,7 @@ async def test_set_target_temperature_publishes_to_state_topic() -> None:
     await climate.set_target_temperature(21.5)
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/thermostat/state/temperature", "21.5", False)
+        ("homeassistant/device/dev-1/thermostat/state/temperature", "21.5", True)
     ]
 
 
@@ -69,7 +69,7 @@ async def test_set_mode_publishes_verbatim() -> None:
     await climate.set_mode("heat")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/thermostat/state/mode", "heat", False)
+        ("homeassistant/device/dev-1/thermostat/state/mode", "heat", True)
     ]
 
 
@@ -90,7 +90,7 @@ async def test_set_mode_without_modes_accepts_any_mode() -> None:
     await climate.set_mode("fan_only")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/thermostat/state/mode", "fan_only", False)
+        ("homeassistant/device/dev-1/thermostat/state/mode", "fan_only", True)
     ]
 
 

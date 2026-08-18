@@ -69,9 +69,9 @@ class Image(Entity):
             RuntimeError: If the entity is not bound to a device.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
-        topic = device.info.resolve_topic(self.image_topic)
-        await device.provider.publish(topic, payload)
+        await self._publish(
+            self._register_publish_topic(self.image_topic, retain=True), payload
+        )
 
     def discovery_config(self) -> dict[str, object]:
         """Return this entity's ``cmps`` config entry for the discovery payload."""

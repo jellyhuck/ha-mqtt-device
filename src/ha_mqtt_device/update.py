@@ -103,29 +103,31 @@ class Update(Entity):
 
     async def publish_state(self, state: Mapping[str, object]) -> None:
         """Publish a validated JSON state mapping on the state topic."""
-        device = self._require_device()
         payload = self._validated_state(state)
-        await device.provider.publish(
-            device.info.resolve_topic(self.state_topic), json.dumps(payload)
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True),
+            json.dumps(payload),
         )
 
     async def set_latest_version(self, version: str) -> None:
         """Publish a simple latest-version update when that topic is enabled."""
-        device = self._require_device()
+        self._require_device()
         if not self.latest_version_enabled:
             raise ValueError("latest version topic is disabled")
         self._validate_string("latest_version", version)
-        await device.provider.publish(
-            device.info.resolve_topic(self.latest_version_topic), version
+        await self._publish(
+            self._register_publish_topic(self.latest_version_topic, retain=True),
+            version,
         )
 
     async def install(self) -> None:
         """Publish the configured install action payload."""
-        device = self._require_device()
+        self._require_device()
         if not self.install_enabled:
             raise ValueError("install command is disabled")
-        await device.provider.publish(
-            device.info.resolve_topic(self.command_topic), self.payload_install
+        await self._publish(
+            self._register_publish_topic(self.command_topic, retain=False),
+            self.payload_install,
         )
 
     async def on_event(self, callback: EventCallback) -> None:

@@ -25,7 +25,7 @@ async def test_set_state_validates_and_publishes_selected_option() -> None:
     await select.set_state("Manual")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/mode/state", "Manual", False)
+        ("homeassistant/device/dev-1/mode/state", "Manual", True)
     ]
     with pytest.raises(ValueError, match="must be one of"):
         await select.set_state("Invalid")

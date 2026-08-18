@@ -24,7 +24,7 @@ async def test_state_and_discovery_defaults() -> None:
     await lock.set_state("locked")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/front_door/state", "LOCKED", False)
+        ("homeassistant/device/dev-1/front_door/state", "LOCKED", True)
     ]
     assert lock.discovery_config() == {
         "uniq_id": "front_door",

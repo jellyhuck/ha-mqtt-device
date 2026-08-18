@@ -43,7 +43,7 @@ async def test_default_discovery_and_json_state() -> None:
     assert provider.published[1] == (
         "homeassistant/device/dev-1/cleaner/state",
         "null",
-        False,
+        True,
     )
 
 

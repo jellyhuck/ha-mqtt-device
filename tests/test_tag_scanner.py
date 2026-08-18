@@ -29,14 +29,13 @@ async def test_scan_publishes_to_resolved_topic() -> None:
     ]
 
 
-async def test_standalone_discovery_contains_tag_topic_template_and_device() -> None:
+async def test_discovery_contains_tag_topic_and_template() -> None:
     provider = RecordingProvider()
-    device, scanner = bound(
+    device, _scanner = bound(
         provider,
         unique_id="scanner",
         topic="~/tags",
         value_template="{{ value_json.uid }}",
-        node_id="node-1",
     )
 
     await device.configure()
@@ -46,21 +45,17 @@ async def test_standalone_discovery_contains_tag_topic_template_and_device() -> 
         "o": {"name": "ha-mqtt-device"},
         "avty": [{"topic": "~/status"}],
         "~": "homeassistant/device/dev-1",
-    }
-    assert provider.published[1][0] == ("homeassistant/tag/node-1/scanner/config")
-    assert json.loads(provider.published[1][1]) == {
-        "t": "~/tags",
-        "val_tpl": "{{ value_json.uid }}",
-        "dev": {"ids": ["dev-1"], "name": "Device"},
+        "cmps": {
+            "scanner": {
+                "uniq_id": "scanner",
+                "p": "tag",
+                "t": "~/tags",
+                "val_tpl": "{{ value_json.uid }}",
+            }
+        },
     }
     await device.remove()
-    assert provider.published[2] == ("homeassistant/device/dev-1/config", "", False)
-    assert provider.published[3] == (
-        "homeassistant/tag/node-1/scanner/config",
-        "",
-        False,
-    )
-    assert scanner.standalone_discovery is True
+    assert provider.published[1] == ("homeassistant/device/dev-1/config", "", True)
 
 
 async def test_scan_events_preserve_raw_payload_and_subscribe_once() -> None:
@@ -87,11 +82,6 @@ async def test_scan_events_preserve_raw_payload_and_subscribe_once() -> None:
 async def test_topic_is_required_and_unbound_operations_fail() -> None:
     with pytest.raises(ValueError, match="topic is required"):
         TagScanner(unique_id="scanner")
-    with pytest.raises(ValueError, match="node_id"):
-        TagScanner(unique_id="scanner", topic="tags", node_id="node/id")
-    with pytest.raises(ValueError, match="node_id"):
-        TagScanner(unique_id="scanner", topic="tags", node_id="")
-
     scanner = TagScanner(unique_id="scanner", topic="tags")
     with pytest.raises(RuntimeError, match="not bound"):
         await scanner.scan("tag")

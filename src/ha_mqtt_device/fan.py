@@ -237,10 +237,10 @@ class Fan(Entity):
             RuntimeError: If the fan is not bound to a device.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
         payload = self.payload_on if state else self.payload_off
-        topic = device.info.resolve_topic(self.state_topic)
-        await device.provider.publish(topic, payload)
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True), payload
+        )
 
     async def set_percentage(self, percentage: int) -> None:
         """Publish the fan's speed as a percentage.
@@ -254,11 +254,13 @@ class Fan(Entity):
             ValueError: If percentage control is disabled.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
+        self._require_device()
         self._require_enabled(self.percentage_enabled, "percentage")
         self._validate_percentage(percentage)
-        topic = device.info.resolve_topic(self.percentage_state_topic)
-        await device.provider.publish(topic, str(percentage))
+        await self._publish(
+            self._register_publish_topic(self.percentage_state_topic, retain=True),
+            str(percentage),
+        )
 
     async def set_preset_mode(self, preset_mode: str | None) -> None:
         """Publish the fan's preset mode.
@@ -274,7 +276,7 @@ class Fan(Entity):
                 is not in :attr:`preset_modes`.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
+        self._require_device()
         self._require_enabled(self.preset_mode_enabled, "preset_mode")
         if preset_mode is None:
             payload = self.payload_reset_percentage
@@ -285,8 +287,10 @@ class Fan(Entity):
                 f"preset_mode {preset_mode!r} is not in preset_modes "
                 f"{self.preset_modes!r}"
             )
-        topic = device.info.resolve_topic(self.preset_mode_state_topic)
-        await device.provider.publish(topic, payload)
+        await self._publish(
+            self._register_publish_topic(self.preset_mode_state_topic, retain=True),
+            payload,
+        )
 
     async def set_oscillation(self, oscillation: bool) -> None:
         """Publish the fan's oscillation state.
@@ -300,13 +304,15 @@ class Fan(Entity):
             ValueError: If oscillation control is disabled.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
+        self._require_device()
         self._require_enabled(self.oscillation_enabled, "oscillation")
         payload = (
             self.payload_oscillation_on if oscillation else self.payload_oscillation_off
         )
-        topic = device.info.resolve_topic(self.oscillation_state_topic)
-        await device.provider.publish(topic, payload)
+        await self._publish(
+            self._register_publish_topic(self.oscillation_state_topic, retain=True),
+            payload,
+        )
 
     async def set_direction(self, direction: str) -> None:
         """Publish the fan's direction.
@@ -321,12 +327,14 @@ class Fan(Entity):
                 not ``"forward"`` or ``"reverse"``.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
+        self._require_device()
         self._require_enabled(self.direction_enabled, "direction")
         if direction not in ("forward", "reverse"):
             raise ValueError("direction must be 'forward' or 'reverse'")
-        topic = device.info.resolve_topic(self.direction_state_topic)
-        await device.provider.publish(topic, direction)
+        await self._publish(
+            self._register_publish_topic(self.direction_state_topic, retain=True),
+            direction,
+        )
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

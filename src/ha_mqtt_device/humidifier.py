@@ -137,10 +137,10 @@ class Humidifier(Entity):
             RuntimeError: If the humidifier is not bound to a device.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
         payload = self.payload_on if state else self.payload_off
-        topic = device.info.resolve_topic(self.state_topic)
-        await device.provider.publish(topic, payload)
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True), payload
+        )
 
     async def set_target_humidity(self, humidity: float) -> None:
         """Publish the target humidity.
@@ -157,12 +157,13 @@ class Humidifier(Entity):
                 is outside the configured range.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
         if not self.target_humidity_enabled:
             raise ValueError("target humidity control is disabled")
         self._validate_humidity(humidity)
-        topic = device.info.resolve_topic(self.target_humidity_state_topic)
-        await device.provider.publish(topic, str(humidity))
+        await self._publish(
+            self._register_publish_topic(self.target_humidity_state_topic, retain=True),
+            str(humidity),
+        )
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

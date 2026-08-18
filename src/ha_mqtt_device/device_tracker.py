@@ -86,10 +86,10 @@ class DeviceTracker(Entity):
             RuntimeError: If the tracker is not bound to a device.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
         payload = self.payload_home if state else self.payload_not_home
-        topic = device.info.resolve_topic(self.state_topic)
-        await device.provider.publish(topic, payload)
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True), payload
+        )
 
     async def set_location(
         self,
@@ -113,7 +113,6 @@ class DeviceTracker(Entity):
             RuntimeError: If the tracker is not bound to a device.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
         payload: dict[str, object] = {
             "latitude": latitude,
             "longitude": longitude,
@@ -130,8 +129,10 @@ class DeviceTracker(Entity):
             payload["source_type"] = source_type
         elif self.source_type is not None:
             payload["source_type"] = self.source_type
-        topic = device.info.resolve_topic(self.state_topic)
-        await device.provider.publish(topic, json.dumps(payload))
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True),
+            json.dumps(payload),
+        )
 
     @property
     def state_topic(self) -> str:

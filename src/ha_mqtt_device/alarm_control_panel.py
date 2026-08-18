@@ -87,13 +87,13 @@ class AlarmControlPanel(Entity):
 
     async def set_state(self, state: str) -> None:
         """Publish a documented alarm state."""
-        device = self._require_device()
         if not self.state_enabled:
             raise ValueError("state reporting is disabled")
         if state not in _ALARM_MODES:
             raise ValueError(f"unknown alarm state {state!r}")
-        topic = device.info.resolve_topic(self.state_topic)
-        await device.provider.publish(topic, state)
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True), state
+        )
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for commands received from Home Assistant."""

@@ -173,10 +173,10 @@ class Cover(Entity):
             ValueError: If ``state`` is not one of the known state names.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
         payload = self._state_payload(state)
-        topic = device.info.resolve_topic(self.state_topic)
-        await device.provider.publish(topic, payload)
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=True), payload
+        )
 
     async def set_position(self, position: int) -> None:
         """Publish the cover's position.
@@ -191,10 +191,11 @@ class Cover(Entity):
             RuntimeError: If the cover is not bound to a device.
             Exception: If the message could not be published.
         """
-        device = self._require_device()
         self._validate_position(position)
-        topic = device.info.resolve_topic(self.position_topic)
-        await device.provider.publish(topic, str(position))
+        await self._publish(
+            self._register_publish_topic(self.position_topic, retain=True),
+            str(position),
+        )
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

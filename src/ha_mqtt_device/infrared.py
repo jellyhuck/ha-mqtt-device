@@ -216,9 +216,10 @@ class InfraredReceiver(Entity):
         if not isinstance(signal, dict):
             raise TypeError("signal must be a dict")
         _validate_signal(signal)
-        device = self._require_device()
-        topic = device.info.resolve_topic(self.state_topic)
-        await device.provider.publish(topic, json.dumps(signal))
+        await self._publish(
+            self._register_publish_topic(self.state_topic, retain=False),
+            json.dumps(signal),
+        )
 
     def discovery_config(self) -> dict[str, object]:
         """Return this receiver's ``cmps`` config entry for the discovery payload."""

@@ -83,7 +83,7 @@ async def test_all_regular_sprint_entities_bind_and_join_cmps() -> None:
     )
 
 
-async def test_tag_scanner_binds_through_standalone_discovery() -> None:
+async def test_tag_scanner_binds_as_a_regular_device_component() -> None:
     provider = RecordingProvider()
     scanner = TagScanner(unique_id="tag_scanner", topic="~/tag/scanned")
     device = Device(
@@ -96,13 +96,8 @@ async def test_tag_scanner_binds_through_standalone_discovery() -> None:
     await device.configure()
 
     device_payload = json.loads(provider.published[0][1])
-    tag_payload = json.loads(provider.published[1][1])
-    assert "cmps" not in device_payload
-    assert provider.published[1][0] == "homeassistant/tag/tag_scanner/config"
-    assert tag_payload == {
-        "t": "~/tag/scanned",
-        "dev": device.info.discovery_payload()["dev"],
-    }
+    assert set(device_payload["cmps"]) == {"tag_scanner"}
+    assert device_payload["cmps"]["tag_scanner"] == scanner.discovery_config()
 
 
 @pytest.mark.parametrize("factory", ENTITY_FACTORIES)
