@@ -37,6 +37,15 @@ from ha_mqtt_device.text import Text
 from ha_mqtt_device.time import Time
 from ha_mqtt_device.update import Update
 from ha_mqtt_device.vacuum import Vacuum
+from ha_mqtt_device.values import (
+    DateTimeValue,
+    DateValue,
+    FloatValue,
+    IntValue,
+    StrEnumValue,
+    StrValue,
+    Value,
+)
 from ha_mqtt_device.valve import Valve
 from ha_mqtt_device.water_heater import WaterHeater
 
@@ -50,6 +59,8 @@ __all__ = [
     "Cover",
     "Date",
     "DateTime",
+    "DateTimeValue",
+    "DateValue",
     "Device",
     "DeviceInfo",
     "DeviceTracker",
@@ -58,10 +69,12 @@ __all__ = [
     "EventCallback",
     "EventEntity",
     "Fan",
+    "FloatValue",
     "Humidifier",
     "Image",
     "InfraredEmitter",
     "InfraredReceiver",
+    "IntValue",
     "LawnMower",
     "Light",
     "Lock",
@@ -74,12 +87,15 @@ __all__ = [
     "SelectEntity",
     "Sensor",
     "Siren",
+    "StrEnumValue",
+    "StrValue",
     "Switch",
     "TagScanner",
     "Text",
     "Time",
     "Update",
     "Vacuum",
+    "Value",
     "Valve",
     "WaterHeater",
 ]
