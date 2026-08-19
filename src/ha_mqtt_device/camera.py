@@ -86,4 +86,4 @@ class Camera(Entity):
         if self.encoding is not None:
             config["img_e"] = self.encoding
         # Camera's MQTT schema does not define content_type; do not emit it.
-        return config
+        return self._resolve_discovery_config(config)

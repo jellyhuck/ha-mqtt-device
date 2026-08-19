@@ -158,4 +158,4 @@ class DeviceTracker(Entity):
             config["bat_lvl"] = self.battery_level
         if self.icon is not None:
             config["ic"] = self.icon
-        return config
+        return self._resolve_discovery_config(config)

@@ -402,4 +402,4 @@ class Vacuum(Entity):
                     self,
                     f"payload_{'return_to_base' if feature == 'return_home' else feature}",
                 )
-        return config
+        return self._resolve_discovery_config(config)

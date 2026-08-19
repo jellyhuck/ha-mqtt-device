@@ -82,4 +82,4 @@ class Image(Entity):
             config["img_e"] = self.encoding
         if self.content_type != DEFAULT_CONTENT_TYPE:
             config["cont_type"] = self.content_type
-        return config
+        return self._resolve_discovery_config(config)

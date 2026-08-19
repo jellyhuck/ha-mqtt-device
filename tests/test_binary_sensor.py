@@ -68,7 +68,7 @@ async def test_discovery_config_defaults() -> None:
     assert sensor.discovery_config() == {
         "uniq_id": "is_led_on",
         "p": "binary_sensor",
-        "stat_t": "~/is_led_on/state",
+        "stat_t": "homeassistant/device/dev-1/is_led_on/state",
     }
 
 
@@ -83,7 +83,7 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
     assert sensor.discovery_config() == {
         "uniq_id": "door",
         "p": "binary_sensor",
-        "stat_t": "~/door/state",
+        "stat_t": "homeassistant/device/dev-1/door/state",
         "name": "Front door",
         "dev_cla": "door",
     }
@@ -100,7 +100,7 @@ async def test_discovery_config_includes_custom_payloads() -> None:
     assert sensor.discovery_config() == {
         "uniq_id": "motion",
         "p": "binary_sensor",
-        "stat_t": "~/motion/state",
+        "stat_t": "homeassistant/device/dev-1/motion/state",
         "pl_on": "1",
         "pl_off": "0",
     }
@@ -117,7 +117,7 @@ async def test_discovery_config_omits_only_default_payloads() -> None:
     assert sensor.discovery_config() == {
         "uniq_id": "motion",
         "p": "binary_sensor",
-        "stat_t": "~/motion/state",
+        "stat_t": "homeassistant/device/dev-1/motion/state",
         "pl_on": "1",
     }
 

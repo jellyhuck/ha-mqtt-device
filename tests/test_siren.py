@@ -54,8 +54,8 @@ async def test_discovery_defaults_omit_documented_defaults() -> None:
     assert siren.discovery_config() == {
         "uniq_id": "alarm",
         "p": "siren",
-        "stat_t": "~/alarm/state",
-        "cmd_t": "~/alarm/command",
+        "stat_t": "homeassistant/device/dev-1/alarm/state",
+        "cmd_t": "homeassistant/device/dev-1/alarm/command",
     }
 
 
@@ -86,8 +86,8 @@ async def test_discovery_includes_features_templates_payloads_and_availability()
     assert siren.discovery_config() == {
         "uniq_id": "alarm",
         "p": "siren",
-        "stat_t": "~/alarm/state",
-        "cmd_t": "~/alarm/command",
+        "stat_t": "homeassistant/device/dev-1/alarm/state",
+        "cmd_t": "homeassistant/device/dev-1/alarm/command",
         "av_tones": ["bell"],
         "cmd_tpl": "{{ value }}",
         "cmd_off_tpl": "OFF",
@@ -100,7 +100,7 @@ async def test_discovery_includes_features_templates_payloads_and_availability()
         "stat_on": "RUNNING",
         "stat_off": "IDLE",
         "opt": True,
-        "avty_t": "~/availability",
+        "avty_t": "homeassistant/device/dev-1/availability",
         "avty_tpl": "{{ value }}",
         "pl_avail": "ready",
         "pl_not_avail": "lost",

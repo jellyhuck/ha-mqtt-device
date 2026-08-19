@@ -79,7 +79,7 @@ async def test_discovery_config_defaults() -> None:
     assert camera.discovery_config() == {
         "uniq_id": "front_door",
         "p": "camera",
-        "t": "~/front_door/image",
+        "t": "homeassistant/device/dev-1/front_door/image",
     }
 
 
@@ -91,7 +91,7 @@ async def test_discovery_config_includes_name() -> None:
     assert camera.discovery_config() == {
         "uniq_id": "front_door",
         "p": "camera",
-        "t": "~/front_door/image",
+        "t": "homeassistant/device/dev-1/front_door/image",
         "name": "Front door camera",
     }
 
@@ -106,7 +106,7 @@ async def test_discovery_config_uses_image_encoding_key() -> None:
     assert camera.discovery_config() == {
         "uniq_id": "front_door",
         "p": "camera",
-        "t": "~/front_door/image",
+        "t": "homeassistant/device/dev-1/front_door/image",
         "img_e": "b64",
     }
 
@@ -122,7 +122,7 @@ async def test_discovery_config_omits_encoding_and_unsupported_content_type() ->
     assert camera.discovery_config() == {
         "uniq_id": "front_door",
         "p": "camera",
-        "t": "~/front_door/image",
+        "t": "homeassistant/device/dev-1/front_door/image",
     }
 
 

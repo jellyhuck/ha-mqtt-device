@@ -25,10 +25,10 @@ def test_default_discovery_payload() -> None:
 
     assert payload["dev"] == {"ids": ["my_device_id"], "name": "My device"}
     assert payload["o"] == {"name": "ha-mqtt-device"}
-    assert payload["~"] == "homeassistant/device/my_device_id"
+    assert "~" not in payload
     # payload_available/payload_not_available are omitted because they match
     # the discovery defaults.
-    assert payload["avty"] == [{"topic": "~/status"}]
+    assert payload["avty"] == [{"topic": "homeassistant/device/my_device_id/status"}]
     assert "cmps" not in payload
 
 
@@ -198,11 +198,11 @@ def test_topic_prefix_defaults_to_discovery_prefix() -> None:
     info = DeviceInfo(device_id="dev-1", name="Device")
 
     assert info.topic_prefix == "homeassistant/device/dev-1"
-    assert info.discovery_payload()["~"] == "homeassistant/device/dev-1"
+    assert "~" not in info.discovery_payload()
 
     custom = DeviceInfo(device_id="dev-1", name="Device", discovery_prefix="myhome")
     assert custom.topic_prefix == "myhome/device/dev-1"
-    assert custom.discovery_payload()["~"] == "myhome/device/dev-1"
+    assert "~" not in custom.discovery_payload()
 
 
 def test_custom_topic_prefix_placeholder_is_resolved() -> None:
@@ -213,7 +213,7 @@ def test_custom_topic_prefix_placeholder_is_resolved() -> None:
     )
 
     assert info.topic_prefix == "custom/dev-1/prefix"
-    assert info.discovery_payload()["~"] == "custom/dev-1/prefix"
+    assert "~" not in info.discovery_payload()
 
 
 def test_custom_availability_config_appears_in_payload() -> None:
@@ -226,15 +226,15 @@ def test_custom_availability_config_appears_in_payload() -> None:
         availability_payload_unavailable="down",
     )
 
-    # The payload keeps the "~" shorthand; Home Assistant resolves it.
+    # The payload contains a fully resolved topic.
     assert info.discovery_payload()["avty"] == [
         {
-            "topic": "~/state",
+            "topic": "home/dev/state",
             "payload_available": "up",
             "payload_not_available": "down",
         }
     ]
-    assert info.discovery_payload()["~"] == "home/dev"
+    assert "~" not in info.discovery_payload()
 
 
 def test_availability_payload_omits_only_default_values() -> None:
@@ -246,5 +246,8 @@ def test_availability_payload_omits_only_default_values() -> None:
 
     # payload_not_available still matches the discovery default and is omitted.
     assert info.discovery_payload()["avty"] == [
-        {"topic": "~/status", "payload_available": "up"}
+        {
+            "topic": "homeassistant/device/dev-1/status",
+            "payload_available": "up",
+        }
     ]

@@ -29,8 +29,8 @@ async def test_state_and_discovery_defaults() -> None:
     assert lock.discovery_config() == {
         "uniq_id": "front_door",
         "p": "lock",
-        "cmd_t": "~/front_door/command",
-        "stat_t": "~/front_door/state",
+        "cmd_t": "homeassistant/device/dev-1/front_door/command",
+        "stat_t": "homeassistant/device/dev-1/front_door/state",
     }
 
 
@@ -52,8 +52,8 @@ async def test_custom_lock_configuration() -> None:
     assert lock.discovery_config() == {
         "uniq_id": "front_door",
         "p": "lock",
-        "cmd_t": "~/front_door/command",
-        "stat_t": "~/front_door/state",
+        "cmd_t": "homeassistant/device/dev-1/front_door/command",
+        "stat_t": "homeassistant/device/dev-1/front_door/state",
         "pl_lock": "CLOSE",
         "pl_unlk": "OPEN_LATCH",
         "pl_open": "OPEN_DOOR",

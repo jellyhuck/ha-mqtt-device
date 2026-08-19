@@ -43,13 +43,13 @@ async def test_discovery_contains_tag_topic_and_template() -> None:
     assert json.loads(provider.published[0][1]) == {
         "dev": {"ids": ["dev-1"], "name": "Device"},
         "o": {"name": "ha-mqtt-device"},
-        "avty": [{"topic": "~/status"}],
-        "~": "homeassistant/device/dev-1",
+        "avty": [{"topic": "homeassistant/device/dev-1/status"}],
+        # The discovery payload does not use the unsupported "~" key.
         "cmps": {
             "scanner": {
                 "uniq_id": "scanner",
                 "p": "tag",
-                "t": "~/tags",
+                "t": "homeassistant/device/dev-1/tags",
                 "val_tpl": "{{ value_json.uid }}",
             }
         },

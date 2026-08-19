@@ -170,7 +170,7 @@ class InfraredEmitter(Entity):
         # Emitters have no state topic; the single topic is the command topic.
         config["cmd_t"] = self.command_topic
         config[_SCHEMA_FIELD] = "emitter"
-        return config
+        return self._resolve_discovery_config(config)
 
 
 @dataclass
@@ -226,4 +226,4 @@ class InfraredReceiver(Entity):
         config = super().discovery_config()
         config["stat_t"] = self.state_topic
         config[_SCHEMA_FIELD] = "receiver"
-        return config
+        return self._resolve_discovery_config(config)

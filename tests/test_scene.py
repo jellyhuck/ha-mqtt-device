@@ -36,7 +36,7 @@ async def test_discovery_is_command_only_and_omits_defaults() -> None:
         "uniq_id": "party",
         "p": "scene",
         "name": "Party",
-        "cmd_t": "~/party/command",
+        "cmd_t": "homeassistant/device/dev-1/party/command",
     }
 
 
@@ -55,10 +55,10 @@ async def test_discovery_includes_custom_payload_template_and_availability() -> 
     assert scene.discovery_config() == {
         "uniq_id": "party",
         "p": "scene",
-        "cmd_t": "~/party/command",
+        "cmd_t": "homeassistant/device/dev-1/party/command",
         "pl_on": "ACTIVATE",
         "cmd_tpl": "{{ value }}",
-        "avty_t": "~/availability",
+        "avty_t": "homeassistant/device/dev-1/availability",
         "avty_tpl": "{{ value }}",
         "pl_avail": "ready",
         "pl_not_avail": "lost",

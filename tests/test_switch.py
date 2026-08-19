@@ -217,8 +217,8 @@ async def test_discovery_config_defaults() -> None:
     assert switch.discovery_config() == {
         "uniq_id": "relay_1",
         "p": "switch",
-        "stat_t": "~/relay_1/state",
-        "cmd_t": "~/relay_1/command",
+        "stat_t": "homeassistant/device/dev-1/relay_1/state",
+        "cmd_t": "homeassistant/device/dev-1/relay_1/command",
     }
 
 
@@ -233,8 +233,8 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
     assert switch.discovery_config() == {
         "uniq_id": "relay_1",
         "p": "switch",
-        "stat_t": "~/relay_1/state",
-        "cmd_t": "~/relay_1/command",
+        "stat_t": "homeassistant/device/dev-1/relay_1/state",
+        "cmd_t": "homeassistant/device/dev-1/relay_1/command",
         "name": "Relay",
         "dev_cla": "outlet",
     }
@@ -251,8 +251,8 @@ async def test_discovery_config_includes_custom_payloads() -> None:
     assert switch.discovery_config() == {
         "uniq_id": "relay_1",
         "p": "switch",
-        "stat_t": "~/relay_1/state",
-        "cmd_t": "~/relay_1/command",
+        "stat_t": "homeassistant/device/dev-1/relay_1/state",
+        "cmd_t": "homeassistant/device/dev-1/relay_1/command",
         "pl_on": "1",
         "pl_off": "0",
     }
@@ -271,8 +271,8 @@ async def test_discovery_config_includes_state_and_command_mapping() -> None:
     assert switch.discovery_config() == {
         "uniq_id": "relay_1",
         "p": "switch",
-        "stat_t": "~/relay_1/state",
-        "cmd_t": "~/relay_1/command",
+        "stat_t": "homeassistant/device/dev-1/relay_1/state",
+        "cmd_t": "homeassistant/device/dev-1/relay_1/command",
         "stat_on": "HIGH",
         "stat_off": "LOW",
         "cmd_on": "ON_CMD",
@@ -292,8 +292,8 @@ async def test_discovery_config_omits_mapping_matching_payloads() -> None:
     assert switch.discovery_config() == {
         "uniq_id": "relay_1",
         "p": "switch",
-        "stat_t": "~/relay_1/state",
-        "cmd_t": "~/relay_1/command",
+        "stat_t": "homeassistant/device/dev-1/relay_1/state",
+        "cmd_t": "homeassistant/device/dev-1/relay_1/command",
     }
 
 
@@ -303,8 +303,8 @@ async def test_discovery_config_includes_optimistic() -> None:
     assert switch.discovery_config() == {
         "uniq_id": "relay_1",
         "p": "switch",
-        "stat_t": "~/relay_1/state",
-        "cmd_t": "~/relay_1/command",
+        "stat_t": "homeassistant/device/dev-1/relay_1/state",
+        "cmd_t": "homeassistant/device/dev-1/relay_1/command",
         "opt": True,
     }
 

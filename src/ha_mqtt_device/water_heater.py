@@ -303,4 +303,4 @@ class WaterHeater(Entity):
             config["pl_off"] = self.payload_off
         if self.optimistic:
             config["opt"] = True
-        return config
+        return self._resolve_discovery_config(config)

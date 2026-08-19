@@ -94,4 +94,4 @@ class Sensor(Entity):
             config["frc_upd"] = True
         if self.suggested_display_precision is not None:
             config["sug_dsp_prc"] = self.suggested_display_precision
-        return config
+        return self._resolve_discovery_config(config)

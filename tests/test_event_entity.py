@@ -87,7 +87,7 @@ async def test_discovery_config_defaults() -> None:
     assert doorbell.discovery_config() == {
         "uniq_id": "doorbell",
         "p": "event",
-        "stat_t": "~/doorbell/state",
+        "stat_t": "homeassistant/device/dev-1/doorbell/state",
         "evt_typ": ["doorbell_pressed", "doorbell_long_press"],
     }
 
@@ -104,7 +104,7 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
     assert doorbell.discovery_config() == {
         "uniq_id": "doorbell",
         "p": "event",
-        "stat_t": "~/doorbell/state",
+        "stat_t": "homeassistant/device/dev-1/doorbell/state",
         "evt_typ": ["doorbell_pressed"],
         "name": "Doorbell",
         "dev_cla": "doorbell",
@@ -122,7 +122,7 @@ async def test_discovery_config_includes_event_type_template() -> None:
     assert doorbell.discovery_config() == {
         "uniq_id": "doorbell",
         "p": "event",
-        "stat_t": "~/doorbell/state",
+        "stat_t": "homeassistant/device/dev-1/doorbell/state",
         "evt_typ": ["doorbell_pressed"],
         "eve_tt": "{{ value.split('_')[0] }}",
     }
@@ -139,7 +139,7 @@ async def test_discovery_config_includes_value_template() -> None:
     assert doorbell.discovery_config() == {
         "uniq_id": "doorbell",
         "p": "event",
-        "stat_t": "~/doorbell/state",
+        "stat_t": "homeassistant/device/dev-1/doorbell/state",
         "evt_typ": ["doorbell_pressed"],
         "val_tpl": "{{ value }}",
     }

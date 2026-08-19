@@ -326,10 +326,10 @@ async def test_discovery_config_defaults() -> None:
     assert humidifier.discovery_config() == {
         "uniq_id": "bedroom",
         "p": "humidifier",
-        "stat_t": "~/bedroom/state",
-        "cmd_t": "~/bedroom/command",
-        "hum_stat_t": "~/bedroom/state/target_humidity",
-        "hum_cmd_t": "~/bedroom/command/target_humidity",
+        "stat_t": "homeassistant/device/dev-1/bedroom/state",
+        "cmd_t": "homeassistant/device/dev-1/bedroom/command",
+        "hum_stat_t": "homeassistant/device/dev-1/bedroom/state/target_humidity",
+        "hum_cmd_t": "homeassistant/device/dev-1/bedroom/command/target_humidity",
     }
 
 
@@ -345,8 +345,8 @@ async def test_discovery_config_omits_disabled_target_humidity() -> None:
     assert humidifier.discovery_config() == {
         "uniq_id": "bedroom",
         "p": "humidifier",
-        "stat_t": "~/bedroom/state",
-        "cmd_t": "~/bedroom/command",
+        "stat_t": "homeassistant/device/dev-1/bedroom/state",
+        "cmd_t": "homeassistant/device/dev-1/bedroom/command",
     }
 
 
@@ -361,10 +361,10 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
     assert humidifier.discovery_config() == {
         "uniq_id": "bedroom",
         "p": "humidifier",
-        "stat_t": "~/bedroom/state",
-        "cmd_t": "~/bedroom/command",
-        "hum_stat_t": "~/bedroom/state/target_humidity",
-        "hum_cmd_t": "~/bedroom/command/target_humidity",
+        "stat_t": "homeassistant/device/dev-1/bedroom/state",
+        "cmd_t": "homeassistant/device/dev-1/bedroom/command",
+        "hum_stat_t": "homeassistant/device/dev-1/bedroom/state/target_humidity",
+        "hum_cmd_t": "homeassistant/device/dev-1/bedroom/command/target_humidity",
         "name": "Bedroom humidifier",
         "dev_cla": "humidifier",
     }
@@ -381,10 +381,10 @@ async def test_discovery_config_includes_custom_payloads() -> None:
     assert humidifier.discovery_config() == {
         "uniq_id": "bedroom",
         "p": "humidifier",
-        "stat_t": "~/bedroom/state",
-        "cmd_t": "~/bedroom/command",
-        "hum_stat_t": "~/bedroom/state/target_humidity",
-        "hum_cmd_t": "~/bedroom/command/target_humidity",
+        "stat_t": "homeassistant/device/dev-1/bedroom/state",
+        "cmd_t": "homeassistant/device/dev-1/bedroom/command",
+        "hum_stat_t": "homeassistant/device/dev-1/bedroom/state/target_humidity",
+        "hum_cmd_t": "homeassistant/device/dev-1/bedroom/command/target_humidity",
         "pl_on": "1",
         "pl_off": "0",
     }
@@ -401,10 +401,10 @@ async def test_discovery_config_includes_humidity_range() -> None:
     assert humidifier.discovery_config() == {
         "uniq_id": "bedroom",
         "p": "humidifier",
-        "stat_t": "~/bedroom/state",
-        "cmd_t": "~/bedroom/command",
-        "hum_stat_t": "~/bedroom/state/target_humidity",
-        "hum_cmd_t": "~/bedroom/command/target_humidity",
+        "stat_t": "homeassistant/device/dev-1/bedroom/state",
+        "cmd_t": "homeassistant/device/dev-1/bedroom/command",
+        "hum_stat_t": "homeassistant/device/dev-1/bedroom/state/target_humidity",
+        "hum_cmd_t": "homeassistant/device/dev-1/bedroom/command/target_humidity",
         "min_hum": 30,
         "max_hum": 80,
     }
@@ -418,10 +418,10 @@ async def test_discovery_config_includes_optimistic() -> None:
     assert humidifier.discovery_config() == {
         "uniq_id": "bedroom",
         "p": "humidifier",
-        "stat_t": "~/bedroom/state",
-        "cmd_t": "~/bedroom/command",
-        "hum_stat_t": "~/bedroom/state/target_humidity",
-        "hum_cmd_t": "~/bedroom/command/target_humidity",
+        "stat_t": "homeassistant/device/dev-1/bedroom/state",
+        "cmd_t": "homeassistant/device/dev-1/bedroom/command",
+        "hum_stat_t": "homeassistant/device/dev-1/bedroom/state/target_humidity",
+        "hum_cmd_t": "homeassistant/device/dev-1/bedroom/command/target_humidity",
         "opt": True,
     }
 

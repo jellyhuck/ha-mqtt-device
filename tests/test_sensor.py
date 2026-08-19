@@ -64,7 +64,7 @@ async def test_discovery_config_defaults() -> None:
     assert sensor.discovery_config() == {
         "uniq_id": "temperature",
         "p": "sensor",
-        "stat_t": "~/temperature/state",
+        "stat_t": "homeassistant/device/dev-1/temperature/state",
     }
 
 
@@ -79,7 +79,7 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
     assert sensor.discovery_config() == {
         "uniq_id": "temperature",
         "p": "sensor",
-        "stat_t": "~/temperature/state",
+        "stat_t": "homeassistant/device/dev-1/temperature/state",
         "name": "Temperature",
         "dev_cla": "temperature",
     }
@@ -98,7 +98,7 @@ async def test_discovery_config_includes_measurement_fields() -> None:
     assert sensor.discovery_config() == {
         "uniq_id": "energy",
         "p": "sensor",
-        "stat_t": "~/energy/state",
+        "stat_t": "homeassistant/device/dev-1/energy/state",
         "unit_of_meas": "kWh",
         "stat_cla": "total_increasing",
         "exp_aft": 300,
@@ -120,7 +120,7 @@ async def test_discovery_config_includes_force_update() -> None:
     assert sensor.discovery_config() == {
         "uniq_id": "temperature",
         "p": "sensor",
-        "stat_t": "~/temperature/state",
+        "stat_t": "homeassistant/device/dev-1/temperature/state",
         "frc_upd": True,
     }
 

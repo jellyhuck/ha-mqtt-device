@@ -36,8 +36,8 @@ async def test_discovery_defaults_and_options() -> None:
     assert defaults.discovery_config() == {
         "uniq_id": "label",
         "p": "text",
-        "stat_t": "~/label/state",
-        "cmd_t": "~/label/command",
+        "stat_t": "homeassistant/device/dev-1/label/state",
+        "cmd_t": "homeassistant/device/dev-1/label/command",
     }
 
     _, configured = bound(
@@ -53,8 +53,8 @@ async def test_discovery_defaults_and_options() -> None:
     assert configured.discovery_config() == {
         "uniq_id": "password",
         "p": "text",
-        "stat_t": "~/password/state",
-        "cmd_t": "~/password/command",
+        "stat_t": "homeassistant/device/dev-1/password/state",
+        "cmd_t": "homeassistant/device/dev-1/password/command",
         "max": 20,
         "min": 1,
         "mode": "password",
@@ -108,7 +108,7 @@ async def test_configuration_validation_and_state_can_be_disabled() -> None:
     assert text.discovery_config() == {
         "uniq_id": "label",
         "p": "text",
-        "cmd_t": "~/label/command",
+        "cmd_t": "homeassistant/device/dev-1/label/command",
     }
     with pytest.raises(ValueError, match="state reporting"):
         await text.set_state("value")

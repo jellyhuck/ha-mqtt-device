@@ -58,8 +58,8 @@ async def test_discovery_defaults_and_optional_configuration() -> None:
     assert defaults.discovery_config() == {
         "uniq_id": "firmware",
         "p": "update",
-        "stat_t": "~/firmware/state",
-        "cmd_t": "~/firmware/command",
+        "stat_t": "homeassistant/device/dev-1/firmware/state",
+        "cmd_t": "homeassistant/device/dev-1/firmware/command",
     }
 
     _, configured = bound(
@@ -78,9 +78,9 @@ async def test_discovery_defaults_and_optional_configuration() -> None:
     assert configured.discovery_config() == {
         "uniq_id": "firmware",
         "p": "update",
-        "stat_t": "~/firmware/state",
-        "cmd_t": "~/firmware/command",
-        "l_ver_t": "~/firmware/state/latest",
+        "stat_t": "homeassistant/device/dev-1/firmware/state",
+        "cmd_t": "homeassistant/device/dev-1/firmware/command",
+        "l_ver_t": "homeassistant/device/dev-1/firmware/state/latest",
         "pl_inst": "update_fw",
         "tit": "Firmware",
         "dev_cla": "firmware",

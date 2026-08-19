@@ -76,4 +76,4 @@ class BinarySensor(Entity):
             config["pl_off"] = self.payload_off
         if self.device_class is not None:
             config["dev_cla"] = self.device_class
-        return config
+        return self._resolve_discovery_config(config)

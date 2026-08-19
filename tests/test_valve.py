@@ -36,8 +36,8 @@ async def test_default_discovery_and_state_commands() -> None:
     assert valve.discovery_config() == {
         "uniq_id": "valve",
         "p": "valve",
-        "stat_t": "~/valve/state",
-        "cmd_t": "~/valve/command",
+        "stat_t": "homeassistant/device/dev-1/valve/state",
+        "cmd_t": "homeassistant/device/dev-1/valve/command",
     }
     await valve.set_state("open")
     await valve.open()
@@ -66,8 +66,8 @@ async def test_custom_discovery_and_optional_stop() -> None:
         "uniq_id": "valve",
         "p": "valve",
         "name": "Water valve",
-        "stat_t": "~/valve/state",
-        "cmd_t": "~/valve/command",
+        "stat_t": "homeassistant/device/dev-1/valve/state",
+        "cmd_t": "homeassistant/device/dev-1/valve/command",
         "pl_open": "OPEN_VALVE",
         "pl_cls": None,
         "stat_open": "OPEN",
@@ -90,8 +90,8 @@ async def test_position_mode_publishes_and_parses_numeric_and_json() -> None:
     assert valve.discovery_config() == {
         "uniq_id": "valve",
         "p": "valve",
-        "stat_t": "~/valve/state",
-        "cmd_t": "~/valve/command",
+        "stat_t": "homeassistant/device/dev-1/valve/state",
+        "cmd_t": "homeassistant/device/dev-1/valve/command",
         "pos": True,
         "pos_clsd": 10,
         "pos_open": 90,

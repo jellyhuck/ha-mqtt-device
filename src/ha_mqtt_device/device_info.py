@@ -8,12 +8,8 @@ the device are represented by separate classes in this project.
 
 The discovery topic for the new format is
 ``<discovery_prefix>/device/<device_id>/config`` and the payload carries the
-``dev`` and ``o`` mappings, the ``~`` topic prefix, and the root-level
-availability options (``avty``).
-
-The ``~`` prefix defaults to ``<discovery_prefix>/device/<device_id>`` — the
-same prefix as the discovery topic — and individual topics are written with
-``~`` shorthand (for example the availability topic ``~/status``).
+``dev`` and ``o`` mappings and the root-level availability options (``avty``).
+All topics in the payload are fully resolved.
 """
 
 from __future__ import annotations
@@ -64,14 +60,13 @@ class DeviceInfo:
             (``dev.cns``), for example ``[("mac", "00:11:22:33:44:55")]``.
         identifiers: Additional identifiers of the device (``dev.ids``).
             Defaults to ``[device_id]``.
-        topic_prefix: MQTT topic prefix published as ``~``. Defaults to
+        topic_prefix: MQTT topic prefix used to resolve shorthand topics. Defaults to
             ``"<discovery_prefix>/device/<device_id>"`` —
             ``"homeassistant/device/<device_id>"`` with the default discovery
             prefix — matching the prefix of the discovery topic. May contain
             ``<device_id>``, which is replaced by the actual device id.
-        availability_topic: Topic used for availability updates, written with
-            ``~`` shorthand and published as-is in the discovery payload.
-            Defaults to ``~/status``.
+        availability_topic: Topic used for availability updates. A ``~/...``
+            value is resolved against ``topic_prefix``. Defaults to ``~/status``.
         availability_payload_available: Payload marking the device available.
         availability_payload_unavailable: Payload marking the device unavailable.
         origin_name: Name of the integration that created the config (``o.name``).
@@ -226,7 +221,7 @@ class DeviceInfo:
             origin["url"] = self.origin_url
 
         availability: dict[str, Any] = {
-            "topic": self.shorthand_topic(self.availability_topic),
+            "topic": self.resolve_topic(self.availability_topic),
         }
         if self.availability_payload_available != DEFAULT_PAYLOAD_AVAILABLE:
             availability["payload_available"] = self.availability_payload_available
@@ -239,7 +234,6 @@ class DeviceInfo:
             "dev": dev,
             "o": origin,
             "avty": [availability],
-            "~": self.topic_prefix,
         }
 
     def discovery_topic(self) -> str:
@@ -247,11 +241,10 @@ class DeviceInfo:
         return f"{self.discovery_prefix}/device/{self.device_id}/config"
 
     def shorthand_topic(self, topic: str | None = None) -> str:
-        """Return ``topic`` as a ``~``-prefixed shorthand for discovery payloads.
+        """Return ``topic`` as a ``~``-prefixed shorthand.
 
-        ``None`` defaults to ``~/status``. Topics are returned as given:
-        ``~/...`` topics keep their shorthand (Home Assistant resolves them
-        against the ``~`` key in the payload), and plain topics stay plain.
+        ``None`` defaults to ``~/status``. This helper is retained for callers
+        that use the internal shorthand topic convention.
         """
         if topic is None:
             return "~/status"
@@ -262,9 +255,7 @@ class DeviceInfo:
 
         ``None`` and ``~/...`` topics are expanded using ``topic_prefix``, so
         ``~/status`` becomes ``homeassistant/device/<device_id>/status``. Plain
-        topics are returned unchanged. Use this for topics the device actually
-        publishes to; the discovery payload itself uses
-        :meth:`shorthand_topic`.
+        topics are returned unchanged.
         """
         if topic is None:
             topic = "~/status"

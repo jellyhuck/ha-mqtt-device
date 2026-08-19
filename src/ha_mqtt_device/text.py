@@ -151,4 +151,4 @@ class Text(Entity):
             config["cmd_tpl"] = self.command_template
         if self.value_template is not None:
             config["val_tpl"] = self.value_template
-        return config
+        return self._resolve_discovery_config(config)

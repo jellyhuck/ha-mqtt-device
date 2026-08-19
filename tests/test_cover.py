@@ -324,10 +324,10 @@ async def test_discovery_config_defaults() -> None:
     assert cover.discovery_config() == {
         "uniq_id": "blinds",
         "p": "cover",
-        "stat_t": "~/blinds/state",
-        "cmd_t": "~/blinds/command",
-        "pos_t": "~/blinds/state/position",
-        "set_pos_t": "~/blinds/command/position",
+        "stat_t": "homeassistant/device/dev-1/blinds/state",
+        "cmd_t": "homeassistant/device/dev-1/blinds/command",
+        "pos_t": "homeassistant/device/dev-1/blinds/state/position",
+        "set_pos_t": "homeassistant/device/dev-1/blinds/command/position",
     }
 
 
@@ -342,10 +342,10 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
     assert cover.discovery_config() == {
         "uniq_id": "blinds",
         "p": "cover",
-        "stat_t": "~/blinds/state",
-        "cmd_t": "~/blinds/command",
-        "pos_t": "~/blinds/state/position",
-        "set_pos_t": "~/blinds/command/position",
+        "stat_t": "homeassistant/device/dev-1/blinds/state",
+        "cmd_t": "homeassistant/device/dev-1/blinds/command",
+        "pos_t": "homeassistant/device/dev-1/blinds/state/position",
+        "set_pos_t": "homeassistant/device/dev-1/blinds/command/position",
         "name": "Blinds",
         "dev_cla": "blind",
     }
@@ -363,10 +363,10 @@ async def test_discovery_config_includes_custom_payloads() -> None:
     assert cover.discovery_config() == {
         "uniq_id": "blinds",
         "p": "cover",
-        "stat_t": "~/blinds/state",
-        "cmd_t": "~/blinds/command",
-        "pos_t": "~/blinds/state/position",
-        "set_pos_t": "~/blinds/command/position",
+        "stat_t": "homeassistant/device/dev-1/blinds/state",
+        "cmd_t": "homeassistant/device/dev-1/blinds/command",
+        "pos_t": "homeassistant/device/dev-1/blinds/state/position",
+        "set_pos_t": "homeassistant/device/dev-1/blinds/command/position",
         "pl_open": "UP",
         "pl_cls": "DOWN",
         "pl_stop": "HALT",
@@ -387,10 +387,10 @@ async def test_discovery_config_includes_custom_state_payloads() -> None:
     assert cover.discovery_config() == {
         "uniq_id": "blinds",
         "p": "cover",
-        "stat_t": "~/blinds/state",
-        "cmd_t": "~/blinds/command",
-        "pos_t": "~/blinds/state/position",
-        "set_pos_t": "~/blinds/command/position",
+        "stat_t": "homeassistant/device/dev-1/blinds/state",
+        "cmd_t": "homeassistant/device/dev-1/blinds/command",
+        "pos_t": "homeassistant/device/dev-1/blinds/state/position",
+        "set_pos_t": "homeassistant/device/dev-1/blinds/command/position",
         "stat_open": "OPENED",
         "stat_opening": "OPENING_",
         "stat_clsd": "SHUT",
@@ -407,10 +407,10 @@ async def test_discovery_config_includes_position_bounds() -> None:
     assert cover.discovery_config() == {
         "uniq_id": "blinds",
         "p": "cover",
-        "stat_t": "~/blinds/state",
-        "cmd_t": "~/blinds/command",
-        "pos_t": "~/blinds/state/position",
-        "set_pos_t": "~/blinds/command/position",
+        "stat_t": "homeassistant/device/dev-1/blinds/state",
+        "cmd_t": "homeassistant/device/dev-1/blinds/command",
+        "pos_t": "homeassistant/device/dev-1/blinds/state/position",
+        "set_pos_t": "homeassistant/device/dev-1/blinds/command/position",
         "pos_open": 50,
         "pos_clsd": 1,
     }
@@ -422,10 +422,10 @@ async def test_discovery_config_includes_optimistic() -> None:
     assert cover.discovery_config() == {
         "uniq_id": "blinds",
         "p": "cover",
-        "stat_t": "~/blinds/state",
-        "cmd_t": "~/blinds/command",
-        "pos_t": "~/blinds/state/position",
-        "set_pos_t": "~/blinds/command/position",
+        "stat_t": "homeassistant/device/dev-1/blinds/state",
+        "cmd_t": "homeassistant/device/dev-1/blinds/command",
+        "pos_t": "homeassistant/device/dev-1/blinds/state/position",
+        "set_pos_t": "homeassistant/device/dev-1/blinds/command/position",
         "opt": True,
     }
 

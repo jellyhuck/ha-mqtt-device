@@ -325,12 +325,12 @@ async def test_discovery_config_defaults() -> None:
     assert climate.discovery_config() == {
         "uniq_id": "thermostat",
         "p": "climate",
-        "curr_temp_t": "~/thermostat/state/current_temperature",
-        "temp_stat_t": "~/thermostat/state/temperature",
-        "temp_cmd_t": "~/thermostat/command/temperature",
-        "mode_stat_t": "~/thermostat/state/mode",
-        "mode_cmd_t": "~/thermostat/command/mode",
-        "act_t": "~/thermostat/state/action",
+        "curr_temp_t": "homeassistant/device/dev-1/thermostat/state/current_temperature",
+        "temp_stat_t": "homeassistant/device/dev-1/thermostat/state/temperature",
+        "temp_cmd_t": "homeassistant/device/dev-1/thermostat/command/temperature",
+        "mode_stat_t": "homeassistant/device/dev-1/thermostat/state/mode",
+        "mode_cmd_t": "homeassistant/device/dev-1/thermostat/command/mode",
+        "act_t": "homeassistant/device/dev-1/thermostat/state/action",
     }
 
 
@@ -356,12 +356,12 @@ async def test_discovery_config_includes_modes_unit_and_bounds() -> None:
     assert climate.discovery_config() == {
         "uniq_id": "thermostat",
         "p": "climate",
-        "curr_temp_t": "~/thermostat/state/current_temperature",
-        "temp_stat_t": "~/thermostat/state/temperature",
-        "temp_cmd_t": "~/thermostat/command/temperature",
-        "mode_stat_t": "~/thermostat/state/mode",
-        "mode_cmd_t": "~/thermostat/command/mode",
-        "act_t": "~/thermostat/state/action",
+        "curr_temp_t": "homeassistant/device/dev-1/thermostat/state/current_temperature",
+        "temp_stat_t": "homeassistant/device/dev-1/thermostat/state/temperature",
+        "temp_cmd_t": "homeassistant/device/dev-1/thermostat/command/temperature",
+        "mode_stat_t": "homeassistant/device/dev-1/thermostat/state/mode",
+        "mode_cmd_t": "homeassistant/device/dev-1/thermostat/command/mode",
+        "act_t": "homeassistant/device/dev-1/thermostat/state/action",
         "modes": ["off", "heat", "cool", "auto"],
         "temp_unit": "F",
         "min_temp": 60,

@@ -205,8 +205,8 @@ async def test_discovery_config_defaults() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "vacation",
         "p": "date",
-        "stat_t": "~/vacation/state",
-        "cmd_t": "~/vacation/command",
+        "stat_t": "homeassistant/device/dev-1/vacation/state",
+        "cmd_t": "homeassistant/device/dev-1/vacation/command",
     }
 
 
@@ -220,8 +220,8 @@ async def test_discovery_config_includes_name() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "vacation",
         "p": "date",
-        "stat_t": "~/vacation/state",
-        "cmd_t": "~/vacation/command",
+        "stat_t": "homeassistant/device/dev-1/vacation/state",
+        "cmd_t": "homeassistant/device/dev-1/vacation/command",
         "name": "Vacation start",
     }
 
@@ -232,8 +232,8 @@ async def test_discovery_config_includes_optimistic() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "vacation",
         "p": "date",
-        "stat_t": "~/vacation/state",
-        "cmd_t": "~/vacation/command",
+        "stat_t": "homeassistant/device/dev-1/vacation/state",
+        "cmd_t": "homeassistant/device/dev-1/vacation/command",
         "opt": True,
     }
 
@@ -244,8 +244,8 @@ async def test_discovery_config_includes_force_update() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "vacation",
         "p": "date",
-        "stat_t": "~/vacation/state",
-        "cmd_t": "~/vacation/command",
+        "stat_t": "homeassistant/device/dev-1/vacation/state",
+        "cmd_t": "homeassistant/device/dev-1/vacation/command",
         "frc_upd": True,
     }
 
@@ -262,8 +262,8 @@ async def test_discovery_config_omits_default_flags() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "vacation",
         "p": "date",
-        "stat_t": "~/vacation/state",
-        "cmd_t": "~/vacation/command",
+        "stat_t": "homeassistant/device/dev-1/vacation/state",
+        "cmd_t": "homeassistant/device/dev-1/vacation/command",
     }
 
 

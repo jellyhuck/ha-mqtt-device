@@ -202,7 +202,7 @@ async def test_discovery_config_defaults() -> None:
     assert emitter.discovery_config() == {
         "uniq_id": "tv_power",
         "p": "infrared",
-        "cmd_t": "~/tv_power/command",
+        "cmd_t": "homeassistant/device/dev-1/tv_power/command",
         "schema": "emitter",
     }
 
@@ -215,7 +215,7 @@ async def test_discovery_config_includes_name() -> None:
     assert emitter.discovery_config() == {
         "uniq_id": "tv_power",
         "p": "infrared",
-        "cmd_t": "~/tv_power/command",
+        "cmd_t": "homeassistant/device/dev-1/tv_power/command",
         "schema": "emitter",
         "name": "TV power",
     }
@@ -271,7 +271,7 @@ async def test_receiver_discovery_config_defaults() -> None:
     assert receiver.discovery_config() == {
         "uniq_id": "living_room_ir",
         "p": "infrared",
-        "stat_t": "~/living_room_ir/state",
+        "stat_t": "homeassistant/device/dev-1/living_room_ir/state",
         "schema": "receiver",
     }
 
@@ -287,7 +287,7 @@ async def test_receiver_discovery_config_includes_name() -> None:
     assert receiver.discovery_config() == {
         "uniq_id": "living_room_ir",
         "p": "infrared",
-        "stat_t": "~/living_room_ir/state",
+        "stat_t": "homeassistant/device/dev-1/living_room_ir/state",
         "schema": "receiver",
         "name": "Living room IR",
     }

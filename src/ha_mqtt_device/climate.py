@@ -370,4 +370,4 @@ class Climate(Entity):
             config["mode_opt"] = True
         if self.temp_opt:
             config["temp_opt"] = True
-        return config
+        return self._resolve_discovery_config(config)

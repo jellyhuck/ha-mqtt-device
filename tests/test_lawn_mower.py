@@ -242,10 +242,10 @@ async def test_discovery_config_defaults() -> None:
     assert mower.discovery_config() == {
         "uniq_id": "mower_1",
         "p": "lawn_mower",
-        "activity_state_topic": "~/mower_1/state",
-        "start_mowing_command_topic": "~/mower_1/command",
-        "pause_command_topic": "~/mower_1/command",
-        "dock_command_topic": "~/mower_1/command",
+        "activity_state_topic": "homeassistant/device/dev-1/mower_1/state",
+        "start_mowing_command_topic": "homeassistant/device/dev-1/mower_1/command",
+        "pause_command_topic": "homeassistant/device/dev-1/mower_1/command",
+        "dock_command_topic": "homeassistant/device/dev-1/mower_1/command",
     }
 
 
@@ -259,10 +259,10 @@ async def test_discovery_config_includes_name() -> None:
     assert mower.discovery_config() == {
         "uniq_id": "mower_1",
         "p": "lawn_mower",
-        "activity_state_topic": "~/mower_1/state",
-        "start_mowing_command_topic": "~/mower_1/command",
-        "pause_command_topic": "~/mower_1/command",
-        "dock_command_topic": "~/mower_1/command",
+        "activity_state_topic": "homeassistant/device/dev-1/mower_1/state",
+        "start_mowing_command_topic": "homeassistant/device/dev-1/mower_1/command",
+        "pause_command_topic": "homeassistant/device/dev-1/mower_1/command",
+        "dock_command_topic": "homeassistant/device/dev-1/mower_1/command",
         "name": "Lawn Mower",
     }
 
@@ -279,10 +279,10 @@ async def test_discovery_config_includes_custom_payloads() -> None:
     assert mower.discovery_config() == {
         "uniq_id": "mower_1",
         "p": "lawn_mower",
-        "activity_state_topic": "~/mower_1/state",
-        "start_mowing_command_topic": "~/mower_1/command",
-        "pause_command_topic": "~/mower_1/command",
-        "dock_command_topic": "~/mower_1/command",
+        "activity_state_topic": "homeassistant/device/dev-1/mower_1/state",
+        "start_mowing_command_topic": "homeassistant/device/dev-1/mower_1/command",
+        "pause_command_topic": "homeassistant/device/dev-1/mower_1/command",
+        "dock_command_topic": "homeassistant/device/dev-1/mower_1/command",
         "pl_strt": '{"cmd": "start"}',
         "pl_pau": '{"cmd": "pause"}',
         "pl_doc": '{"cmd": "dock"}',
@@ -302,10 +302,10 @@ async def test_discovery_config_includes_custom_states() -> None:
     assert mower.discovery_config() == {
         "uniq_id": "mower_1",
         "p": "lawn_mower",
-        "activity_state_topic": "~/mower_1/state",
-        "start_mowing_command_topic": "~/mower_1/command",
-        "pause_command_topic": "~/mower_1/command",
-        "dock_command_topic": "~/mower_1/command",
+        "activity_state_topic": "homeassistant/device/dev-1/mower_1/state",
+        "start_mowing_command_topic": "homeassistant/device/dev-1/mower_1/command",
+        "pause_command_topic": "homeassistant/device/dev-1/mower_1/command",
+        "dock_command_topic": "homeassistant/device/dev-1/mower_1/command",
         "sta_mow": "MOWING",
         "sta_pau": "PAUSED",
         "sta_doc": "DOCKED",
@@ -325,10 +325,10 @@ async def test_discovery_config_omits_states_matching_defaults() -> None:
     assert mower.discovery_config() == {
         "uniq_id": "mower_1",
         "p": "lawn_mower",
-        "activity_state_topic": "~/mower_1/state",
-        "start_mowing_command_topic": "~/mower_1/command",
-        "pause_command_topic": "~/mower_1/command",
-        "dock_command_topic": "~/mower_1/command",
+        "activity_state_topic": "homeassistant/device/dev-1/mower_1/state",
+        "start_mowing_command_topic": "homeassistant/device/dev-1/mower_1/command",
+        "pause_command_topic": "homeassistant/device/dev-1/mower_1/command",
+        "dock_command_topic": "homeassistant/device/dev-1/mower_1/command",
     }
 
 

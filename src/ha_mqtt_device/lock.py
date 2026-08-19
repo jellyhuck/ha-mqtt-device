@@ -195,4 +195,4 @@ class Lock(Entity):
             config["val_tpl"] = self.value_template
         if self.optimistic is not None:
             config["opt"] = self.optimistic
-        return config
+        return self._resolve_discovery_config(config)

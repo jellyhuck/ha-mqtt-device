@@ -131,7 +131,7 @@ async def test_discovery_config_defaults() -> None:
     assert tracker.discovery_config() == {
         "uniq_id": "phone",
         "p": "device_tracker",
-        "stat_t": "~/phone/state",
+        "stat_t": "homeassistant/device/dev-1/phone/state",
     }
 
 
@@ -146,7 +146,7 @@ async def test_discovery_config_includes_name_and_icon() -> None:
     assert tracker.discovery_config() == {
         "uniq_id": "phone",
         "p": "device_tracker",
-        "stat_t": "~/phone/state",
+        "stat_t": "homeassistant/device/dev-1/phone/state",
         "name": "Phone",
         "ic": "mdi:cellphone",
     }
@@ -163,7 +163,7 @@ async def test_discovery_config_includes_custom_payloads() -> None:
     assert tracker.discovery_config() == {
         "uniq_id": "phone",
         "p": "device_tracker",
-        "stat_t": "~/phone/state",
+        "stat_t": "homeassistant/device/dev-1/phone/state",
         "pl_home": "in",
         "pl_not_home": "out",
     }
@@ -183,7 +183,7 @@ async def test_discovery_config_includes_location_fields() -> None:
     assert tracker.discovery_config() == {
         "uniq_id": "phone",
         "p": "device_tracker",
-        "stat_t": "~/phone/state",
+        "stat_t": "homeassistant/device/dev-1/phone/state",
         "source_type": "bluetooth",
         "lat": 32.87336,
         "lon": -117.22743,
@@ -199,7 +199,7 @@ async def test_discovery_config_omits_default_source_type() -> None:
     assert tracker.discovery_config() == {
         "uniq_id": "phone",
         "p": "device_tracker",
-        "stat_t": "~/phone/state",
+        "stat_t": "homeassistant/device/dev-1/phone/state",
     }
 
 

@@ -268,4 +268,4 @@ class LawnMower(Entity):
         if self.state_error is not None and self.state_error != DEFAULT_ERROR_STATE:
             config["sta_err"] = self.state_error
 
-        return config
+        return self._resolve_discovery_config(config)

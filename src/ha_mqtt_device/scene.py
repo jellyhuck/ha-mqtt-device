@@ -98,4 +98,4 @@ class Scene(Entity):
             config["pl_avail"] = self.payload_available
         if self.payload_not_available != "offline":
             config["pl_not_avail"] = self.payload_not_available
-        return config
+        return self._resolve_discovery_config(config)

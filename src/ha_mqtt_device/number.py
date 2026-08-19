@@ -245,4 +245,4 @@ class Number(Entity):
             config["exp_aft"] = self.expire_after
         if self.force_update:
             config["frc_upd"] = True
-        return config
+        return self._resolve_discovery_config(config)

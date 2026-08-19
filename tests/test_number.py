@@ -194,8 +194,8 @@ async def test_discovery_config_defaults() -> None:
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
         "p": "number",
-        "stat_t": "~/dimmer/state",
-        "cmd_t": "~/dimmer/command",
+        "stat_t": "homeassistant/device/dev-1/dimmer/state",
+        "cmd_t": "homeassistant/device/dev-1/dimmer/command",
     }
 
 
@@ -210,8 +210,8 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
         "p": "number",
-        "stat_t": "~/dimmer/state",
-        "cmd_t": "~/dimmer/command",
+        "stat_t": "homeassistant/device/dev-1/dimmer/state",
+        "cmd_t": "homeassistant/device/dev-1/dimmer/command",
         "name": "Dimmer",
         "dev_cla": "power",
     }
@@ -230,8 +230,8 @@ async def test_discovery_config_includes_bounds_step_and_mode() -> None:
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
         "p": "number",
-        "stat_t": "~/dimmer/state",
-        "cmd_t": "~/dimmer/command",
+        "stat_t": "homeassistant/device/dev-1/dimmer/state",
+        "cmd_t": "homeassistant/device/dev-1/dimmer/command",
         "min": 0.5,
         "max": 50.0,
         "step": 0.5,
@@ -253,8 +253,8 @@ async def test_discovery_config_omits_default_bounds_step_and_mode() -> None:
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
         "p": "number",
-        "stat_t": "~/dimmer/state",
-        "cmd_t": "~/dimmer/command",
+        "stat_t": "homeassistant/device/dev-1/dimmer/state",
+        "cmd_t": "homeassistant/device/dev-1/dimmer/command",
     }
 
 
@@ -264,8 +264,8 @@ async def test_discovery_config_includes_optimistic() -> None:
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
         "p": "number",
-        "stat_t": "~/dimmer/state",
-        "cmd_t": "~/dimmer/command",
+        "stat_t": "homeassistant/device/dev-1/dimmer/state",
+        "cmd_t": "homeassistant/device/dev-1/dimmer/command",
         "opt": True,
     }
 
@@ -276,8 +276,8 @@ async def test_discovery_config_includes_payload_reset() -> None:
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
         "p": "number",
-        "stat_t": "~/dimmer/state",
-        "cmd_t": "~/dimmer/command",
+        "stat_t": "homeassistant/device/dev-1/dimmer/state",
+        "cmd_t": "homeassistant/device/dev-1/dimmer/command",
         "pl_rst": "0",
     }
 
@@ -291,8 +291,8 @@ async def test_discovery_config_omits_default_payload_reset() -> None:
     assert number.discovery_config() == {
         "uniq_id": "dimmer",
         "p": "number",
-        "stat_t": "~/dimmer/state",
-        "cmd_t": "~/dimmer/command",
+        "stat_t": "homeassistant/device/dev-1/dimmer/state",
+        "cmd_t": "homeassistant/device/dev-1/dimmer/command",
     }
 
 
@@ -308,8 +308,8 @@ async def test_discovery_config_includes_unit_and_expiry_fields() -> None:
     assert number.discovery_config() == {
         "uniq_id": "temperature",
         "p": "number",
-        "stat_t": "~/temperature/state",
-        "cmd_t": "~/temperature/command",
+        "stat_t": "homeassistant/device/dev-1/temperature/state",
+        "cmd_t": "homeassistant/device/dev-1/temperature/command",
         "unit_of_meas": "°C",
         "exp_aft": 300,
         "frc_upd": True,

@@ -23,7 +23,7 @@ async def test_discovery_is_command_only() -> None:
     assert notify.discovery_config() == {
         "uniq_id": "alerts",
         "p": "notify",
-        "cmd_t": "~/alerts/command",
+        "cmd_t": "homeassistant/device/dev-1/alerts/command",
     }
 
 
@@ -41,9 +41,9 @@ async def test_discovery_includes_template_and_availability_options() -> None:
     assert notify.discovery_config() == {
         "uniq_id": "alerts",
         "p": "notify",
-        "cmd_t": "~/alerts/command",
+        "cmd_t": "homeassistant/device/dev-1/alerts/command",
         "cmd_tpl": "{{ value_json.message }}",
-        "avty_t": "~/notify_status",
+        "avty_t": "homeassistant/device/dev-1/notify_status",
         "avty_tpl": "{{ value }}",
         "pl_avail": "up",
         "pl_not_avail": "down",

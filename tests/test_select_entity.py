@@ -40,8 +40,8 @@ async def test_discovery_defaults_include_required_options_and_topics() -> None:
         "uniq_id": "mode",
         "p": "select",
         "name": "Mode",
-        "stat_t": "~/mode/state",
-        "cmd_t": "~/mode/command",
+        "stat_t": "homeassistant/device/dev-1/mode/state",
+        "cmd_t": "homeassistant/device/dev-1/mode/command",
         "ops": ["Auto", "Manual"],
     }
 
@@ -56,7 +56,7 @@ async def test_discovery_omits_or_includes_optimistic_and_templates() -> None:
     assert optimistic.discovery_config() == {
         "uniq_id": "mode",
         "p": "select",
-        "cmd_t": "~/mode/command",
+        "cmd_t": "homeassistant/device/dev-1/mode/command",
         "ops": [],
     }
 
@@ -71,8 +71,8 @@ async def test_discovery_omits_or_includes_optimistic_and_templates() -> None:
     assert configured.discovery_config() == {
         "uniq_id": "mode",
         "p": "select",
-        "stat_t": "~/mode/state",
-        "cmd_t": "~/mode/command",
+        "stat_t": "homeassistant/device/dev-1/mode/state",
+        "cmd_t": "homeassistant/device/dev-1/mode/command",
         "ops": ["Auto"],
         "opt": True,
         "cmd_tpl": "{{ value }}",

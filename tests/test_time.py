@@ -87,8 +87,8 @@ async def test_discovery_options_and_device_configuration() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
         "p": "time",
-        "stat_t": "~/alarm/state",
-        "cmd_t": "~/alarm/command",
+        "stat_t": "homeassistant/device/dev-1/alarm/state",
+        "cmd_t": "homeassistant/device/dev-1/alarm/command",
         "cmd_tpl": "{{ value }}",
         "val_tpl": "{{ value_json.time }}",
     }
@@ -110,7 +110,7 @@ async def test_unbound_and_disabled_state_errors() -> None:
     assert disabled.discovery_config() == {
         "uniq_id": "alarm",
         "p": "time",
-        "cmd_t": "~/alarm/command",
+        "cmd_t": "homeassistant/device/dev-1/alarm/command",
     }
     with pytest.raises(ValueError, match="state reporting"):
         await disabled.set_state("12:00")

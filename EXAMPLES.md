@@ -58,9 +58,10 @@ async with provider:
 
 ## Entities
 
-All entity classes are exported from `ha_mqtt_device`. Entity topics use the
-`~/` prefix resolved by the device, and entity-level availability is inherited
-from the device.
+All entity classes are exported from `ha_mqtt_device`. Runtime entity topics
+use the `~/` prefix resolved by the device; discovery configs contain the
+fully resolved topic names, and entity-level availability is inherited from
+the device.
 
 ### Alarm control panel
 

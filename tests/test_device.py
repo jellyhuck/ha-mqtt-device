@@ -56,8 +56,8 @@ async def test_configure_publishes_discovery_payload() -> None:
     assert payload["dev"]["ids"] == ["dev-1"]
     assert payload["dev"]["name"] == "Device"
     assert payload["o"]["name"] == "ha-mqtt-device"
-    assert payload["~"] == "homeassistant/device/dev-1"
-    assert payload["avty"][0]["topic"] == "~/status"
+    assert "~" not in payload
+    assert payload["avty"][0]["topic"] == "homeassistant/device/dev-1/status"
 
 
 async def test_set_availability_publishes_online_and_offline() -> None:
@@ -245,7 +245,7 @@ async def test_configure_includes_cmps_for_entities() -> None:
         "is_led_on": {
             "uniq_id": "is_led_on",
             "p": "binary_sensor",
-            "stat_t": "~/is_led_on/state",
+            "stat_t": "homeassistant/device/dev-1/is_led_on/state",
             "name": "LED state",
         }
     }

@@ -166,7 +166,7 @@ async def test_discovery_config_defaults() -> None:
     assert button.discovery_config() == {
         "uniq_id": "restart_1",
         "p": "button",
-        "cmd_t": "~/restart_1/command",
+        "cmd_t": "homeassistant/device/dev-1/restart_1/command",
     }
 
 
@@ -181,7 +181,7 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
     assert button.discovery_config() == {
         "uniq_id": "restart_1",
         "p": "button",
-        "cmd_t": "~/restart_1/command",
+        "cmd_t": "homeassistant/device/dev-1/restart_1/command",
         "name": "Restart",
         "dev_cla": "restart",
     }
@@ -195,7 +195,7 @@ async def test_discovery_config_includes_custom_payload() -> None:
     assert button.discovery_config() == {
         "uniq_id": "restart_1",
         "p": "button",
-        "cmd_t": "~/restart_1/command",
+        "cmd_t": "homeassistant/device/dev-1/restart_1/command",
         "pl_prs": "R",
     }
 

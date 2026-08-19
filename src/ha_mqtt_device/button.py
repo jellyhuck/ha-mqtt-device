@@ -135,4 +135,4 @@ class Button(Entity):
             config["pl_prs"] = self.payload_press
         if self.device_class is not None:
             config["dev_cla"] = self.device_class
-        return config
+        return self._resolve_discovery_config(config)

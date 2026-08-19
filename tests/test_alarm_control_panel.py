@@ -31,8 +31,8 @@ async def test_state_and_discovery_defaults() -> None:
     assert panel.discovery_config() == {
         "uniq_id": "alarm",
         "p": "alarm_control_panel",
-        "cmd_t": "~/alarm/command",
-        "stat_t": "~/alarm/state",
+        "cmd_t": "homeassistant/device/dev-1/alarm/command",
+        "stat_t": "homeassistant/device/dev-1/alarm/state",
     }
 
 
@@ -51,8 +51,8 @@ async def test_discovery_custom_payloads_codes_and_templates() -> None:
     assert panel.discovery_config() == {
         "uniq_id": "alarm",
         "p": "alarm_control_panel",
-        "cmd_t": "~/alarm/command",
-        "stat_t": "~/alarm/state",
+        "cmd_t": "homeassistant/device/dev-1/alarm/command",
+        "stat_t": "homeassistant/device/dev-1/alarm/state",
         "pl_arm_home": "HOME",
         "cod_arm_req": True,
         "cod_dis_req": True,

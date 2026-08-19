@@ -97,4 +97,4 @@ class EventEntity(Entity):
             config["val_tpl"] = self.value_template
         if self.device_class is not None:
             config["dev_cla"] = self.device_class
-        return config
+        return self._resolve_discovery_config(config)

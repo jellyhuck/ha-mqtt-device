@@ -25,8 +25,8 @@ async def test_default_discovery_and_json_state() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "cleaner",
         "p": "vacuum",
-        "stat_t": "~/cleaner/state",
-        "cmd_t": "~/cleaner/command",
+        "stat_t": "homeassistant/device/dev-1/cleaner/state",
+        "cmd_t": "homeassistant/device/dev-1/cleaner/command",
     }
     await entity.set_state(
         "docked",
@@ -71,12 +71,12 @@ async def test_optional_features_and_payload_mappings() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "cleaner",
         "p": "vacuum",
-        "stat_t": "~/cleaner/state",
-        "cmd_t": "~/cleaner/command",
-        "send_cmd_t": "~/cleaner/command/send",
-        "set_fan_spd_t": "~/cleaner/command/fan_speed",
+        "stat_t": "homeassistant/device/dev-1/cleaner/state",
+        "cmd_t": "homeassistant/device/dev-1/cleaner/command",
+        "send_cmd_t": "homeassistant/device/dev-1/cleaner/command/send",
+        "set_fan_spd_t": "homeassistant/device/dev-1/cleaner/command/fan_speed",
         "fanspd_lst": ["min", "max"],
-        "clean_segments_command_topic": "~/cleaner/command/clean_segments",
+        "clean_segments_command_topic": "homeassistant/device/dev-1/cleaner/command/clean_segments",
         "sup_feat": [
             "start",
             "pause",

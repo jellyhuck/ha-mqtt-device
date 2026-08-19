@@ -5,10 +5,10 @@ An entity is a pure configuration object until it is bound to a
 entity is passed to the device constructor. Once bound, the entity can publish
 state changes through the device's MQTT provider.
 
-Topics follow the convention ``~/<unique_id>/<topic>``: the device's topic
-prefix (published as ``~`` in the discovery payload) is followed by the
-entity's ``unique_id`` and then the per-entity topic, for example the state
-topic ``~/is_led_on/state``.
+Topics follow the convention ``~/<unique_id>/<topic>`` internally: the
+device's topic prefix is followed by the entity's ``unique_id`` and then the
+per-entity topic, for example the state topic ``~/is_led_on/state``. Discovery
+configs contain the fully resolved MQTT topics.
 """
 
 from __future__ import annotations
@@ -138,3 +138,18 @@ class Entity:
         if self.name is not None:
             config["name"] = self.name
         return config
+
+    def _resolve_discovery_config(self, config: dict[str, Any]) -> dict[str, Any]:
+        """Resolve shorthand topics contained in an entity discovery config."""
+        device = self._require_device()
+
+        def resolve(value: Any) -> Any:
+            if isinstance(value, str):
+                return device.info.resolve_topic(value)
+            if isinstance(value, dict):
+                return {key: resolve(item) for key, item in value.items()}
+            if isinstance(value, list):
+                return [resolve(item) for item in value]
+            return value
+
+        return resolve(config)

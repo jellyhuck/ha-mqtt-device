@@ -80,7 +80,7 @@ async def test_discovery_config_defaults() -> None:
     assert image.discovery_config() == {
         "uniq_id": "camera",
         "p": "image",
-        "img_t": "~/camera/image",
+        "img_t": "homeassistant/device/dev-1/camera/image",
     }
 
 
@@ -90,7 +90,7 @@ async def test_discovery_config_includes_name() -> None:
     assert image.discovery_config() == {
         "uniq_id": "camera",
         "p": "image",
-        "img_t": "~/camera/image",
+        "img_t": "homeassistant/device/dev-1/camera/image",
         "name": "Camera",
     }
 
@@ -106,7 +106,7 @@ async def test_discovery_config_uses_image_encoding_and_content_type_keys() -> N
     assert image.discovery_config() == {
         "uniq_id": "camera",
         "p": "image",
-        "img_t": "~/camera/image",
+        "img_t": "homeassistant/device/dev-1/camera/image",
         "img_e": "b64",
         "cont_type": "image/png",
     }
@@ -123,7 +123,7 @@ async def test_discovery_config_omits_encoding_with_non_default_content_type() -
     assert image.discovery_config() == {
         "uniq_id": "camera",
         "p": "image",
-        "img_t": "~/camera/image",
+        "img_t": "homeassistant/device/dev-1/camera/image",
         "cont_type": "image/png",
     }
 

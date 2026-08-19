@@ -572,10 +572,10 @@ async def test_discovery_config_defaults() -> None:
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
         "p": "fan",
-        "stat_t": "~/ceiling_fan/state",
-        "cmd_t": "~/ceiling_fan/command",
-        "pct_stat_t": "~/ceiling_fan/state/percentage",
-        "pct_cmd_t": "~/ceiling_fan/command/percentage",
+        "stat_t": "homeassistant/device/dev-1/ceiling_fan/state",
+        "cmd_t": "homeassistant/device/dev-1/ceiling_fan/command",
+        "pct_stat_t": "homeassistant/device/dev-1/ceiling_fan/state/percentage",
+        "pct_cmd_t": "homeassistant/device/dev-1/ceiling_fan/command/percentage",
     }
 
 
@@ -590,10 +590,10 @@ async def test_discovery_config_includes_name_and_device_class() -> None:
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
         "p": "fan",
-        "stat_t": "~/ceiling_fan/state",
-        "cmd_t": "~/ceiling_fan/command",
-        "pct_stat_t": "~/ceiling_fan/state/percentage",
-        "pct_cmd_t": "~/ceiling_fan/command/percentage",
+        "stat_t": "homeassistant/device/dev-1/ceiling_fan/state",
+        "cmd_t": "homeassistant/device/dev-1/ceiling_fan/command",
+        "pct_stat_t": "homeassistant/device/dev-1/ceiling_fan/state/percentage",
+        "pct_cmd_t": "homeassistant/device/dev-1/ceiling_fan/command/percentage",
         "name": "Ceiling fan",
         "dev_cla": "ceiling",
     }
@@ -613,14 +613,14 @@ async def test_discovery_config_includes_custom_payloads() -> None:
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
         "p": "fan",
-        "stat_t": "~/ceiling_fan/state",
-        "cmd_t": "~/ceiling_fan/command",
-        "pct_stat_t": "~/ceiling_fan/state/percentage",
-        "pct_cmd_t": "~/ceiling_fan/command/percentage",
+        "stat_t": "homeassistant/device/dev-1/ceiling_fan/state",
+        "cmd_t": "homeassistant/device/dev-1/ceiling_fan/command",
+        "pct_stat_t": "homeassistant/device/dev-1/ceiling_fan/state/percentage",
+        "pct_cmd_t": "homeassistant/device/dev-1/ceiling_fan/command/percentage",
         "pl_on": "1",
         "pl_off": "0",
-        "osc_stat_t": "~/ceiling_fan/state/oscillation",
-        "osc_cmd_t": "~/ceiling_fan/command/oscillation",
+        "osc_stat_t": "homeassistant/device/dev-1/ceiling_fan/state/oscillation",
+        "osc_cmd_t": "homeassistant/device/dev-1/ceiling_fan/command/oscillation",
         "pl_osc_on": "yes",
         "pl_osc_off": "no",
     }
@@ -638,16 +638,16 @@ async def test_discovery_config_with_all_features_enabled() -> None:
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
         "p": "fan",
-        "stat_t": "~/ceiling_fan/state",
-        "cmd_t": "~/ceiling_fan/command",
-        "pct_stat_t": "~/ceiling_fan/state/percentage",
-        "pct_cmd_t": "~/ceiling_fan/command/percentage",
-        "pr_mode_stat_t": "~/ceiling_fan/state/preset_mode",
-        "pr_mode_cmd_t": "~/ceiling_fan/command/preset_mode",
-        "osc_stat_t": "~/ceiling_fan/state/oscillation",
-        "osc_cmd_t": "~/ceiling_fan/command/oscillation",
-        "dir_stat_t": "~/ceiling_fan/state/direction",
-        "dir_cmd_t": "~/ceiling_fan/command/direction",
+        "stat_t": "homeassistant/device/dev-1/ceiling_fan/state",
+        "cmd_t": "homeassistant/device/dev-1/ceiling_fan/command",
+        "pct_stat_t": "homeassistant/device/dev-1/ceiling_fan/state/percentage",
+        "pct_cmd_t": "homeassistant/device/dev-1/ceiling_fan/command/percentage",
+        "pr_mode_stat_t": "homeassistant/device/dev-1/ceiling_fan/state/preset_mode",
+        "pr_mode_cmd_t": "homeassistant/device/dev-1/ceiling_fan/command/preset_mode",
+        "osc_stat_t": "homeassistant/device/dev-1/ceiling_fan/state/oscillation",
+        "osc_cmd_t": "homeassistant/device/dev-1/ceiling_fan/command/oscillation",
+        "dir_stat_t": "homeassistant/device/dev-1/ceiling_fan/state/direction",
+        "dir_cmd_t": "homeassistant/device/dev-1/ceiling_fan/command/direction",
     }
 
 
@@ -664,8 +664,8 @@ async def test_discovery_config_with_all_features_disabled() -> None:
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
         "p": "fan",
-        "stat_t": "~/ceiling_fan/state",
-        "cmd_t": "~/ceiling_fan/command",
+        "stat_t": "homeassistant/device/dev-1/ceiling_fan/state",
+        "cmd_t": "homeassistant/device/dev-1/ceiling_fan/command",
     }
 
 
@@ -683,12 +683,12 @@ async def test_discovery_config_includes_custom_modes_and_speed_range() -> None:
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
         "p": "fan",
-        "stat_t": "~/ceiling_fan/state",
-        "cmd_t": "~/ceiling_fan/command",
-        "pct_stat_t": "~/ceiling_fan/state/percentage",
-        "pct_cmd_t": "~/ceiling_fan/command/percentage",
-        "pr_mode_stat_t": "~/ceiling_fan/state/preset_mode",
-        "pr_mode_cmd_t": "~/ceiling_fan/command/preset_mode",
+        "stat_t": "homeassistant/device/dev-1/ceiling_fan/state",
+        "cmd_t": "homeassistant/device/dev-1/ceiling_fan/command",
+        "pct_stat_t": "homeassistant/device/dev-1/ceiling_fan/state/percentage",
+        "pct_cmd_t": "homeassistant/device/dev-1/ceiling_fan/command/percentage",
+        "pr_mode_stat_t": "homeassistant/device/dev-1/ceiling_fan/state/preset_mode",
+        "pr_mode_cmd_t": "homeassistant/device/dev-1/ceiling_fan/command/preset_mode",
         "pr_modes": ["low", "medium", "high"],
         "pl_rst_pct": "speed",
         "spd_rng_min": 0,
@@ -702,10 +702,10 @@ async def test_discovery_config_includes_optimistic() -> None:
     assert fan.discovery_config() == {
         "uniq_id": "ceiling_fan",
         "p": "fan",
-        "stat_t": "~/ceiling_fan/state",
-        "cmd_t": "~/ceiling_fan/command",
-        "pct_stat_t": "~/ceiling_fan/state/percentage",
-        "pct_cmd_t": "~/ceiling_fan/command/percentage",
+        "stat_t": "homeassistant/device/dev-1/ceiling_fan/state",
+        "cmd_t": "homeassistant/device/dev-1/ceiling_fan/command",
+        "pct_stat_t": "homeassistant/device/dev-1/ceiling_fan/state/percentage",
+        "pct_cmd_t": "homeassistant/device/dev-1/ceiling_fan/command/percentage",
         "opt": True,
     }
 

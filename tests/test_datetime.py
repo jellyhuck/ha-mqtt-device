@@ -233,8 +233,8 @@ async def test_discovery_config_defaults() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
         "p": "datetime",
-        "stat_t": "~/alarm/state",
-        "cmd_t": "~/alarm/command",
+        "stat_t": "homeassistant/device/dev-1/alarm/state",
+        "cmd_t": "homeassistant/device/dev-1/alarm/command",
     }
 
 
@@ -248,8 +248,8 @@ async def test_discovery_config_includes_name() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
         "p": "datetime",
-        "stat_t": "~/alarm/state",
-        "cmd_t": "~/alarm/command",
+        "stat_t": "homeassistant/device/dev-1/alarm/state",
+        "cmd_t": "homeassistant/device/dev-1/alarm/command",
         "name": "Morning alarm",
     }
 
@@ -260,8 +260,8 @@ async def test_discovery_config_includes_optimistic() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
         "p": "datetime",
-        "stat_t": "~/alarm/state",
-        "cmd_t": "~/alarm/command",
+        "stat_t": "homeassistant/device/dev-1/alarm/state",
+        "cmd_t": "homeassistant/device/dev-1/alarm/command",
         "opt": True,
     }
 
@@ -272,8 +272,8 @@ async def test_discovery_config_includes_force_update() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
         "p": "datetime",
-        "stat_t": "~/alarm/state",
-        "cmd_t": "~/alarm/command",
+        "stat_t": "homeassistant/device/dev-1/alarm/state",
+        "cmd_t": "homeassistant/device/dev-1/alarm/command",
         "frc_upd": True,
     }
 
@@ -290,8 +290,8 @@ async def test_discovery_config_omits_default_flags() -> None:
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
         "p": "datetime",
-        "stat_t": "~/alarm/state",
-        "cmd_t": "~/alarm/command",
+        "stat_t": "homeassistant/device/dev-1/alarm/state",
+        "cmd_t": "homeassistant/device/dev-1/alarm/command",
     }
 
 

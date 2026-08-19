@@ -242,4 +242,4 @@ class Update(Entity):
             config["val_tpl"] = self.value_template
         if self.latest_version_template is not None:
             config["l_ver_tpl"] = self.latest_version_template
-        return config
+        return self._resolve_discovery_config(config)

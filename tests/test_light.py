@@ -72,13 +72,13 @@ async def test_discovery_config() -> None:
     assert payload["cmps"]["lamp"] == {
         "uniq_id": "lamp",
         "p": "light",
-        "stat_t": "~/lamp/state/power",
-        "cmd_t": "~/lamp/command/power",
+        "stat_t": "homeassistant/device/dev-1/lamp/state/power",
+        "cmd_t": "homeassistant/device/dev-1/lamp/command/power",
         "name": "Lamp",
-        "bri_stat_t": "~/lamp/state/brightness",
-        "bri_cmd_t": "~/lamp/command/brightness",
-        "fx_stat_t": "~/lamp/state/effect",
-        "fx_cmd_t": "~/lamp/command/effect",
+        "bri_stat_t": "homeassistant/device/dev-1/lamp/state/brightness",
+        "bri_cmd_t": "homeassistant/device/dev-1/lamp/command/brightness",
+        "fx_stat_t": "homeassistant/device/dev-1/lamp/state/effect",
+        "fx_cmd_t": "homeassistant/device/dev-1/lamp/command/effect",
         "fx_list": ["rainbow"],
     }
 
@@ -99,17 +99,17 @@ async def test_discovery_config_includes_documented_optional_keys() -> None:
     assert light.discovery_config() == {
         "uniq_id": "lamp",
         "p": "light",
-        "stat_t": "~/lamp/state/power",
-        "cmd_t": "~/lamp/command/power",
-        "bri_stat_t": "~/lamp/state/brightness",
-        "bri_cmd_t": "~/lamp/command/brightness",
-        "clr_temp_stat_t": "~/lamp/state/color_temp",
-        "clr_temp_cmd_t": "~/lamp/command/color_temp",
-        "fx_stat_t": "~/lamp/state/effect",
-        "fx_cmd_t": "~/lamp/command/effect",
+        "stat_t": "homeassistant/device/dev-1/lamp/state/power",
+        "cmd_t": "homeassistant/device/dev-1/lamp/command/power",
+        "bri_stat_t": "homeassistant/device/dev-1/lamp/state/brightness",
+        "bri_cmd_t": "homeassistant/device/dev-1/lamp/command/brightness",
+        "clr_temp_stat_t": "homeassistant/device/dev-1/lamp/state/color_temp",
+        "clr_temp_cmd_t": "homeassistant/device/dev-1/lamp/command/color_temp",
+        "fx_stat_t": "homeassistant/device/dev-1/lamp/state/effect",
+        "fx_cmd_t": "homeassistant/device/dev-1/lamp/command/effect",
         "fx_list": ["rainbow"],
         "clr_temp_k": True,
-        "whit_cmd_t": "~/lamp/command/white",
+        "whit_cmd_t": "homeassistant/device/dev-1/lamp/command/white",
         "whit_scl": 100,
     }
 
@@ -122,8 +122,8 @@ async def test_discovery_config_omits_disabled_optional_keys() -> None:
     assert light.discovery_config() == {
         "uniq_id": "lamp",
         "p": "light",
-        "stat_t": "~/lamp/state/power",
-        "cmd_t": "~/lamp/command/power",
+        "stat_t": "homeassistant/device/dev-1/lamp/state/power",
+        "cmd_t": "homeassistant/device/dev-1/lamp/command/power",
     }
 
 
