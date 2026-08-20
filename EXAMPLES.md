@@ -37,10 +37,8 @@ async with provider:
 ## Reusable values
 
 [`Value`](src/ha_mqtt_device/values/value.py) and its typed subclasses store a
-value independently of an entity and publish changes through an
-[`MqttProvider`](src/ha_mqtt_device/provider.py). Each value starts unset;
-publication uses the topic and retention policy from its
-[`PublishTopic`](src/ha_mqtt_device/publish_topic.py). See the runnable
+value independently of an entity and send changes through an async updater
+callback. Each value starts unset. See the runnable
 [`examples/values.py`](examples/values.py).
 
 ```python
@@ -48,23 +46,29 @@ from datetime import date
 from enum import StrEnum
 
 from ha_mqtt_device import DateValue, StrEnumValue, StrValue
-from ha_mqtt_device.publish_topic import PublishTopic
 
 class Status(StrEnum):
     READY = "ready"
 
-status = StrValue(PublishTopic("home/device/status", retain=True))
-target_date = DateValue(PublishTopic("home/device/date", retain=True))
-device_status = StrEnumValue[Status](
-    PublishTopic("home/device/status_enum", retain=True)
-)
+status = StrValue()
+target_date = DateValue()
+device_status = StrEnumValue[Status]()
 
 assert status.value is None
-await status.set_value("ready", provider)
-await status.set_value("ready", provider)  # unchanged, so not published
-await status.set_value("ready", provider, force_publish=True)
-await target_date.set_value(date(2024, 2, 14), provider)
-await device_status.set_value(Status.READY, provider)
+async def update_status(payload: str | bytes) -> None:
+    await provider.publish("home/device/status", payload, retain=True)
+
+async def update_date(payload: str | bytes) -> None:
+    await provider.publish("home/device/date", payload, retain=True)
+
+async def update_device_status(payload: str | bytes) -> None:
+    await provider.publish("home/device/status_enum", payload, retain=True)
+
+await status.set_value("ready", update_status)
+await status.set_value("ready", update_status)  # unchanged, so not updated
+await status.set_value("ready", update_status, force_update=True)
+await target_date.set_value(date(2024, 2, 14), update_date)
+await device_status.set_value(Status.READY, update_device_status)
 ```
 
 ## Device discovery

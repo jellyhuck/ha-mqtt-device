@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from datetime import UTC, date, datetime
 from enum import StrEnum
 
@@ -17,11 +18,20 @@ from ha_mqtt_device import (
     StrValue,
     Value,
 )
-from ha_mqtt_device.publish_topic import PublishTopic
+from ha_mqtt_device.values.bytes_value import BytesValue
+from ha_mqtt_device.values.mapped_value import MappedValue
+from ha_mqtt_device.values.time_value import TimeValue
+
+TOPIC = "home/device/value"
 
 
-def topic() -> PublishTopic:
-    return PublishTopic("home/device/value", retain=True)
+def updater(
+    provider: RecordingProvider,
+) -> Callable[[str | bytes], Awaitable[None]]:
+    async def update(payload: str | bytes) -> None:
+        await provider.publish(TOPIC, payload, retain=True)
+
+    return update
 
 
 @pytest.mark.parametrize(
@@ -29,10 +39,9 @@ def topic() -> PublishTopic:
     [StrValue, IntValue, FloatValue, DateValue, DateTimeValue],
 )
 def test_values_start_unset(value_class: type[Value[object]]) -> None:
-    value = value_class(topic())
+    value = value_class()
 
     assert value.value is None
-    assert value.publish_topic == topic()
 
 
 @pytest.mark.asyncio
@@ -56,41 +65,43 @@ async def test_first_set_publishes_and_updates_value(
     value_class: type[Value[object]],
 ) -> None:
     provider = RecordingProvider()
-    typed_value = value_class(topic())
+    typed_value = value_class()
 
-    await typed_value.set_value(value, provider)  # type: ignore[arg-type]
+    await typed_value.set_value(value, updater(provider))  # type: ignore[arg-type]
 
     assert typed_value.value == value
-    assert provider.published == [("home/device/value", payload, True)]
+    assert provider.published == [(TOPIC, payload, True)]
 
 
 @pytest.mark.asyncio
 async def test_unchanged_value_is_not_published_unless_forced() -> None:
     provider = RecordingProvider()
-    value = StrValue(topic())
+    value = StrValue()
+    update = updater(provider)
 
-    await value.set_value("same", provider)
-    await value.set_value("same", provider)
-    await value.set_value("same", provider, force_publish=True)
+    await value.set_value("same", update)
+    await value.set_value("same", update)
+    await value.set_value("same", update, force_update=True)
 
     assert provider.published == [
-        ("home/device/value", "same", True),
-        ("home/device/value", "same", True),
+        (TOPIC, "same", True),
+        (TOPIC, "same", True),
     ]
 
 
 @pytest.mark.asyncio
 async def test_changed_value_is_published() -> None:
     provider = RecordingProvider()
-    value = IntValue(topic())
+    value = IntValue()
+    update = updater(provider)
 
-    await value.set_value(1, provider)
-    await value.set_value(2, provider)
+    await value.set_value(1, update)
+    await value.set_value(2, update)
 
     assert value.value == 2
     assert provider.published == [
-        ("home/device/value", "1", True),
-        ("home/device/value", "2", True),
+        (TOPIC, "1", True),
+        (TOPIC, "2", True),
     ]
 
 
@@ -102,11 +113,12 @@ class Status(StrEnum):
 @pytest.mark.asyncio
 async def test_str_enum_value_publishes_values_and_stores_members() -> None:
     provider = RecordingProvider()
-    value = StrEnumValue[Status](topic())
+    value = StrEnumValue[Status]()
+    update = updater(provider)
 
-    await value.set_value(Status.READY, provider)
-    await value.set_value(Status.READY, provider)
-    await value.set_value(Status.OFFLINE, provider)
+    await value.set_value(Status.READY, update)
+    await value.set_value(Status.READY, update)
+    await value.set_value(Status.OFFLINE, update)
 
     assert value.value is Status.OFFLINE
     assert provider.published == [
@@ -118,10 +130,10 @@ async def test_str_enum_value_publishes_values_and_stores_members() -> None:
 @pytest.mark.asyncio
 async def test_str_enum_value_rejects_plain_strings() -> None:
     provider = RecordingProvider()
-    value = StrEnumValue[Status](topic())
+    value = StrEnumValue[Status]()
 
     with pytest.raises(TypeError, match="StrEnum"):
-        await value.set_value("ready", provider)  # type: ignore[arg-type]
+        await value.set_value("ready", updater(provider))  # type: ignore[arg-type]
 
     assert value.value is None
     assert provider.published == []
@@ -134,10 +146,10 @@ async def test_str_enum_value_rejects_plain_strings() -> None:
 )
 async def test_none_is_rejected(value_class: type[Value[object]]) -> None:
     provider = RecordingProvider()
-    value = value_class(topic())
+    value = value_class()
 
     with pytest.raises(TypeError, match="None"):
-        await value.set_value(None, provider)  # type: ignore[arg-type]
+        await value.set_value(None, updater(provider))  # type: ignore[arg-type]
 
     assert value.value is None
     assert provider.published == []
@@ -159,10 +171,10 @@ async def test_strict_types_are_rejected(
     value_class: type[Value[object]], invalid: object
 ) -> None:
     provider = RecordingProvider()
-    value = value_class(topic())
+    value = value_class()
 
     with pytest.raises(TypeError):
-        await value.set_value(invalid, provider)  # type: ignore[arg-type]
+        await value.set_value(invalid, updater(provider))  # type: ignore[arg-type]
 
     assert value.value is None
     assert provider.published == []
@@ -176,10 +188,14 @@ async def test_failed_publication_does_not_update_value() -> None:
         ) -> None:
             raise RuntimeError("publish failed")
 
-    value = StrValue(topic())
+    value = StrValue()
 
     with pytest.raises(RuntimeError, match="publish failed"):
-        await value.set_value("new", FailingProvider())
+
+        async def fail_update(payload: str | bytes) -> None:
+            await FailingProvider().publish(TOPIC, payload, retain=True)
+
+        await value.set_value("new", fail_update)
 
     assert value.value is None
 
@@ -193,12 +209,45 @@ async def test_public_generic_base_supports_custom_serializers() -> None:
             return value.upper()
 
     provider = RecordingProvider()
-    value = UpperValue(topic())
+    value = UpperValue()
 
-    await value.set_value("hello", provider)
+    await value.set_value("hello", updater(provider))
 
     assert value.value == "hello"
-    assert provider.published == [("home/device/value", "HELLO", True)]
+    assert provider.published == [(TOPIC, "HELLO", True)]
+
+
+@pytest.mark.asyncio
+async def test_mapped_value_stores_canonical_value_and_publishes_payload() -> None:
+    provider = RecordingProvider()
+    value = MappedValue({True: "ON", False: "OFF"})
+    update = updater(provider)
+
+    await value.set_value(True, update)
+    await value.set_value(True, update)
+    await value.set_value(False, update)
+
+    assert value.value is False
+    assert provider.published == [
+        ("home/device/value", "ON", True),
+        ("home/device/value", "OFF", True),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_time_and_bytes_values_publish_typed_payloads() -> None:
+    provider = RecordingProvider()
+    time_value = TimeValue()
+    bytes_value = BytesValue()
+    update = updater(provider)
+
+    await time_value.set_value(datetime(2024, 2, 14, 10, 30, tzinfo=UTC).time(), update)
+    await bytes_value.set_value(b"frame", update)
+
+    assert provider.published == [
+        (TOPIC, "10:30:00", True),
+        (TOPIC, b"frame", True),
+    ]
 
 
 def test_public_value_exports() -> None:

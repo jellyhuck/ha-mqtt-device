@@ -16,7 +16,6 @@ from ha_mqtt_device import (
     StrEnumValue,
     StrValue,
 )
-from ha_mqtt_device.publish_topic import PublishTopic
 
 logger = logging.getLogger(__name__)
 
@@ -41,21 +40,32 @@ async def main(
         password=password,
         logger=logger,
     )
-    status = StrValue(PublishTopic("home/example/status", retain=True))
-    enum_status = StrEnumValue[Status](
-        PublishTopic("home/example/status_enum", retain=True)
-    )
-    target_date = DateValue(PublishTopic("home/example/date", retain=True))
-    alarm = DateTimeValue(PublishTopic("home/example/alarm", retain=True))
+
+    async def update_status(payload: str | bytes) -> None:
+        await provider.publish("home/example/status", payload, retain=True)
+
+    async def update_enum_status(payload: str | bytes) -> None:
+        await provider.publish("home/example/status_enum", payload, retain=True)
+
+    async def update_target_date(payload: str | bytes) -> None:
+        await provider.publish("home/example/date", payload, retain=True)
+
+    async def update_alarm(payload: str | bytes) -> None:
+        await provider.publish("home/example/alarm", payload, retain=True)
+
+    status = StrValue()
+    enum_status = StrEnumValue[Status]()
+    target_date = DateValue()
+    alarm = DateTimeValue()
 
     async with provider:
         logger.info("Initial status: %r", status.value)
-        await status.set_value("ready", provider)
-        await status.set_value("ready", provider)  # unchanged: no publication
-        await status.set_value("ready", provider, force_publish=True)
-        await enum_status.set_value(Status.READY, provider)
-        await target_date.set_value(date(2024, 2, 14), provider)
-        await alarm.set_value(datetime(2024, 2, 14, 10, 30, tzinfo=UTC), provider)
+        await status.set_value("ready", update_status)
+        await status.set_value("ready", update_status)  # unchanged: no update
+        await status.set_value("ready", update_status, force_update=True)
+        await enum_status.set_value(Status.READY, update_enum_status)
+        await target_date.set_value(date(2024, 2, 14), update_target_date)
+        await alarm.set_value(datetime(2024, 2, 14, 10, 30, tzinfo=UTC), update_alarm)
 
 
 def run_cli(
