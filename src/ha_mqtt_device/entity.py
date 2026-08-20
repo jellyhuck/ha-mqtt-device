@@ -52,8 +52,12 @@ class Entity:
     #: The device this entity is bound to; set by :meth:`bind` when the entity
     #: is passed to the ``Device`` constructor.
     device: Device | None = field(default=None, init=False, repr=False)
+    # TODO: Remove this registry once all entity publications use StateValue.
     _publish_topics: dict[str, PublishTopic] = field(
         default_factory=dict, init=False, repr=False
+    )
+    _persistent_values: list[StateValue[Any]] = field(
+        default_factory=list, init=False, repr=False
     )
 
     #: Home Assistant MQTT component name, e.g. ``"binary_sensor"``.
@@ -67,19 +71,32 @@ class Entity:
         :meth:`Entity._make_persistent_state` to construct instances.
         """
 
-        __slots__ = ("_entity", "_persistent", "_topic", "_value")
+        __slots__ = ("_entity", "_persistent", "_topic_suffix", "_value")
 
         def __init__(
             self,
             value: Value[T],
-            topic: str,
+            topic_suffix: str,
             persistent: bool,
             entity: Entity,
         ) -> None:
             self._value = value
-            self._topic = topic
+            self._topic_suffix = topic_suffix
             self._persistent = persistent
             self._entity: weakref.ReferenceType[Entity] = weakref.ref(entity)
+            if persistent:
+                entity._register_persistent_value(self)
+
+        def topic(self) -> PublishTopic:
+            """Return this value's resolved topic and retention policy."""
+            entity = self._entity()
+            if entity is None:
+                raise RuntimeError("the owning Entity no longer exists")
+            device = entity._require_device()
+            return PublishTopic(
+                device.info.resolve_topic(f"~/{entity.unique_id}/{self._topic_suffix}"),
+                self._persistent,
+            )
 
         async def set_value(self, new_value: T) -> None:
             """Publish ``new_value`` using this state's topic and retention."""
@@ -88,10 +105,7 @@ class Entity:
                 raise RuntimeError("the owning Entity no longer exists")
 
             async def update(payload: str | bytes) -> None:
-                topic = entity._register_publish_topic(
-                    self._topic, retain=self._persistent
-                )
-                await entity._publish(topic, payload)
+                await entity._publish(self.topic(), payload)
 
             await self._value.set_value(new_value, update)
 
@@ -130,16 +144,16 @@ class Entity:
         self.device = device
 
     def _make_momentary_state(
-        self, value: Value[T], topic: str
+        self, value: Value[T], topic_suffix: str
     ) -> Entity.StateValue[T]:
         """Create a state value whose publications are not retained."""
-        return Entity.StateValue(value, topic, False, self)
+        return Entity.StateValue(value, topic_suffix, False, self)
 
     def _make_persistent_state(
-        self, value: Value[T], topic: str
+        self, value: Value[T], topic_suffix: str
     ) -> Entity.StateValue[T]:
         """Create a state value whose publications are retained."""
-        return Entity.StateValue(value, topic, True, self)
+        return Entity.StateValue(value, topic_suffix, True, self)
 
     def _register_publish_topic(self, topic: str, *, retain: bool) -> PublishTopic:
         """Register and return a resolved topic descriptor.
@@ -148,6 +162,7 @@ class Entity:
             ValueError: If the topic was already registered with another
                 retention policy.
         """
+        # TODO: Remove this method once all entity publications use StateValue.
         device = self._require_device()
         resolved_topic = device.info.resolve_topic(topic)
         descriptor = PublishTopic(resolved_topic, retain)
@@ -160,6 +175,9 @@ class Entity:
         self._publish_topics[resolved_topic] = descriptor
         return existing or descriptor
 
+    def _register_persistent_value(self, value: StateValue[Any]) -> None:
+        self._persistent_values.append(value)
+
     async def _publish(self, topic: PublishTopic, message: str | bytes) -> None:
         """Publish a payload using a registered topic descriptor."""
         device = self._require_device()
@@ -168,8 +186,13 @@ class Entity:
     async def _on_remove(self) -> None:
         """Clear every retained topic registered by this entity."""
         device = self._require_device()
+        cleared_topics: set[str] = set()
+        for value in self._persistent_values:
+            descriptor = value.topic()
+            await device.provider.publish(descriptor.topic, "", retain=True)
+            cleared_topics.add(descriptor.topic)
         for descriptor in self._publish_topics.values():
-            if descriptor.retain:
+            if descriptor.retain and descriptor.topic not in cleared_topics:
                 await device.provider.publish(descriptor.topic, "", retain=True)
 
     def _require_device(self) -> Device:
