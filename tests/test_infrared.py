@@ -236,6 +236,22 @@ async def test_set_state_publishes_json_to_state_topic() -> None:
     ]
 
 
+async def test_receiver_republishes_identical_signals() -> None:
+    provider = RecordingProvider()
+    _, receiver = make_bound(provider, InfraredReceiver, unique_id="living_room_ir")
+    signal = {"timings": [9000, -4500]}
+
+    await receiver.set_state(signal)
+    await receiver.set_state(signal)
+
+    expected = (
+        "homeassistant/device/dev-1/living_room_ir/state",
+        json.dumps(signal),
+        False,
+    )
+    assert provider.published == [expected, expected]
+
+
 async def test_set_state_rejects_missing_timings() -> None:
     provider = RecordingProvider()
     _, receiver = make_bound(provider, InfraredReceiver, unique_id="living_room_ir")

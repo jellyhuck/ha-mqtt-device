@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.date_time_value import DateTimeValue
 
 __all__ = ["DateTime"]
 
@@ -75,6 +76,15 @@ class DateTime(Entity):
     )
     #: Whether the command topic subscription has been registered.
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _state_value: Entity.StateValue[datetime] = field(
+        init=False, repr=False, compare=False
+    )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._state_value = self._make_state(
+            DateTimeValue(), "state", retain=True, force_update=self.force_update
+        )
 
     @property
     def command_topic(self) -> str:
@@ -91,6 +101,8 @@ class DateTime(Entity):
         its wall-clock components verbatim — no timezone conversion is
         performed. Publishing does not trigger callbacks registered with
         :meth:`on_event`; only messages received on the command topic do.
+        Canonically equal values are suppressed unless :attr:`force_update`
+        was enabled at construction.
 
         Raises:
             RuntimeError: If the datetime is not bound to a device.
@@ -99,10 +111,8 @@ class DateTime(Entity):
                 nor a ``YYYY-MM-DD HH:MM:SS`` string.
             Exception: If the message could not be published.
         """
-        payload = self._datetime_payload(value)
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        normalized = datetime.fromisoformat(self._datetime_payload(value))
+        await self._state_value.set_value(normalized)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

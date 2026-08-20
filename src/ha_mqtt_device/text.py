@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["Text"]
 
@@ -41,6 +42,9 @@ class Text(Entity):
     _compiled_pattern: re.Pattern[str] | None = field(
         default=None, init=False, repr=False
     )
+    _state_value: Entity.StateValue[str] | None = field(
+        default=None, init=False, repr=False, compare=False
+    )
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -61,6 +65,8 @@ class Text(Entity):
                 self._compiled_pattern = re.compile(self.pattern)
             except re.error as exc:
                 raise ValueError(f"invalid text pattern: {exc}") from exc
+        if self.state_enabled:
+            self._state_value = self._make_persistent_state(StrValue(), "state")
 
     @property
     def command_topic(self) -> str:
@@ -68,13 +74,11 @@ class Text(Entity):
         return Entity.command_topic_for(self.unique_id)
 
     async def set_state(self, value: str) -> None:
-        """Validate and publish a text state to the state topic."""
-        if not self.state_enabled:
+        """Validate and publish text that differs from the last state."""
+        if self._state_value is None:
             raise ValueError("state reporting is disabled")
         self._validate_value(value)
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), value
-        )
+        await self._state_value.set_value(value)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for text commands received from Home Assistant."""

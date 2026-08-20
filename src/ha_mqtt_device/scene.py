@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.mapped_value import MappedValue
 
 __all__ = ["Scene"]
 
@@ -38,6 +39,16 @@ class Scene(Entity):
         default_factory=list, init=False, repr=False
     )
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _activation_value: Entity.StateValue[bool] = field(
+        init=False, repr=False, compare=False
+    )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._activation_value = self._make_momentary_state(
+            MappedValue({True: self.payload_on}),
+            "command",
+        )
 
     @property
     def command_topic(self) -> str:
@@ -45,11 +56,8 @@ class Scene(Entity):
         return Entity.command_topic_for(self.unique_id)
 
     async def activate(self) -> None:
-        """Publish the configured payload to activate the scene."""
-        await self._publish(
-            self._register_publish_topic(self.command_topic, retain=False),
-            self.payload_on,
-        )
+        """Publish the configured payload for every activation request."""
+        await self._activation_value.set_value(True)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for activation messages received by the device."""

@@ -12,6 +12,7 @@ from typing import Any
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["Valve"]
 
@@ -55,6 +56,11 @@ class Valve(Entity):
     optimistic: bool = False
     value_template: str | None = None
 
+    _state_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
+    _command_value: Entity.StateValue[str] = field(
+        init=False, repr=False, compare=False
+    )
+
     _event_callbacks: list[EventCallback] = field(
         default_factory=list, init=False, repr=False
     )
@@ -95,6 +101,8 @@ class Valve(Entity):
             raise ValueError("payload_stop must be a string or None")
         if self.value_template is not None and not isinstance(self.value_template, str):
             raise ValueError("value_template must be a string or None")
+        self._state_value = self._make_persistent_state(StrValue(), "state")
+        self._command_value = self._make_momentary_state(StrValue(), "command")
 
     @property
     def command_topic(self) -> str:
@@ -105,9 +113,7 @@ class Valve(Entity):
         """Publish a valve state to the state topic."""
         if state not in self._state_values:
             raise ValueError(f"unsupported valve state: {state!r}")
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), state
-        )
+        await self._state_value.set_value(state)
 
     async def set_position(self, position: float) -> None:
         """Publish a numeric position to the command topic.
@@ -116,10 +122,7 @@ class Valve(Entity):
         enabled and accepts values within the configured closed/open range.
         """
         self._validate_position(position)
-        await self._publish(
-            self._register_publish_topic(self.command_topic, retain=False),
-            self._number_payload(position),
-        )
+        await self._command_value.set_value(self._number_payload(position))
 
     async def open(self) -> None:
         """Publish the open command or open position."""
@@ -147,9 +150,7 @@ class Valve(Entity):
 
     async def _publish_command(self, payload: str) -> None:
         self._require_device()
-        await self._publish(
-            self._register_publish_topic(self.command_topic, retain=False), payload
-        )
+        await self._command_value.set_value(payload)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Subscribe once to commands and deliver them to ``callback``."""

@@ -10,6 +10,8 @@ from math import isfinite
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.mapped_value import MappedValue
+from ha_mqtt_device.values.numeric_value import NumericValue
 
 __all__ = ["Humidifier"]
 
@@ -103,12 +105,29 @@ class Humidifier(Entity):
     optimistic: bool = False
     target_humidity_enabled: bool = True
 
+    _state_value: Entity.StateValue[bool] = field(init=False, repr=False, compare=False)
+    _target_humidity_value: Entity.StateValue[float] | None = field(
+        init=False, repr=False, compare=False
+    )
+
     #: Callbacks registered via :meth:`on_event`.
     _event_callbacks: list[EventCallback] = field(
         default_factory=list, init=False, repr=False
     )
     #: Whether the command topic subscriptions have been registered.
     _subscribed: bool = field(default=False, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._state_value = self._make_persistent_state(
+            MappedValue({True: self.payload_on, False: self.payload_off}),
+            "state",
+        )
+        self._target_humidity_value = (
+            self._make_persistent_state(NumericValue(), "state/target_humidity")
+            if self.target_humidity_enabled
+            else None
+        )
 
     @property
     def command_topic(self) -> str:
@@ -137,10 +156,7 @@ class Humidifier(Entity):
             RuntimeError: If the humidifier is not bound to a device.
             Exception: If the message could not be published.
         """
-        payload = self.payload_on if state else self.payload_off
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        await self._state_value.set_value(state)
 
     async def set_target_humidity(self, humidity: float) -> None:
         """Publish the target humidity.
@@ -160,10 +176,8 @@ class Humidifier(Entity):
         if not self.target_humidity_enabled:
             raise ValueError("target humidity control is disabled")
         self._validate_humidity(humidity)
-        await self._publish(
-            self._register_publish_topic(self.target_humidity_state_topic, retain=True),
-            str(humidity),
-        )
+        assert self._target_humidity_value is not None
+        await self._target_humidity_value.set_value(humidity)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

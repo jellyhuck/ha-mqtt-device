@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["Update"]
 
@@ -40,6 +41,14 @@ class Update(Entity):
     install_enabled: bool = True
     latest_version_enabled: bool = False
 
+    _state_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
+    _latest_version_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _install_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+
     _event_callbacks: list[EventCallback] = field(
         default_factory=list, init=False, repr=False
     )
@@ -61,6 +70,17 @@ class Update(Entity):
             value = getattr(self, field_name)
             if value is not None and not isinstance(value, str):
                 raise TypeError(f"{field_name} must be a string or None")
+        self._state_value = self._make_persistent_state(StrValue(), "state")
+        self._latest_version_value = (
+            self._make_persistent_state(StrValue(), "state/latest")
+            if self.latest_version_enabled
+            else None
+        )
+        self._install_value = (
+            self._make_momentary_state(StrValue(), "command")
+            if self.install_enabled
+            else None
+        )
 
     @property
     def command_topic(self) -> str:
@@ -104,10 +124,7 @@ class Update(Entity):
     async def publish_state(self, state: Mapping[str, object]) -> None:
         """Publish a validated JSON state mapping on the state topic."""
         payload = self._validated_state(state)
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True),
-            json.dumps(payload),
-        )
+        await self._state_value.set_value(json.dumps(payload))
 
     async def set_latest_version(self, version: str) -> None:
         """Publish a simple latest-version update when that topic is enabled."""
@@ -115,20 +132,16 @@ class Update(Entity):
         if not self.latest_version_enabled:
             raise ValueError("latest version topic is disabled")
         self._validate_string("latest_version", version)
-        await self._publish(
-            self._register_publish_topic(self.latest_version_topic, retain=True),
-            version,
-        )
+        assert self._latest_version_value is not None
+        await self._latest_version_value.set_value(version)
 
     async def install(self) -> None:
         """Publish the configured install action payload."""
         self._require_device()
         if not self.install_enabled:
             raise ValueError("install command is disabled")
-        await self._publish(
-            self._register_publish_topic(self.command_topic, retain=False),
-            self.payload_install,
-        )
+        assert self._install_value is not None
+        await self._install_value.set_value(self.payload_install)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for install commands from Home Assistant."""

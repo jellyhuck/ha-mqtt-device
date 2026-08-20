@@ -44,6 +44,18 @@ async def test_set_image_publishes_payload_verbatim() -> None:
     ]
 
 
+async def test_set_image_suppresses_an_unchanged_retained_image() -> None:
+    provider = RecordingProvider()
+    _, image = make_bound(provider, unique_id="camera")
+
+    await image.set_image(b"same image")
+    await image.set_image(b"same image")
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/camera/image", b"same image", True)
+    ]
+
+
 async def test_set_image_publishes_verbatim_for_any_encoding() -> None:
     provider = RecordingProvider()
     _, image = make_bound(provider, unique_id="camera", encoding="binary")

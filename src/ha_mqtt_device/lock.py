@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.mapped_value import MappedValue
 
 __all__ = ["Lock"]
 
@@ -58,6 +59,9 @@ class Lock(Entity):
         default_factory=list, init=False, repr=False
     )
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _state_value: Entity.StateValue[str] | None = field(
+        default=None, init=False, repr=False, compare=False
+    )
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -79,6 +83,20 @@ class Lock(Entity):
                 re.compile(self.code_format)
             except re.error as error:
                 raise ValueError(f"invalid code_format: {error}") from error
+        if self.state_enabled:
+            self._state_value = self._make_persistent_state(
+                MappedValue(
+                    {
+                        "unknown": self.payload_reset or DEFAULT_PAYLOAD_RESET,
+                        "jammed": self.state_jammed,
+                        "locked": self.state_locked,
+                        "locking": self.state_locking,
+                        "unlocked": self.state_unlocked,
+                        "unlocking": self.state_unlocking,
+                    }
+                ),
+                "state",
+            )
 
     @property
     def state_topic(self) -> str:
@@ -90,26 +108,12 @@ class Lock(Entity):
         return Entity.command_topic_for(self.unique_id)
 
     async def set_state(self, state: str) -> None:
-        """Publish a lock state using its configured state payload."""
-        if not self.state_enabled:
+        """Publish a changed lock state using its construction-time mapping."""
+        if self._state_value is None:
             raise ValueError("state reporting is disabled")
-        if state == "unknown":
-            payload = self.payload_reset or DEFAULT_PAYLOAD_RESET
-        else:
-            states = {
-                "jammed": self.state_jammed,
-                "locked": self.state_locked,
-                "locking": self.state_locking,
-                "unlocked": self.state_unlocked,
-                "unlocking": self.state_unlocking,
-            }
-            try:
-                payload = states[state]
-            except KeyError:
-                raise ValueError(f"unknown lock state {state!r}") from None
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        if state not in {*_DEFAULT_STATES, "unknown"}:
+            raise ValueError(f"unknown lock state {state!r}")
+        await self._state_value.set_value(state)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for commands received from Home Assistant."""

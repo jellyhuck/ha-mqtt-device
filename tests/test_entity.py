@@ -50,9 +50,11 @@ async def test_momentary_state_is_not_retained_or_cleared() -> None:
     state = entity._make_momentary_state(StrValue(), "state/event")
 
     await state.set_value("pressed")
+    await state.set_value("pressed")
     await entity._on_remove()
 
     assert provider.published == [
+        ("homeassistant/device/dev-1/relay/state/event", "pressed", False),
         ("homeassistant/device/dev-1/relay/state/event", "pressed", False),
     ]
 
@@ -101,7 +103,7 @@ async def test_state_value_force_update_is_independent_of_retention() -> None:
     entity = Entity("relay")
     Device(provider, DeviceInfo(device_id="dev-1", name="Device"), [entity])
     state = entity._make_state(
-        StrValue(), "state/event", retain=False, force_update=True
+        StrValue(), "state/event", retain=True, force_update=True
     )
 
     await state.set_value("pressed")
@@ -109,8 +111,38 @@ async def test_state_value_force_update_is_independent_of_retention() -> None:
     await entity._on_remove()
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/relay/state/event", "pressed", False),
-        ("homeassistant/device/dev-1/relay/state/event", "pressed", False),
+        ("homeassistant/device/dev-1/relay/state/event", "pressed", True),
+        ("homeassistant/device/dev-1/relay/state/event", "pressed", True),
+        ("homeassistant/device/dev-1/relay/state/event", "", True),
+    ]
+
+
+async def test_state_value_supports_an_exact_unresolved_topic() -> None:
+    provider = RecordingProvider()
+    entity = Entity("relay")
+    Device(provider, DeviceInfo(device_id="dev-1", name="Device"), [entity])
+    state = entity._make_state_for_topic(
+        StrValue(), "~/shared/state", retain=True, force_update=False
+    )
+
+    await state.set_value("ON")
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/shared/state", "ON", True),
+    ]
+
+
+async def test_retained_state_cleanup_deduplicates_topics() -> None:
+    provider = RecordingProvider()
+    entity = Entity("relay")
+    entity._make_persistent_state(StrValue(), "state")
+    entity._make_persistent_state(StrValue(), "state")
+    Device(provider, DeviceInfo(device_id="dev-1", name="Device"), [entity])
+
+    await entity._on_remove()
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/relay/state", "", True),
     ]
 
 

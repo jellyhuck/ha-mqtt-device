@@ -10,6 +10,9 @@ from math import isfinite
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.mapped_value import MappedValue
+from ha_mqtt_device.values.numeric_value import NumericValue
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["WaterHeater"]
 
@@ -57,6 +60,17 @@ class WaterHeater(Entity):
     optimistic: bool = False
     power_enabled: bool = False
 
+    _current_temperature_value: Entity.StateValue[float] = field(
+        init=False, repr=False, compare=False
+    )
+    _target_temperature_value: Entity.StateValue[float] = field(
+        init=False, repr=False, compare=False
+    )
+    _mode_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
+    _power_value: Entity.StateValue[bool] | None = field(
+        init=False, repr=False, compare=False
+    )
+
     _event_callbacks: list[EventCallback] = field(
         default_factory=list, init=False, repr=False
     )
@@ -94,6 +108,21 @@ class WaterHeater(Entity):
             self.payload_off, str
         ):
             raise TypeError("power payloads must be strings")
+        self._current_temperature_value = self._make_persistent_state(
+            NumericValue(), "state/current_temperature"
+        )
+        self._target_temperature_value = self._make_persistent_state(
+            NumericValue(), "state/temperature"
+        )
+        self._mode_value = self._make_persistent_state(StrValue(), "state/mode")
+        self._power_value = (
+            self._make_momentary_state(
+                MappedValue({True: self.payload_on, False: self.payload_off}),
+                "command/power",
+            )
+            if self.power_enabled
+            else None
+        )
 
     @property
     def current_temperature_topic(self) -> str:
@@ -128,35 +157,25 @@ class WaterHeater(Entity):
     async def set_current_temperature(self, temperature: float) -> None:
         """Publish the current water temperature."""
         self._validate_number(temperature, "temperature")
-        await self._publish(
-            self._register_publish_topic(self.current_temperature_topic, retain=True),
-            self._number_payload(temperature),
-        )
+        await self._current_temperature_value.set_value(temperature)
 
     async def set_target_temperature(self, temperature: float) -> None:
         """Publish the current target temperature."""
         self._validate_temperature(temperature)
-        await self._publish(
-            self._register_publish_topic(self.temperature_state_topic, retain=True),
-            self._number_payload(temperature),
-        )
+        await self._target_temperature_value.set_value(temperature)
 
     async def set_mode(self, mode: str) -> None:
         """Publish the current operation mode."""
         if mode not in self._effective_modes:
             raise ValueError(f"unsupported water heater mode: {mode!r}")
-        await self._publish(
-            self._register_publish_topic(self.mode_state_topic, retain=True), mode
-        )
+        await self._mode_value.set_value(mode)
 
     async def set_power(self, enabled: bool) -> None:
         """Publish a power payload to the optional power command topic."""
         if not self.power_enabled:
             raise ValueError("power commands are not enabled")
-        await self._publish(
-            self._register_publish_topic(self.power_command_topic, retain=False),
-            self.payload_on if enabled else self.payload_off,
-        )
+        assert self._power_value is not None
+        await self._power_value.set_value(enabled)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Subscribe once to enabled command topics and register ``callback``."""

@@ -48,6 +48,34 @@ async def test_state_and_feature_commands_publish_json_to_resolved_topics() -> N
     assert json.loads(provider.published[3][1]) == {"volume_level": 1.0}
 
 
+async def test_state_deduplicates_but_repeated_commands_are_published() -> None:
+    provider = RecordingProvider()
+    _, siren = bound(provider, unique_id="alarm", available_tones=["bell"])
+
+    await siren.set_state(True)
+    await siren.set_state(True)
+    await siren.set_tone("bell")
+    await siren.set_tone("bell")
+
+    assert provider.published == [
+        (
+            "homeassistant/device/dev-1/alarm/state",
+            json.dumps({"state": "ON"}),
+            True,
+        ),
+        (
+            "homeassistant/device/dev-1/alarm/command",
+            json.dumps({"tone": "bell"}),
+            False,
+        ),
+        (
+            "homeassistant/device/dev-1/alarm/command",
+            json.dumps({"tone": "bell"}),
+            False,
+        ),
+    ]
+
+
 async def test_discovery_defaults_omit_documented_defaults() -> None:
     _, siren = bound(RecordingProvider(), unique_id="alarm")
 

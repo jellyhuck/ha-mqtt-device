@@ -98,7 +98,12 @@ async with provider:
 All entity classes are exported from `ha_mqtt_device`. Runtime entity topics
 use the `~/` prefix resolved by the device; discovery configs contain the
 fully resolved topic names, and entity-level availability is inherited from
-the device.
+the device. Entities remember the last value successfully published on each
+outgoing topic. Durable state setters skip an unchanged value unless their
+`force_update` option is enabled (or an expiry timer must be refreshed), while
+commands and transient updates such as events, scans, and frames publish on
+every call. Entity configuration, including payload mappings and enabled
+topics, is fixed when the entity is constructed.
 
 ### Alarm control panel
 

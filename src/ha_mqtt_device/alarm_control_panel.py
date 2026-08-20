@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.mapped_value import MappedValue
 
 __all__ = ["AlarmControlPanel"]
 
@@ -65,6 +66,9 @@ class AlarmControlPanel(Entity):
         default_factory=list, init=False, repr=False
     )
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _state_value: Entity.StateValue[str] | None = field(
+        default=None, init=False, repr=False, compare=False
+    )
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -79,6 +83,10 @@ class AlarmControlPanel(Entity):
         )
         if any(not payload for payload in payloads):
             raise ValueError("alarm command payloads must be non-empty")
+        if self.state_enabled:
+            self._state_value = self._make_persistent_state(
+                MappedValue({state: state for state in _ALARM_MODES}), "state"
+            )
 
     @property
     def command_topic(self) -> str:
@@ -86,14 +94,12 @@ class AlarmControlPanel(Entity):
         return Entity.command_topic_for(self.unique_id)
 
     async def set_state(self, state: str) -> None:
-        """Publish a documented alarm state."""
-        if not self.state_enabled:
+        """Publish a documented alarm state when it differs from the last value."""
+        if self._state_value is None:
             raise ValueError("state reporting is disabled")
         if state not in _ALARM_MODES:
             raise ValueError(f"unknown alarm state {state!r}")
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), state
-        )
+        await self._state_value.set_value(state)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for commands received from Home Assistant."""

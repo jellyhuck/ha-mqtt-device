@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ha_mqtt_device.entity import Entity
+from ha_mqtt_device.values.mapped_value import MappedValue
 
 __all__ = ["BinarySensor"]
 
@@ -46,21 +47,27 @@ class BinarySensor(Entity):
     device_class: str | None = None
     payload_on: str = DEFAULT_PAYLOAD_ON
     payload_off: str = DEFAULT_PAYLOAD_OFF
+    _state_value: Entity.StateValue[bool] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._state_value = self._make_persistent_state(
+            MappedValue({True: self.payload_on, False: self.payload_off}), "state"
+        )
 
     async def set_state(self, state: bool) -> None:
         """Publish the sensor's state.
 
         ``True`` publishes :attr:`payload_on` and ``False`` publishes
         :attr:`payload_off` to the state topic (``~/<unique_id>/state``).
+        Repeating the current state is suppressed. The payload mapping is
+        captured when the entity is constructed.
 
         Raises:
             RuntimeError: If the sensor is not bound to a device.
             Exception: If the message could not be published.
         """
-        payload = self.payload_on if state else self.payload_off
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        await self._state_value.set_value(state)
 
     @property
     def state_topic(self) -> str:

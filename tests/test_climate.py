@@ -105,6 +105,32 @@ async def test_set_action_publishes_verbatim() -> None:
     ]
 
 
+async def test_retained_values_deduplicate_but_actions_repeat() -> None:
+    provider = RecordingProvider()
+    _, climate = make_bound(provider, unique_id="thermostat")
+
+    await climate.set_current_temperature(21.5)
+    await climate.set_current_temperature(21.5)
+    await climate.set_target_temperature(22)
+    await climate.set_target_temperature(22)
+    await climate.set_mode("heat")
+    await climate.set_mode("heat")
+    await climate.set_action("heating")
+    await climate.set_action("heating")
+
+    assert provider.published == [
+        (
+            "homeassistant/device/dev-1/thermostat/state/current_temperature",
+            "21.5",
+            True,
+        ),
+        ("homeassistant/device/dev-1/thermostat/state/temperature", "22", True),
+        ("homeassistant/device/dev-1/thermostat/state/mode", "heat", True),
+        ("homeassistant/device/dev-1/thermostat/state/action", "heating", False),
+        ("homeassistant/device/dev-1/thermostat/state/action", "heating", False),
+    ]
+
+
 async def test_set_target_temperature_requires_binding() -> None:
     climate = Climate(unique_id="thermostat")
 

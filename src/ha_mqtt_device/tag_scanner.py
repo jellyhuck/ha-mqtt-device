@@ -10,6 +10,7 @@ from typing import Any
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["TagScanner"]
 
@@ -35,19 +36,21 @@ class TagScanner(Entity):
         default_factory=list, init=False, repr=False
     )
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _scan_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         super().__post_init__()
         if not self.topic:
             raise ValueError("topic is required")
+        self._scan_value = self._make_state_for_topic(
+            StrValue(), self.topic, retain=False, force_update=True
+        )
 
     async def scan(self, tag_id: str) -> None:
-        """Publish a scanned tag ID to the configured scan topic."""
+        """Publish every scanned tag ID to the configured scan topic."""
         if not isinstance(tag_id, str):
             raise TypeError("tag_id must be a string")
-        await self._publish(
-            self._register_publish_topic(self.topic, retain=False), tag_id
-        )
+        await self._scan_value.set_value(tag_id)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for tag scans received on ``topic``."""

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from ha_mqtt_device.entity import Entity
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["EventEntity"]
 
@@ -53,6 +54,7 @@ class EventEntity(Entity):
     event_types: list[str] = field(default_factory=list)
     event_type_template: str | None = None
     value_template: str | None = None
+    _event_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         super().__post_init__()
@@ -62,12 +64,14 @@ class EventEntity(Entity):
             raise ValueError(
                 "event_type_template and value_template are mutually exclusive"
             )
+        self._event_value = self._make_momentary_state(StrValue(), "state")
 
     async def set_event(self, event_type: str) -> None:
         """Publish ``event_type`` as an event to Home Assistant.
 
         ``event_type`` must be one of :attr:`event_types`; it is published to
-        the state topic (``~/<unique_id>/state``).
+        the state topic (``~/<unique_id>/state``). Events are transient, so
+        repeated calls with the same event type each publish.
 
         Raises:
             RuntimeError: If the entity is not bound to a device.
@@ -78,9 +82,7 @@ class EventEntity(Entity):
             raise ValueError(
                 f"event_type {event_type!r} is not in event_types {self.event_types!r}"
             )
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=False), event_type
-        )
+        await self._event_value.set_value(event_type)
 
     @property
     def state_topic(self) -> str:

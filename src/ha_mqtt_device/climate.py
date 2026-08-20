@@ -10,6 +10,8 @@ from math import isfinite
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.numeric_value import NumericValue
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["Climate"]
 
@@ -112,6 +114,25 @@ class Climate(Entity):
     )
     #: Whether the command topic subscriptions have been registered.
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _current_temperature_value: Entity.StateValue[float] = field(
+        init=False, repr=False, compare=False
+    )
+    _target_temperature_value: Entity.StateValue[float] = field(
+        init=False, repr=False, compare=False
+    )
+    _mode_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
+    _action_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._current_temperature_value = self._make_persistent_state(
+            NumericValue(), "state/current_temperature"
+        )
+        self._target_temperature_value = self._make_persistent_state(
+            NumericValue(), "state/temperature"
+        )
+        self._mode_value = self._make_persistent_state(StrValue(), "state/mode")
+        self._action_value = self._make_momentary_state(StrValue(), "state/action")
 
     @property
     def current_temperature_topic(self) -> str:
@@ -148,6 +169,7 @@ class Climate(Entity):
 
         ``temperature`` is converted to a string and published to the
         current-temperature topic (``~/<unique_id>/current_temperature``).
+        Consecutive unchanged temperatures are not republished.
         Publishing does not trigger callbacks registered with
         :meth:`on_event`; only messages received on the command topics do.
 
@@ -156,17 +178,15 @@ class Climate(Entity):
             Exception: If the message could not be published.
         """
         self._validate_finite(temperature, "temperature")
-        await self._publish(
-            self._register_publish_topic(self.current_temperature_topic, retain=True),
-            str(temperature),
-        )
+        await self._current_temperature_value.set_value(temperature)
 
     async def set_target_temperature(self, temperature: float) -> None:
         """Publish the target temperature.
 
         ``temperature`` is converted to a string and published to the state
         topic (``~/<unique_id>/temperature``), for example ``21.5`` is
-        published as ``"21.5"``. Publishing does not trigger callbacks
+        published as ``"21.5"``. Consecutive unchanged temperatures are not
+        republished. Publishing does not trigger callbacks
         registered with :meth:`on_event`; only messages received on the command
         topics do.
 
@@ -175,16 +195,14 @@ class Climate(Entity):
             Exception: If the message could not be published.
         """
         self._validate_target_temperature(temperature)
-        await self._publish(
-            self._register_publish_topic(self.temperature_state_topic, retain=True),
-            str(temperature),
-        )
+        await self._target_temperature_value.set_value(temperature)
 
     async def set_mode(self, mode: str) -> None:
         """Publish the HVAC mode.
 
         ``mode`` must be one of :attr:`modes` when :attr:`modes` is set; it is
         published verbatim to the mode state topic (``~/<unique_id>/mode``).
+        Consecutive unchanged modes are not republished.
         Publishing does not trigger callbacks registered with :meth:`on_event`;
         only messages received on the command topics do.
 
@@ -195,9 +213,7 @@ class Climate(Entity):
         """
         if self.modes is not None and mode not in self.modes:
             raise ValueError(f"mode {mode!r} is not in modes {self.modes!r}")
-        await self._publish(
-            self._register_publish_topic(self.mode_state_topic, retain=True), mode
-        )
+        await self._mode_value.set_value(mode)
 
     async def set_action(self, action: str) -> None:
         """Publish the current action.
@@ -207,15 +223,13 @@ class Climate(Entity):
         ``"off"``, ``"heating"``, ``"cooling"``, ``"drying"``, ``"idle"``,
         and ``"fan"``; no validation is performed. Publishing does not trigger
         callbacks registered with :meth:`on_event`; only messages received on
-        the command topics do.
+        the command topics do. Actions are transient, so every call publishes.
 
         Raises:
             RuntimeError: If the climate is not bound to a device.
             Exception: If the message could not be published.
         """
-        await self._publish(
-            self._register_publish_topic(self.action_topic, retain=False), action
-        )
+        await self._action_value.set_value(action)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

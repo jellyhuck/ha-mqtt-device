@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["SelectEntity"]
 
@@ -31,11 +32,16 @@ class SelectEntity(Entity):
         default_factory=list, init=False, repr=False
     )
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _state_value: Entity.StateValue[str] | None = field(
+        default=None, init=False, repr=False, compare=False
+    )
 
     def __post_init__(self) -> None:
         super().__post_init__()
         if any(not isinstance(option, str) for option in self.options):
             raise ValueError("options must contain only strings")
+        if self.state_enabled:
+            self._state_value = self._make_persistent_state(StrValue(), "state")
 
     @property
     def command_topic(self) -> str:
@@ -43,13 +49,11 @@ class SelectEntity(Entity):
         return Entity.command_topic_for(self.unique_id)
 
     async def set_state(self, option: str) -> None:
-        """Publish a selected option to the state topic."""
+        """Publish a selected option when it differs from the last value."""
         self._validate_option(option)
-        if not self.state_enabled:
+        if self._state_value is None:
             raise ValueError("state reporting is disabled")
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), option
-        )
+        await self._state_value.set_value(option)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for options selected by Home Assistant."""

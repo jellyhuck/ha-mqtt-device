@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ha_mqtt_device.entity import Entity
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["Sensor"]
 
@@ -57,22 +58,31 @@ class Sensor(Entity):
     expire_after: int | None = None
     force_update: bool = False
     suggested_display_precision: int | None = None
+    _state_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._state_value = self._make_state(
+            StrValue(),
+            "state",
+            retain=True,
+            force_update=self.force_update or self.expire_after is not None,
+        )
 
     async def set_state(self, value: str | float) -> None:
         """Publish the sensor's value.
 
         ``value`` is converted to a string and published to the state topic
         (``~/<unique_id>/state``), for example ``21.5`` is published as
-        ``"21.5"``.
+        ``"21.5"``. Equivalent stringified values are suppressed unless
+        ``force_update`` or ``expire_after`` was configured when the entity
+        was constructed.
 
         Raises:
             RuntimeError: If the sensor is not bound to a device.
             Exception: If the message could not be published.
         """
-        payload = str(value)
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        await self._state_value.set_value(str(value))
 
     @property
     def state_topic(self) -> str:

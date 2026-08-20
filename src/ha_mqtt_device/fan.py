@@ -10,6 +10,9 @@ from math import isfinite
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.int_value import IntValue
+from ha_mqtt_device.values.mapped_value import MappedValue
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["Fan"]
 
@@ -165,6 +168,20 @@ class Fan(Entity):
     oscillation_enabled: bool = False
     direction_enabled: bool = False
 
+    _state_value: Entity.StateValue[bool] = field(init=False, repr=False, compare=False)
+    _percentage_value: Entity.StateValue[int] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _preset_mode_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _oscillation_value: Entity.StateValue[bool] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _direction_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+
     #: Callbacks registered via :meth:`on_event`.
     _event_callbacks: list[EventCallback] = field(
         default_factory=list, init=False, repr=False
@@ -179,6 +196,38 @@ class Fan(Entity):
                 "preset_modes must contain at least one mode when "
                 "preset_mode_enabled is True"
             )
+        self._state_value = self._make_persistent_state(
+            MappedValue({True: self.payload_on, False: self.payload_off}),
+            "state",
+        )
+        self._percentage_value = (
+            self._make_persistent_state(IntValue(), "state/percentage")
+            if self.percentage_enabled
+            else None
+        )
+        self._preset_mode_value = (
+            self._make_persistent_state(StrValue(), "state/preset_mode")
+            if self.preset_mode_enabled
+            else None
+        )
+        self._oscillation_value = (
+            self._make_persistent_state(
+                MappedValue(
+                    {
+                        True: self.payload_oscillation_on,
+                        False: self.payload_oscillation_off,
+                    }
+                ),
+                "state/oscillation",
+            )
+            if self.oscillation_enabled
+            else None
+        )
+        self._direction_value = (
+            self._make_persistent_state(StrValue(), "state/direction")
+            if self.direction_enabled
+            else None
+        )
 
     @property
     def command_topic(self) -> str:
@@ -237,10 +286,7 @@ class Fan(Entity):
             RuntimeError: If the fan is not bound to a device.
             Exception: If the message could not be published.
         """
-        payload = self.payload_on if state else self.payload_off
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        await self._state_value.set_value(state)
 
     async def set_percentage(self, percentage: int) -> None:
         """Publish the fan's speed as a percentage.
@@ -257,10 +303,8 @@ class Fan(Entity):
         self._require_device()
         self._require_enabled(self.percentage_enabled, "percentage")
         self._validate_percentage(percentage)
-        await self._publish(
-            self._register_publish_topic(self.percentage_state_topic, retain=True),
-            str(percentage),
-        )
+        assert self._percentage_value is not None
+        await self._percentage_value.set_value(percentage)
 
     async def set_preset_mode(self, preset_mode: str | None) -> None:
         """Publish the fan's preset mode.
@@ -287,10 +331,8 @@ class Fan(Entity):
                 f"preset_mode {preset_mode!r} is not in preset_modes "
                 f"{self.preset_modes!r}"
             )
-        await self._publish(
-            self._register_publish_topic(self.preset_mode_state_topic, retain=True),
-            payload,
-        )
+        assert self._preset_mode_value is not None
+        await self._preset_mode_value.set_value(payload)
 
     async def set_oscillation(self, oscillation: bool) -> None:
         """Publish the fan's oscillation state.
@@ -306,13 +348,8 @@ class Fan(Entity):
         """
         self._require_device()
         self._require_enabled(self.oscillation_enabled, "oscillation")
-        payload = (
-            self.payload_oscillation_on if oscillation else self.payload_oscillation_off
-        )
-        await self._publish(
-            self._register_publish_topic(self.oscillation_state_topic, retain=True),
-            payload,
-        )
+        assert self._oscillation_value is not None
+        await self._oscillation_value.set_value(oscillation)
 
     async def set_direction(self, direction: str) -> None:
         """Publish the fan's direction.
@@ -331,10 +368,8 @@ class Fan(Entity):
         self._require_enabled(self.direction_enabled, "direction")
         if direction not in ("forward", "reverse"):
             raise ValueError("direction must be 'forward' or 'reverse'")
-        await self._publish(
-            self._register_publish_topic(self.direction_state_topic, retain=True),
-            direction,
-        )
+        assert self._direction_value is not None
+        await self._direction_value.set_value(direction)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

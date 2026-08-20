@@ -31,6 +31,53 @@ async def test_topics_and_publish() -> None:
     ]
 
 
+async def test_retained_feature_values_suppress_unchanged_updates() -> None:
+    provider = RecordingProvider()
+    _, light = bound(
+        provider,
+        unique_id="lamp",
+        brightness_enabled=True,
+        color_temp_enabled=True,
+        rgb_enabled=True,
+        hs_enabled=True,
+        xy_enabled=True,
+        effect_enabled=True,
+        white_enabled=True,
+    )
+
+    for _ in range(2):
+        await light.set_state(True)
+        await light.set_brightness(50)
+        await light.set_color_temp(300)
+        await light.set_rgb((1, 2, 3))
+        await light.set_hs((180, 50))
+        await light.set_xy((0.25, 0.75))
+        await light.set_effect("rainbow")
+        await light.set_white(100)
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/lamp/state/power", "ON", True),
+        ("homeassistant/device/dev-1/lamp/state/brightness", "50", True),
+        ("homeassistant/device/dev-1/lamp/state/color_temp", "300", True),
+        ("homeassistant/device/dev-1/lamp/state/rgb", "1,2,3", True),
+        ("homeassistant/device/dev-1/lamp/state/hs", "180,50", True),
+        ("homeassistant/device/dev-1/lamp/state/xy", "0.25,0.75", True),
+        ("homeassistant/device/dev-1/lamp/state/effect", "rainbow", True),
+        ("homeassistant/device/dev-1/lamp/state/white", "100", True),
+    ]
+
+
+async def test_removal_ignores_disabled_optional_state_topics() -> None:
+    provider = RecordingProvider()
+    _, light = bound(provider, unique_id="lamp")
+
+    await light._on_remove()
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/lamp/state/power", "", True)
+    ]
+
+
 async def test_on_event_subscribes_enabled_features_and_parses_events() -> None:
     provider = RecordingProvider()
     _, light = bound(

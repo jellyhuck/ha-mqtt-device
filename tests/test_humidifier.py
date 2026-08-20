@@ -93,6 +93,21 @@ async def test_set_target_humidity_publishes_float() -> None:
     ]
 
 
+async def test_retained_values_suppress_canonically_unchanged_updates() -> None:
+    provider = RecordingProvider()
+    _, humidifier = make_bound(provider, unique_id="bedroom")
+
+    await humidifier.set_state(True)
+    await humidifier.set_state(True)
+    await humidifier.set_target_humidity(50)
+    await humidifier.set_target_humidity(50.0)
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/bedroom/state", "ON", True),
+        ("homeassistant/device/dev-1/bedroom/state/target_humidity", "50", True),
+    ]
+
+
 async def test_set_target_humidity_requires_binding() -> None:
     humidifier = Humidifier(unique_id="bedroom")
 

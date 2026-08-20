@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ha_mqtt_device.entity import Entity
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["DeviceTracker"]
 
@@ -74,22 +75,30 @@ class DeviceTracker(Entity):
     gps_accuracy: int | None = None
     battery_level: int | None = None
     icon: str | None = None
+    _state_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
+    _home_payload: str = field(init=False, repr=False, compare=False)
+    _not_home_payload: str = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._home_payload = self.payload_home
+        self._not_home_payload = self.payload_not_home
+        self._state_value = self._make_persistent_state(StrValue(), "state")
 
     async def set_state(self, state: bool) -> None:
         """Publish the tracker's home/not-home state.
 
         ``True`` publishes :attr:`payload_home` and ``False`` publishes
         :attr:`payload_not_home` to the state topic
-        (``~/<unique_id>/state``).
+        (``~/<unique_id>/state``). A consecutive unchanged payload is not
+        republished.
 
         Raises:
             RuntimeError: If the tracker is not bound to a device.
             Exception: If the message could not be published.
         """
-        payload = self.payload_home if state else self.payload_not_home
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        payload = self._home_payload if state else self._not_home_payload
+        await self._state_value.set_value(payload)
 
     async def set_location(
         self,
@@ -107,7 +116,8 @@ class DeviceTracker(Entity):
         left as ``None`` fall back to the matching
         :attr:`gps_accuracy`, :attr:`battery_level`, and :attr:`source_type`
         attributes, so a tracker configured once can report its position with
-        just ``await tracker.set_location(lat, lon)``.
+        just ``await tracker.set_location(lat, lon)``. Presence and location
+        reports share change detection because they use the same MQTT topic.
 
         Raises:
             RuntimeError: If the tracker is not bound to a device.
@@ -129,10 +139,7 @@ class DeviceTracker(Entity):
             payload["source_type"] = source_type
         elif self.source_type is not None:
             payload["source_type"] = self.source_type
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True),
-            json.dumps(payload),
-        )
+        await self._state_value.set_value(json.dumps(payload))
 
     @property
     def state_topic(self) -> str:

@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.mapped_value import MappedValue
 
 __all__ = ["Switch"]
 
@@ -92,6 +93,13 @@ class Switch(Entity):
     )
     #: Whether the command topic subscription has been registered.
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _state_value: Entity.StateValue[bool] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._state_value = self._make_persistent_state(
+            MappedValue({True: self.payload_on, False: self.payload_off}), "state"
+        )
 
     @property
     def command_topic(self) -> str:
@@ -105,15 +113,14 @@ class Switch(Entity):
         :attr:`payload_off` to the state topic (``~/<unique_id>/state``).
         Publishing does not trigger callbacks registered with
         :meth:`on_event`; only messages received on the command topic do.
+        Repeating the current state is suppressed. The payload mapping is
+        captured when the entity is constructed.
 
         Raises:
             RuntimeError: If the switch is not bound to a device.
             Exception: If the message could not be published.
         """
-        payload = self.payload_on if state else self.payload_off
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        await self._state_value.set_value(state)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

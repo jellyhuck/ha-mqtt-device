@@ -10,6 +10,8 @@ from math import isfinite
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.int_value import IntValue
+from ha_mqtt_device.values.mapped_value import MappedValue
 
 __all__ = ["Cover"]
 
@@ -140,6 +142,26 @@ class Cover(Entity):
     )
     #: Whether the incoming-topic subscriptions have been registered.
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _state_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
+    _position_value: Entity.StateValue[int] = field(
+        init=False, repr=False, compare=False
+    )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._state_value = self._make_persistent_state(
+            MappedValue(
+                {
+                    "open": self.state_open or DEFAULT_STATE_OPEN,
+                    "opening": self.state_opening or DEFAULT_STATE_OPENING,
+                    "closed": self.state_closed or DEFAULT_STATE_CLOSED,
+                    "closing": self.state_closing or DEFAULT_STATE_CLOSING,
+                    "stopped": self.state_stopped or DEFAULT_STATE_STOPPED,
+                }
+            ),
+            "state",
+        )
+        self._position_value = self._make_persistent_state(IntValue(), "state/position")
 
     @property
     def command_topic(self) -> str:
@@ -166,17 +188,16 @@ class Cover(Entity):
         :attr:`state_stopped` value (or the Home Assistant default when the
         corresponding field is unset). Publishing does not trigger callbacks
         registered with :meth:`on_event`; only messages received on the
-        command and set-position topics do.
+        command and set-position topics do. Consecutive unchanged states are
+        not republished.
 
         Raises:
             RuntimeError: If the cover is not bound to a device.
             ValueError: If ``state`` is not one of the known state names.
             Exception: If the message could not be published.
         """
-        payload = self._state_payload(state)
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        self._state_payload(state)
+        await self._state_value.set_value(state)
 
     async def set_position(self, position: int) -> None:
         """Publish the cover's position.
@@ -185,17 +206,15 @@ class Cover(Entity):
         topic (``~/<unique_id>/position``), for example ``75`` is published
         as ``"75"``. Publishing does not trigger callbacks registered with
         :meth:`on_event`; only messages received on the command and
-        set-position topics do.
+        set-position topics do. Consecutive unchanged positions are not
+        republished.
 
         Raises:
             RuntimeError: If the cover is not bound to a device.
             Exception: If the message could not be published.
         """
         self._validate_position(position)
-        await self._publish(
-            self._register_publish_topic(self.position_topic, retain=True),
-            str(position),
-        )
+        await self._position_value.set_value(position)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

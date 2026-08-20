@@ -106,6 +106,21 @@ async def test_set_position_publishes_stringified_value_to_position_topic() -> N
     ]
 
 
+async def test_retained_state_and_position_suppress_unchanged_values() -> None:
+    provider = RecordingProvider()
+    _, cover = make_bound(provider, unique_id="blinds")
+
+    await cover.set_state("open")
+    await cover.set_state("open")
+    await cover.set_position(75)
+    await cover.set_position(75)
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/blinds/state", "open", True),
+        ("homeassistant/device/dev-1/blinds/state/position", "75", True),
+    ]
+
+
 async def test_set_position_requires_binding() -> None:
     cover = Cover(unique_id="blinds")
 

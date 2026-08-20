@@ -29,6 +29,17 @@ async def test_activate_publishes_to_resolved_command_topic() -> None:
     ]
 
 
+async def test_activate_republishes_identical_commands() -> None:
+    provider = RecordingProvider()
+    _, scene = bound(provider, unique_id="party", payload_on="GO")
+
+    await scene.activate()
+    await scene.activate()
+
+    expected = ("homeassistant/device/dev-1/party/command", "GO", False)
+    assert provider.published == [expected, expected]
+
+
 async def test_discovery_is_command_only_and_omits_defaults() -> None:
     _, scene = bound(RecordingProvider(), unique_id="party", name="Party")
 

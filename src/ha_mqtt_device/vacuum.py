@@ -12,6 +12,7 @@ from typing import Any
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["Vacuum"]
 
@@ -64,6 +65,20 @@ class Vacuum(Entity):
     payload_locate: str = DEFAULT_PAYLOADS["locate"]
     payload_clean_spot: str = DEFAULT_PAYLOADS["clean_spot"]
 
+    _state_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
+    _command_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _fan_speed_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _send_command_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _clean_segments_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+
     _event_callbacks: list[EventCallback] = field(
         default_factory=list, init=False, repr=False
     )
@@ -107,6 +122,27 @@ class Vacuum(Entity):
             )
             if not isinstance(value, str) or not value:
                 raise ValueError(f"payload for {name} must be a non-empty string")
+        self._state_value = self._make_persistent_state(StrValue(), "state")
+        self._command_value = (
+            self._make_momentary_state(StrValue(), "command")
+            if any(feature in self._features for feature in DEFAULT_PAYLOADS)
+            else None
+        )
+        self._fan_speed_value = (
+            self._make_momentary_state(StrValue(), "command/fan_speed")
+            if "fan_speed" in self._features
+            else None
+        )
+        self._send_command_value = (
+            self._make_momentary_state(StrValue(), "command/send")
+            if "send_command" in self._features
+            else None
+        )
+        self._clean_segments_value = (
+            self._make_momentary_state(StrValue(), "command/clean_segments")
+            if self.clean_segments_enabled
+            else None
+        )
 
     @property
     def command_topic(self) -> str:
@@ -149,17 +185,12 @@ class Vacuum(Entity):
 
     async def reset_state(self) -> None:
         """Publish ``null`` to reset Home Assistant's vacuum state."""
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), "null"
-        )
+        await self._state_value.set_value("null")
 
     async def publish_state(self, state: Mapping[str, object]) -> None:
         """Publish a validated JSON state mapping."""
         payload = self._validated_state(state)
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True),
-            json.dumps(payload),
-        )
+        await self._state_value.set_value(json.dumps(payload))
 
     async def start(self) -> None:
         """Start cleaning."""
@@ -189,9 +220,8 @@ class Vacuum(Entity):
         """Publish a configured fan speed."""
         self._require_feature("fan_speed")
         self._validate_fan_speed(speed)
-        await self._publish(
-            self._register_publish_topic(self.fan_speed_topic, retain=False), speed
-        )
+        assert self._fan_speed_value is not None
+        await self._fan_speed_value.set_value(speed)
 
     async def send_command(
         self, command: str, params: Mapping[str, object] | None = None
@@ -211,10 +241,8 @@ class Vacuum(Entity):
                     )
                 payload_map[key] = value
             payload = json.dumps(payload_map)
-        await self._publish(
-            self._register_publish_topic(self.send_command_topic, retain=False),
-            payload,
-        )
+        assert self._send_command_value is not None
+        await self._send_command_value.set_value(payload)
 
     async def clean_segments(self, segments: Sequence[str]) -> None:
         """Publish the JSON list of segment IDs to clean."""
@@ -224,10 +252,8 @@ class Vacuum(Entity):
             not isinstance(segment, str) or not segment for segment in segments
         ):
             raise ValueError("segments must contain non-empty strings")
-        await self._publish(
-            self._register_publish_topic(self.clean_segments_topic, retain=False),
-            json.dumps(list(segments)),
-        )
+        assert self._clean_segments_value is not None
+        await self._clean_segments_value.set_value(json.dumps(list(segments)))
 
     async def on_event(self, callback: EventCallback) -> None:
         """Subscribe once to each enabled Home Assistant command topic."""
@@ -266,10 +292,8 @@ class Vacuum(Entity):
 
     async def _publish_basic(self, feature: str) -> None:
         self._require_feature(feature)
-        await self._publish(
-            self._register_publish_topic(self.command_topic, retain=False),
-            self._payload_for(feature),
-        )
+        assert self._command_value is not None
+        await self._command_value.set_value(self._payload_for(feature))
 
     def _require_feature(self, feature: str) -> None:
         if feature not in self._features:

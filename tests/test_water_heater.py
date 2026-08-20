@@ -66,6 +66,32 @@ async def test_publish_temperature_mode_and_power() -> None:
     ]
 
 
+async def test_retained_values_deduplicate_but_power_commands_repeat() -> None:
+    provider = RecordingProvider()
+    _, heater = bound(provider, unique_id="boiler", power_enabled=True)
+
+    await heater.set_current_temperature(50)
+    await heater.set_current_temperature(50.0)
+    await heater.set_target_temperature(55)
+    await heater.set_target_temperature(55.0)
+    await heater.set_mode("eco")
+    await heater.set_mode("eco")
+    await heater.set_power(True)
+    await heater.set_power(True)
+
+    assert provider.published == [
+        (
+            "homeassistant/device/dev-1/boiler/state/current_temperature",
+            "50",
+            True,
+        ),
+        ("homeassistant/device/dev-1/boiler/state/temperature", "55", True),
+        ("homeassistant/device/dev-1/boiler/state/mode", "eco", True),
+        ("homeassistant/device/dev-1/boiler/command/power", "ON", False),
+        ("homeassistant/device/dev-1/boiler/command/power", "ON", False),
+    ]
+
+
 async def test_optional_discovery_and_custom_payloads() -> None:
     _, heater = bound(
         RecordingProvider(),

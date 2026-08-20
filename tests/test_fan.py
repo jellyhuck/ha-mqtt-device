@@ -62,6 +62,61 @@ async def test_set_state_uses_custom_payloads() -> None:
     ]
 
 
+async def test_retained_feature_values_suppress_unchanged_updates() -> None:
+    provider = RecordingProvider()
+    _, fan = make_bound(
+        provider,
+        unique_id="ceiling_fan",
+        preset_mode_enabled=True,
+        oscillation_enabled=True,
+        direction_enabled=True,
+    )
+
+    for _ in range(2):
+        await fan.set_state(True)
+        await fan.set_percentage(60)
+        await fan.set_preset_mode("auto")
+        await fan.set_oscillation(True)
+        await fan.set_direction("forward")
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/ceiling_fan/state", "ON", True),
+        ("homeassistant/device/dev-1/ceiling_fan/state/percentage", "60", True),
+        (
+            "homeassistant/device/dev-1/ceiling_fan/state/preset_mode",
+            "auto",
+            True,
+        ),
+        (
+            "homeassistant/device/dev-1/ceiling_fan/state/oscillation",
+            "oscillate_on",
+            True,
+        ),
+        (
+            "homeassistant/device/dev-1/ceiling_fan/state/direction",
+            "forward",
+            True,
+        ),
+    ]
+
+
+async def test_state_payload_mapping_is_captured_at_construction() -> None:
+    provider = RecordingProvider()
+    _, fan = make_bound(
+        provider,
+        unique_id="ceiling_fan",
+        payload_on="running",
+        payload_off="stopped",
+    )
+    fan.payload_on = "changed"
+
+    await fan.set_state(True)
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/ceiling_fan/state", "running", True)
+    ]
+
+
 async def test_set_state_requires_binding() -> None:
     fan = Fan(unique_id="ceiling_fan")
 

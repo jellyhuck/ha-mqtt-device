@@ -10,6 +10,7 @@ from math import isfinite
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.numeric_value import NumericValue
 
 __all__ = ["Number"]
 
@@ -115,6 +116,18 @@ class Number(Entity):
     )
     #: Whether the command topic subscription has been registered.
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _state_value: Entity.StateValue[float] = field(
+        init=False, repr=False, compare=False
+    )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._state_value = self._make_state(
+            NumericValue(),
+            "state",
+            retain=True,
+            force_update=self.force_update or self.expire_after is not None,
+        )
 
     @property
     def command_topic(self) -> str:
@@ -128,16 +141,15 @@ class Number(Entity):
         (``~/<unique_id>/state``), for example ``75.0`` is published as
         ``"75.0"``. Publishing does not trigger callbacks registered with
         :meth:`on_event`; only messages received on the command topic do.
+        Unchanged values are suppressed unless ``force_update`` or
+        ``expire_after`` was configured when the entity was constructed.
 
         Raises:
             RuntimeError: If the number is not bound to a device.
             Exception: If the message could not be published.
         """
         self._validate_value(value)
-        payload = str(value)
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        await self._state_value.set_value(value)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

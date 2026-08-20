@@ -123,6 +123,23 @@ async def test_set_location_requires_binding() -> None:
         await tracker.set_location(32.87336, -117.22743)
 
 
+async def test_state_and_location_share_change_detection() -> None:
+    provider = RecordingProvider()
+    _, tracker = make_bound(provider, unique_id="phone")
+
+    await tracker.set_state(True)
+    await tracker.set_state(True)
+    await tracker.set_location(32.87336, -117.22743)
+    await tracker.set_state(True)
+
+    location = json.dumps({"latitude": 32.87336, "longitude": -117.22743})
+    assert provider.published == [
+        ("homeassistant/device/dev-1/phone/state", "home", True),
+        ("homeassistant/device/dev-1/phone/state", location, True),
+        ("homeassistant/device/dev-1/phone/state", "home", True),
+    ]
+
+
 async def test_discovery_config_defaults() -> None:
     _, tracker = make_bound(RecordingProvider(), unique_id="phone")
 

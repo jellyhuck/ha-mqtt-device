@@ -6,14 +6,20 @@ import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from math import isfinite
+from typing import TypeVar
 
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.int_value import IntValue
+from ha_mqtt_device.values.mapped_value import MappedValue
+from ha_mqtt_device.values.str_value import StrValue
+from ha_mqtt_device.values.value import Value
 
 __all__ = ["Light"]
 
 logger = logging.getLogger(__name__)
+T = TypeVar("T")
 DEFAULT_PAYLOAD_ON = "ON"
 DEFAULT_PAYLOAD_OFF = "OFF"
 
@@ -45,10 +51,64 @@ class Light(Entity):
     white_scale: int = 255
     optimistic: bool = False
 
+    _power_value: Entity.StateValue[bool] = field(init=False, repr=False, compare=False)
+    _brightness_value: Entity.StateValue[int] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _color_temp_value: Entity.StateValue[int] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _rgb_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _hs_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _xy_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _effect_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _white_value: Entity.StateValue[int] | None = field(
+        init=False, repr=False, compare=False
+    )
+
     _event_callbacks: list[EventCallback] = field(
         default_factory=list, init=False, repr=False
     )
     _subscribed: bool = field(default=False, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._power_value = self._make_persistent_state(
+            MappedValue({True: self.payload_on, False: self.payload_off}),
+            "state/power",
+        )
+        self._brightness_value = self._optional_state_value(
+            IntValue(), "brightness", self.brightness_enabled
+        )
+        self._color_temp_value = self._optional_state_value(
+            IntValue(), "color_temp", self.color_temp_enabled
+        )
+        self._rgb_value = self._optional_state_value(
+            StrValue(), "rgb", self.rgb_enabled
+        )
+        self._hs_value = self._optional_state_value(StrValue(), "hs", self.hs_enabled)
+        self._xy_value = self._optional_state_value(StrValue(), "xy", self.xy_enabled)
+        self._effect_value = self._optional_state_value(
+            StrValue(), "effect", self.effect_enabled
+        )
+        self._white_value = self._optional_state_value(
+            IntValue(), "white", self.white_enabled
+        )
+
+    def _optional_state_value(
+        self, value: Value[T], topic_suffix: str, enabled: bool
+    ) -> Entity.StateValue[T] | None:
+        if not enabled:
+            return None
+        return self._make_persistent_state(value, f"state/{topic_suffix}")
 
     @property
     def power_state_topic(self) -> str:
@@ -120,10 +180,7 @@ class Light(Entity):
         return self._topic("white", True)
 
     async def set_state(self, state: bool) -> None:
-        await self._publish(
-            self._register_publish_topic(self.power_state_topic, retain=True),
-            self.payload_on if state else self.payload_off,
-        )
+        await self._power_value.set_value(state)
 
     async def set_brightness(self, brightness: int) -> None:
         self._require_enabled(self.brightness_enabled, "brightness")
@@ -131,60 +188,47 @@ class Light(Entity):
             raise ValueError(
                 f"brightness must be between 0 and {self.brightness_scale}"
             )
-        await self._publish(
-            self._register_publish_topic(self.brightness_state_topic, retain=True),
-            str(brightness),
-        )
+        assert self._brightness_value is not None
+        await self._brightness_value.set_value(brightness)
 
     async def set_color_temp(self, value: int) -> None:
         self._require_enabled(self.color_temp_enabled, "color_temp")
         self._validate_integer(value, "color_temp")
-        await self._publish(
-            self._register_publish_topic(self.color_temp_state_topic, retain=True),
-            str(value),
-        )
+        assert self._color_temp_value is not None
+        await self._color_temp_value.set_value(value)
 
     async def set_rgb(self, rgb: tuple[int, int, int]) -> None:
         self._require_enabled(self.rgb_enabled, "rgb")
         if len(rgb) != 3 or any(not 0 <= value <= 255 for value in rgb):
             raise ValueError("rgb must contain three values between 0 and 255")
-        await self._publish(
-            self._register_publish_topic(self.rgb_state_topic, retain=True),
-            ",".join(map(str, rgb)),
-        )
+        assert self._rgb_value is not None
+        await self._rgb_value.set_value(",".join(map(str, rgb)))
 
     async def set_hs(self, hs: tuple[float, float]) -> None:
         self._require_enabled(self.hs_enabled, "hs")
         self._validate_hs(hs)
-        await self._publish(
-            self._register_publish_topic(self.hs_state_topic, retain=True),
-            f"{hs[0]},{hs[1]}",
-        )
+        assert self._hs_value is not None
+        await self._hs_value.set_value(f"{hs[0]},{hs[1]}")
 
     async def set_xy(self, xy: tuple[float, float]) -> None:
         self._require_enabled(self.xy_enabled, "xy")
         self._validate_xy(xy)
-        await self._publish(
-            self._register_publish_topic(self.xy_state_topic, retain=True),
-            f"{xy[0]},{xy[1]}",
-        )
+        assert self._xy_value is not None
+        await self._xy_value.set_value(f"{xy[0]},{xy[1]}")
 
     async def set_effect(self, effect: str) -> None:
         self._require_enabled(self.effect_enabled, "effect")
         if self.effect_list and effect not in self.effect_list:
             raise ValueError(f"effect {effect!r} is not in effect_list")
-        await self._publish(
-            self._register_publish_topic(self.effect_state_topic, retain=True), effect
-        )
+        assert self._effect_value is not None
+        await self._effect_value.set_value(effect)
 
     async def set_white(self, value: int) -> None:
         self._require_enabled(self.white_enabled, "white")
         if not 0 <= value <= self.white_scale:
             raise ValueError(f"white must be between 0 and {self.white_scale}")
-        await self._publish(
-            self._register_publish_topic(self.white_state_topic, retain=True),
-            str(value),
-        )
+        assert self._white_value is not None
+        await self._white_value.set_value(value)
 
     async def on_event(self, callback: EventCallback) -> None:
         device = self._require_device()

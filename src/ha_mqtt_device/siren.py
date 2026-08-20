@@ -11,6 +11,7 @@ from typing import Any
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["Siren"]
 
@@ -49,6 +50,13 @@ class Siren(Entity):
     payload_available: str = "online"
     payload_not_available: str = "offline"
 
+    _state_value: Entity.StateValue[str] | None = field(
+        init=False, repr=False, compare=False
+    )
+    _command_value: Entity.StateValue[str] = field(
+        init=False, repr=False, compare=False
+    )
+
     _event_callbacks: list[EventCallback] = field(
         default_factory=list, init=False, repr=False
     )
@@ -58,6 +66,12 @@ class Siren(Entity):
         super().__post_init__()
         if any(not isinstance(tone, str) for tone in self.available_tones):
             raise ValueError("available_tones must contain only strings")
+        self._state_value = (
+            self._make_persistent_state(StrValue(), "state")
+            if self.state_enabled
+            else None
+        )
+        self._command_value = self._make_momentary_state(StrValue(), "command")
 
     @property
     def command_topic(self) -> str:
@@ -79,10 +93,8 @@ class Siren(Entity):
             "state": self.payload_on if state else self.payload_off
         }
         self._add_parameters(payload, tone, duration, volume_level)
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True),
-            json.dumps(payload),
-        )
+        assert self._state_value is not None
+        await self._state_value.set_value(json.dumps(payload))
 
     async def set_tone(self, tone: str) -> None:
         """Publish a tone command, validating it against available tones."""
@@ -105,10 +117,7 @@ class Siren(Entity):
 
     async def _publish_command(self, payload: dict[str, Any]) -> None:
         self._require_device()
-        await self._publish(
-            self._register_publish_topic(self.command_topic, retain=False),
-            json.dumps(payload),
-        )
+        await self._command_value.set_value(json.dumps(payload))
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for command payloads received from Home Assistant."""

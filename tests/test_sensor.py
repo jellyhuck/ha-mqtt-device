@@ -41,6 +41,34 @@ async def test_set_state_publishes_stringified_values_to_state_topic() -> None:
     ]
 
 
+async def test_set_state_suppresses_an_equivalent_sensor_value() -> None:
+    provider = RecordingProvider()
+    _, sensor = make_bound(provider, unique_id="temperature")
+
+    await sensor.set_state(21.5)
+    await sensor.set_state("21.5")
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/temperature/state", "21.5", True)
+    ]
+
+
+@pytest.mark.parametrize("kwargs", [{"force_update": True}, {"expire_after": 30}])
+async def test_set_state_refreshes_when_updates_are_forced(
+    kwargs: dict[str, Any],
+) -> None:
+    provider = RecordingProvider()
+    _, sensor = make_bound(provider, unique_id="temperature", **kwargs)
+
+    await sensor.set_state(21.5)
+    await sensor.set_state("21.5")
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/temperature/state", "21.5", True),
+        ("homeassistant/device/dev-1/temperature/state", "21.5", True),
+    ]
+
+
 async def test_set_state_requires_binding() -> None:
     sensor = Sensor(unique_id="temperature")
 

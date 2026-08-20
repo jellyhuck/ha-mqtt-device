@@ -47,6 +47,27 @@ async def test_default_discovery_and_json_state() -> None:
     )
 
 
+async def test_shared_state_deduplicates_without_losing_reset_transitions() -> None:
+    provider = RecordingProvider()
+    _, entity = bound(provider, unique_id="cleaner")
+
+    await entity.set_state("docked")
+    await entity.set_state("docked")
+    await entity.reset_state()
+    await entity.set_state("docked")
+    await entity.start()
+    await entity.start()
+
+    state = json.dumps({"state": "docked"})
+    assert provider.published == [
+        ("homeassistant/device/dev-1/cleaner/state", state, True),
+        ("homeassistant/device/dev-1/cleaner/state", "null", True),
+        ("homeassistant/device/dev-1/cleaner/state", state, True),
+        ("homeassistant/device/dev-1/cleaner/command", "start", False),
+        ("homeassistant/device/dev-1/cleaner/command", "start", False),
+    ]
+
+
 async def test_optional_features_and_payload_mappings() -> None:
     _, entity = bound(
         RecordingProvider(),

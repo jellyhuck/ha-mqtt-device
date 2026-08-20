@@ -110,6 +110,29 @@ async def test_latest_version_and_install_publish_to_resolved_topics() -> None:
     ]
 
 
+async def test_retained_values_deduplicate_but_install_commands_repeat() -> None:
+    provider = RecordingProvider()
+    _, entity = bound(provider, unique_id="firmware", latest_version_enabled=True)
+
+    await entity.set_state("1.21.0")
+    await entity.set_state("1.21.0")
+    await entity.set_latest_version("1.22.0")
+    await entity.set_latest_version("1.22.0")
+    await entity.install()
+    await entity.install()
+
+    assert provider.published == [
+        (
+            "homeassistant/device/dev-1/firmware/state",
+            json.dumps({"installed_version": "1.21.0"}),
+            True,
+        ),
+        ("homeassistant/device/dev-1/firmware/state/latest", "1.22.0", True),
+        ("homeassistant/device/dev-1/firmware/command", "install", False),
+        ("homeassistant/device/dev-1/firmware/command", "install", False),
+    ]
+
+
 async def test_install_events_subscribe_once_and_preserve_unknown_payloads() -> None:
     provider = RecordingProvider()
     _, entity = bound(provider, unique_id="firmware", payload_install="update_fw")

@@ -49,6 +49,22 @@ async def test_default_discovery_and_state_commands() -> None:
     ]
 
 
+async def test_retained_state_deduplicates_but_commands_repeat() -> None:
+    provider = RecordingProvider()
+    _, valve = bound(provider, unique_id="valve")
+
+    await valve.set_state("open")
+    await valve.set_state("open")
+    await valve.open()
+    await valve.open()
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/valve/state", "open", True),
+        ("homeassistant/device/dev-1/valve/command", "OPEN", False),
+        ("homeassistant/device/dev-1/valve/command", "OPEN", False),
+    ]
+
+
 async def test_custom_discovery_and_optional_stop() -> None:
     _, valve = bound(
         RecordingProvider(),

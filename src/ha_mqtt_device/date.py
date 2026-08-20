@@ -10,6 +10,7 @@ from datetime import UTC, date, datetime
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.date_value import DateValue
 
 __all__ = ["Date"]
 
@@ -72,6 +73,13 @@ class Date(Entity):
     )
     #: Whether the command topic subscription has been registered.
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _state_value: Entity.StateValue[date] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._state_value = self._make_state(
+            DateValue(), "state", retain=True, force_update=self.force_update
+        )
 
     @property
     def command_topic(self) -> str:
@@ -85,7 +93,8 @@ class Date(Entity):
         published to the state topic (``~/<unique_id>/state``), for example
         ``date(2024, 2, 14)`` is published as ``"2024-02-14"``. Publishing
         does not trigger callbacks registered with :meth:`on_event`; only
-        messages received on the command topic do.
+        messages received on the command topic do. Canonically equal values
+        are suppressed unless :attr:`force_update` was enabled at construction.
 
         Raises:
             RuntimeError: If the date is not bound to a device.
@@ -94,10 +103,8 @@ class Date(Entity):
                 than a :class:`datetime.date`.
             Exception: If the message could not be published.
         """
-        payload = self._date_payload(value)
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        normalized = date.fromisoformat(self._date_payload(value))
+        await self._state_value.set_value(normalized)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

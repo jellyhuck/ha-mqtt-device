@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ha_mqtt_device.entity import Entity
+from ha_mqtt_device.values.bytes_value import BytesValue
 
 __all__ = ["Camera"]
 
@@ -53,6 +54,13 @@ class Camera(Entity):
     # define a content-type field.
     content_type: str = DEFAULT_CONTENT_TYPE
     encoding: str | None = DEFAULT_ENCODING
+    _image_value: Entity.StateValue[bytes] = field(
+        init=False, repr=False, compare=False
+    )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._image_value = self._make_momentary_state(BytesValue(), "image")
 
     @property
     def image_topic(self) -> str:
@@ -66,15 +74,14 @@ class Camera(Entity):
         (``~/<unique_id>/image``); this entity does not transform it. With
         :attr:`encoding` omitted, Home Assistant expects raw image bytes. Set
         it to ``"b64"`` and pass base64-encoded bytes — for example
-        ``base64.b64encode(raw_image_bytes)``.
+        ``base64.b64encode(raw_image_bytes)``. Frames are transient, so every
+        call publishes even when the bytes are unchanged.
 
         Raises:
             RuntimeError: If the entity is not bound to a device.
             Exception: If the message could not be published.
         """
-        await self._publish(
-            self._register_publish_topic(self.image_topic, retain=False), payload
-        )
+        await self._image_value.set_value(payload)
 
     def discovery_config(self) -> dict[str, object]:
         """Return this entity's ``cmps`` config entry for the discovery payload."""

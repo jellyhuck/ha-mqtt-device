@@ -44,6 +44,19 @@ async def test_set_image_publishes_payload_verbatim() -> None:
     ]
 
 
+async def test_set_image_republishes_identical_frames() -> None:
+    provider = RecordingProvider()
+    _, camera = make_bound(provider, unique_id="front_door")
+
+    await camera.set_image(b"same-frame")
+    await camera.set_image(b"same-frame")
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/front_door/image", b"same-frame", False),
+        ("homeassistant/device/dev-1/front_door/image", b"same-frame", False),
+    ]
+
+
 async def test_set_image_publishes_verbatim_for_any_encoding() -> None:
     provider = RecordingProvider()
     _, camera = make_bound(provider, unique_id="front_door", encoding="binary")

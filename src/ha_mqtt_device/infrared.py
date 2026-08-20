@@ -11,6 +11,7 @@ from typing import Any
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.str_value import StrValue
 
 __all__ = ["InfraredEmitter", "InfraredReceiver"]
 
@@ -195,6 +196,12 @@ class InfraredReceiver(Entity):
 
     component = "infrared"
 
+    _signal_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._signal_value = self._make_momentary_state(StrValue(), "state")
+
     @property
     def state_topic(self) -> str:
         return Entity.state_topic_for(self.unique_id)
@@ -205,7 +212,8 @@ class InfraredReceiver(Entity):
         ``signal`` must be a dict with a required ``timings`` key (list of ints
         representing on/off microseconds) and an optional ``modulation`` key
         (int, typically 38000). The JSON payload is published to the state topic
-        (``~/<unique_id>/state``).
+        (``~/<unique_id>/state``). Received signals are transient, so repeated
+        calls with the same signal each publish.
 
         Raises:
             RuntimeError: If the receiver is not bound to a device.
@@ -216,10 +224,7 @@ class InfraredReceiver(Entity):
         if not isinstance(signal, dict):
             raise TypeError("signal must be a dict")
         _validate_signal(signal)
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=False),
-            json.dumps(signal),
-        )
+        await self._signal_value.set_value(json.dumps(signal))
 
     def discovery_config(self) -> dict[str, object]:
         """Return this receiver's ``cmps`` config entry for the discovery payload."""

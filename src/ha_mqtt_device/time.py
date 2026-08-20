@@ -11,6 +11,7 @@ from datetime import time as time_value
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.time_value import TimeValue
 
 __all__ = ["Time"]
 
@@ -33,6 +34,14 @@ class Time(Entity):
         default_factory=list, init=False, repr=False
     )
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _state_value: Entity.StateValue[time_value] | None = field(
+        default=None, init=False, repr=False, compare=False
+    )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if self.state_enabled:
+            self._state_value = self._make_persistent_state(TimeValue(), "state")
 
     @property
     def command_topic(self) -> str:
@@ -40,13 +49,11 @@ class Time(Entity):
         return Entity.command_topic_for(self.unique_id)
 
     async def set_state(self, value: time_value | str) -> None:
-        """Normalize and publish a time value to the state topic."""
-        if not self.state_enabled:
+        """Normalize and publish a time that differs from the last value."""
+        if self._state_value is None:
             raise ValueError("state reporting is disabled")
-        payload = self._time_payload(value)
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        normalized = time_value.fromisoformat(self._time_payload(value))
+        await self._state_value.set_value(normalized)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for time commands received from Home Assistant."""

@@ -43,6 +43,19 @@ async def test_set_event_publishes_to_state_topic() -> None:
     ]
 
 
+async def test_set_event_republishes_identical_events() -> None:
+    provider = RecordingProvider()
+    _, doorbell = make_bound(
+        provider, unique_id="doorbell", event_types=["doorbell_pressed"]
+    )
+
+    await doorbell.set_event("doorbell_pressed")
+    await doorbell.set_event("doorbell_pressed")
+
+    expected = ("homeassistant/device/dev-1/doorbell/state", "doorbell_pressed", False)
+    assert provider.published == [expected, expected]
+
+
 async def test_set_event_requires_binding() -> None:
     doorbell = EventEntity(unique_id="doorbell", event_types=["doorbell_pressed"])
 

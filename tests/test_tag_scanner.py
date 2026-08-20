@@ -18,14 +18,25 @@ def bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, TagScanne
     ), scanner
 
 
-async def test_scan_publishes_to_resolved_topic() -> None:
+@pytest.mark.parametrize(
+    ("configured_topic", "published_topic"),
+    [
+        ("~/tags", "homeassistant/device/dev-1/tags"),
+        ("building/entrance/tags", "building/entrance/tags"),
+    ],
+)
+async def test_scan_publishes_repeated_scans_to_configured_topic(
+    configured_topic: str, published_topic: str
+) -> None:
     provider = RecordingProvider()
-    _, scanner = bound(provider, unique_id="scanner", topic="~/tags")
+    _, scanner = bound(provider, unique_id="scanner", topic=configured_topic)
 
+    await scanner.scan("E9F35959")
     await scanner.scan("E9F35959")
 
     assert provider.published == [
-        ("homeassistant/device/dev-1/tags", "E9F35959", False)
+        (published_topic, "E9F35959", False),
+        (published_topic, "E9F35959", False),
     ]
 
 

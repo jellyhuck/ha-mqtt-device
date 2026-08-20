@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from ha_mqtt_device.entity import Entity
 from ha_mqtt_device.event import Event, EventCallback
 from ha_mqtt_device.provider import Message
+from ha_mqtt_device.values.mapped_value import MappedValue
 
 __all__ = ["LawnMower"]
 
@@ -102,6 +103,21 @@ class LawnMower(Entity):
         default_factory=list, init=False, repr=False
     )
     _subscribed: bool = field(default=False, init=False, repr=False)
+    _state_value: Entity.StateValue[str] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        self._state_value = self._make_persistent_state(
+            MappedValue(
+                {
+                    "mowing": self.state_mowing or DEFAULT_MOWING_STATE,
+                    "paused": self.state_paused or DEFAULT_PAUSED_STATE,
+                    "docked": self.state_docked or DEFAULT_DOCKED_STATE,
+                    "error": self.state_error or DEFAULT_ERROR_STATE,
+                }
+            ),
+            "state",
+        )
 
     @property
     def state_topic(self) -> str:
@@ -123,7 +139,8 @@ class LawnMower(Entity):
         Publishes the configured activity payload to the state topic
         (``~/<unique_id>/state``). The default payloads are the plain activity
         values documented by Home Assistant (``mowing``, ``paused``,
-        ``docked``, and ``error``).
+        ``docked``, and ``error``). Repeating the current activity is
+        suppressed. Configured payloads are captured at construction.
 
         Args:
             activity: The activity state to publish (e.g., "mowing", "paused",
@@ -133,10 +150,8 @@ class LawnMower(Entity):
             RuntimeError: If the lawn mower is not bound to a device.
             Exception: If the message could not be published.
         """
-        payload = self._state_payload(activity)
-        await self._publish(
-            self._register_publish_topic(self.state_topic, retain=True), payload
-        )
+        self._state_payload(activity)
+        await self._state_value.set_value(activity)
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.

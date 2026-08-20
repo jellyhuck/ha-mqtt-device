@@ -37,7 +37,7 @@ def collector(received: list[Event]) -> EventCallback:
     return collect
 
 
-async def test_set_state_publishes_iso_dates_to_state_topic() -> None:
+async def test_set_state_publishes_iso_dates_and_suppresses_duplicates() -> None:
     provider = RecordingProvider()
     _, entity = make_bound(provider, unique_id="vacation")
 
@@ -47,8 +47,20 @@ async def test_set_state_publishes_iso_dates_to_state_topic() -> None:
 
     assert provider.published == [
         ("homeassistant/device/dev-1/vacation/state", "2024-02-14", True),
-        ("homeassistant/device/dev-1/vacation/state", "2024-02-14", True),
         ("homeassistant/device/dev-1/vacation/state", "2024-12-31", True),
+    ]
+
+
+async def test_force_update_republishes_canonically_equal_dates() -> None:
+    provider = RecordingProvider()
+    _, entity = make_bound(provider, unique_id="vacation", force_update=True)
+
+    await entity.set_state(date(2024, 2, 14))
+    await entity.set_state("2024-02-14")
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/vacation/state", "2024-02-14", True),
+        ("homeassistant/device/dev-1/vacation/state", "2024-02-14", True),
     ]
 
 
