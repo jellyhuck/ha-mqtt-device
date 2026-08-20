@@ -56,7 +56,7 @@ class Entity:
     _publish_topics: dict[str, PublishTopic] = field(
         default_factory=dict, init=False, repr=False
     )
-    _persistent_values: list[StateValue[Any]] = field(
+    _retained_values: list[StateValue[Any]] = field(
         default_factory=list, init=False, repr=False
     )
 
@@ -71,21 +71,29 @@ class Entity:
         :meth:`Entity._make_persistent_state` to construct instances.
         """
 
-        __slots__ = ("_entity", "_persistent", "_topic_suffix", "_value")
+        __slots__ = (
+            "_entity",
+            "_force_update",
+            "_retain",
+            "_topic_suffix",
+            "_value",
+        )
 
         def __init__(
             self,
             value: Value[T],
             topic_suffix: str,
-            persistent: bool,
+            retain: bool,
+            force_update: bool,
             entity: Entity,
         ) -> None:
             self._value = value
             self._topic_suffix = topic_suffix
-            self._persistent = persistent
+            self._retain = retain
+            self._force_update = force_update
             self._entity: weakref.ReferenceType[Entity] = weakref.ref(entity)
-            if persistent:
-                entity._register_persistent_value(self)
+            if retain:
+                entity._register_retained_value(self)
 
         def topic(self) -> PublishTopic:
             """Return this value's resolved topic and retention policy."""
@@ -95,7 +103,7 @@ class Entity:
             device = entity._require_device()
             return PublishTopic(
                 device.info.resolve_topic(f"~/{entity.unique_id}/{self._topic_suffix}"),
-                self._persistent,
+                self._retain,
             )
 
         async def set_value(self, new_value: T) -> None:
@@ -107,7 +115,7 @@ class Entity:
             async def update(payload: str | bytes) -> None:
                 await entity._publish(self.topic(), payload)
 
-            await self._value.set_value(new_value, update)
+            await self._value.set_value(new_value, update, self._force_update)
 
     def __post_init__(self) -> None:
         if not _UNIQUE_ID_RE.fullmatch(self.unique_id):
@@ -147,13 +155,19 @@ class Entity:
         self, value: Value[T], topic_suffix: str
     ) -> Entity.StateValue[T]:
         """Create a state value whose publications are not retained."""
-        return Entity.StateValue(value, topic_suffix, False, self)
+        return self._make_state(value, topic_suffix, False, False)
 
     def _make_persistent_state(
         self, value: Value[T], topic_suffix: str
     ) -> Entity.StateValue[T]:
         """Create a state value whose publications are retained."""
-        return Entity.StateValue(value, topic_suffix, True, self)
+        return self._make_state(value, topic_suffix, True, False)
+
+    def _make_state(
+        self, value: Value[T], topic_suffix: str, retain: bool, force_update: bool
+    ) -> Entity.StateValue[T]:
+        """Create a state value with independent publication policies."""
+        return Entity.StateValue(value, topic_suffix, retain, force_update, self)
 
     def _register_publish_topic(self, topic: str, *, retain: bool) -> PublishTopic:
         """Register and return a resolved topic descriptor.
@@ -175,8 +189,8 @@ class Entity:
         self._publish_topics[resolved_topic] = descriptor
         return existing or descriptor
 
-    def _register_persistent_value(self, value: StateValue[Any]) -> None:
-        self._persistent_values.append(value)
+    def _register_retained_value(self, value: StateValue[Any]) -> None:
+        self._retained_values.append(value)
 
     async def _publish(self, topic: PublishTopic, message: str | bytes) -> None:
         """Publish a payload using a registered topic descriptor."""
@@ -187,7 +201,7 @@ class Entity:
         """Clear every retained topic registered by this entity."""
         device = self._require_device()
         cleared_topics: set[str] = set()
-        for value in self._persistent_values:
+        for value in self._retained_values:
             descriptor = value.topic()
             await device.provider.publish(descriptor.topic, "", retain=True)
             cleared_topics.add(descriptor.topic)

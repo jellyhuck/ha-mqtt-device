@@ -96,6 +96,24 @@ async def test_state_value_delegates_change_detection() -> None:
     ]
 
 
+async def test_state_value_force_update_is_independent_of_retention() -> None:
+    provider = RecordingProvider()
+    entity = Entity("relay")
+    Device(provider, DeviceInfo(device_id="dev-1", name="Device"), [entity])
+    state = entity._make_state(
+        StrValue(), "state/event", retain=False, force_update=True
+    )
+
+    await state.set_value("pressed")
+    await state.set_value("pressed")
+    await entity._on_remove()
+
+    assert provider.published == [
+        ("homeassistant/device/dev-1/relay/state/event", "pressed", False),
+        ("homeassistant/device/dev-1/relay/state/event", "pressed", False),
+    ]
+
+
 async def test_state_value_requires_a_bound_entity() -> None:
     entity = Entity("relay")
     state = entity._make_persistent_state(StrValue(), "state")
