@@ -21,6 +21,9 @@ async def test_state_and_discovery_defaults() -> None:
     provider = RecordingProvider()
     _, lock = make_bound(provider, unique_id="front_door")
 
+    assert lock.command_topic == "homeassistant/device/dev-1/front_door/command"
+    assert lock._state_value is not None
+    assert lock.state_topic == lock._state_value.topic().topic
     await lock.set_state("locked")
 
     assert provider.published == [
@@ -106,6 +109,11 @@ async def test_lock_validation_and_unbound_errors() -> None:
         await lock.set_state("bad")
     with pytest.raises(ValueError, match="invalid code_format"):
         Lock(unique_id="bad_lock", code_format="[")
+
+    _, disabled = make_bound(
+        RecordingProvider(), unique_id="optimistic_lock", state_enabled=False
+    )
+    assert disabled.state_topic is None
 
 
 async def test_device_configure_includes_lock_component() -> None:

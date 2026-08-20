@@ -75,8 +75,8 @@ class Siren(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved command topic for this bound entity."""
+        return self.command_topic_for()
 
     async def set_state(
         self,
@@ -123,9 +123,7 @@ class Siren(Entity):
         """Register a callback for command payloads received from Home Assistant."""
         device = self._require_device()
         if not self._subscribed:
-            await device.provider.subscribe(
-                device.info.resolve_topic(self.command_topic), self._dispatch
-            )
+            await device.provider.subscribe(self.command_topic, self._dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 
@@ -212,14 +210,18 @@ class Siren(Entity):
             raise ValueError("volume_level must be between 0 and 1")
 
     @property
-    def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+    def state_topic(self) -> str | None:
+        """Return the resolved state topic, or ``None`` when it is disabled."""
+        if self._state_value is None:
+            return None
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this siren's abbreviated MQTT discovery configuration."""
         config = super().discovery_config()
-        if self.state_enabled:
-            config["stat_t"] = self.state_topic
+        state_topic = self.state_topic
+        if state_topic is not None:
+            config["stat_t"] = state_topic
         config["cmd_t"] = self.command_topic
         if self.available_tones:
             config["av_tones"] = list(self.available_tones)

@@ -147,15 +147,29 @@ async def test_publish_methods_do_not_subscribe() -> None:
     assert provider.subscriptions == {}
 
 
-async def test_topics_shorthand() -> None:
+async def test_topics_are_resolved() -> None:
     _, humidifier = make_bound(RecordingProvider(), unique_id="bedroom")
 
-    assert humidifier.state_topic == "~/bedroom/state"
-    assert humidifier.command_topic == "~/bedroom/command"
-    assert humidifier.target_humidity_state_topic == "~/bedroom/state/target_humidity"
+    assert humidifier.state_topic == "homeassistant/device/dev-1/bedroom/state"
+    assert humidifier.command_topic == "homeassistant/device/dev-1/bedroom/command"
     assert (
-        humidifier.target_humidity_command_topic == "~/bedroom/command/target_humidity"
+        humidifier.target_humidity_state_topic
+        == "homeassistant/device/dev-1/bedroom/state/target_humidity"
     )
+    assert (
+        humidifier.target_humidity_command_topic
+        == "homeassistant/device/dev-1/bedroom/command/target_humidity"
+    )
+
+
+async def test_disabled_target_humidity_state_topic_is_none() -> None:
+    _, humidifier = make_bound(
+        RecordingProvider(),
+        unique_id="bedroom",
+        target_humidity_enabled=False,
+    )
+
+    assert humidifier.target_humidity_state_topic is None
 
 
 async def test_on_event_subscribes_to_both_resolved_command_topics() -> None:

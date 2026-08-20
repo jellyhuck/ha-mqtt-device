@@ -30,6 +30,7 @@ async def test_set_state_publishes_stringified_values_to_state_topic() -> None:
     provider = RecordingProvider()
     _, sensor = make_bound(provider, unique_id="temperature")
 
+    assert sensor.state_topic == sensor._state_value.topic().topic
     await sensor.set_state("21.5")
     await sensor.set_state(42)
     await sensor.set_state(21.5)

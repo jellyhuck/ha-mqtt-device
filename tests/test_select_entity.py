@@ -36,6 +36,9 @@ async def test_discovery_defaults_include_required_options_and_topics() -> None:
         RecordingProvider(), unique_id="mode", name="Mode", options=["Auto", "Manual"]
     )
 
+    assert select.command_topic == "homeassistant/device/dev-1/mode/command"
+    assert select._state_value is not None
+    assert select.state_topic == select._state_value.topic().topic
     assert select.discovery_config() == {
         "uniq_id": "mode",
         "p": "select",
@@ -112,6 +115,7 @@ async def test_options_must_be_strings_and_state_requires_enabled_topic() -> Non
 
     provider = RecordingProvider()
     _, select = bound(provider, unique_id="mode", options=["Auto"], state_enabled=False)
+    assert select.state_topic is None
     with pytest.raises(ValueError, match="state reporting"):
         await select.set_state("Auto")
 

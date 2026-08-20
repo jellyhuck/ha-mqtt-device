@@ -33,9 +33,9 @@ class Switch(Entity):
     """A switch belonging to a device.
 
     A switch has two MQTT topics. The device publishes its state to the state
-    topic (``~/<unique_id>/state``) with :meth:`set_state`, and it receives
-    commands from Home Assistant on the command topic
-    (``~/<unique_id>/command``). Registering an async callback with
+    topic (``<device topic prefix>/<unique_id>/state``) with :meth:`set_state`,
+    and it receives commands from Home Assistant on the command topic
+    (``<device topic prefix>/<unique_id>/command``). Registering an async callback with
     :meth:`on_event` subscribes to the command topic and delivers every
     command as an :class:`~ha_mqtt_device.event.Event`::
 
@@ -103,14 +103,15 @@ class Switch(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved MQTT command topic."""
+        return self.command_topic_for()
 
     async def set_state(self, state: bool) -> None:
         """Publish the switch's state.
 
         ``True`` publishes :attr:`payload_on` and ``False`` publishes
-        :attr:`payload_off` to the state topic (``~/<unique_id>/state``).
+        :attr:`payload_off` to the state topic
+        (``<device topic prefix>/<unique_id>/state``).
         Publishing does not trigger callbacks registered with
         :meth:`on_event`; only messages received on the command topic do.
         Repeating the current state is suppressed. The payload mapping is
@@ -126,7 +127,8 @@ class Switch(Entity):
         """Register ``callback`` for every command received from Home Assistant.
 
         Appends ``callback`` and, on first use, subscribes to the command
-        topic (``~/<unique_id>/command``). Every command message is awaited as
+        topic (``<device topic prefix>/<unique_id>/command``). Every command
+        message is awaited as
         an :class:`~ha_mqtt_device.event.Event` with ``event_type``
         ``"command"``, ``topic_type`` ``"command_topic"``, and ``state``
         ``"on"`` or ``"off"`` derived from the payload via
@@ -145,8 +147,7 @@ class Switch(Entity):
         """
         device = self._require_device()
         if not self._subscribed:
-            topic = device.info.resolve_topic(self.command_topic)
-            await device.provider.subscribe(topic, self._dispatch)
+            await device.provider.subscribe(self.command_topic, self._dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 
@@ -186,7 +187,7 @@ class Switch(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this switch's ``cmps`` config entry for the discovery payload."""

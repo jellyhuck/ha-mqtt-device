@@ -53,7 +53,7 @@ async def main(
 
             await restart.on_event(on_press)
 
-            command_topic = info.resolve_topic(restart.command_topic)
+            command_topic = restart.command_topic
             logger.info("Publishing PRESS command to %s", command_topic)
             await provider.publish(command_topic, restart.payload_press)
 

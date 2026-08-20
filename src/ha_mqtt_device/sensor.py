@@ -73,8 +73,8 @@ class Sensor(Entity):
         """Publish the sensor's value.
 
         ``value`` is converted to a string and published to the state topic
-        (``~/<unique_id>/state``), for example ``21.5`` is published as
-        ``"21.5"``. Equivalent stringified values are suppressed unless
+        (``<device topic prefix>/<unique_id>/state``), for example ``21.5`` is
+        published as ``"21.5"``. Equivalent stringified values are suppressed unless
         ``force_update`` or ``expire_after`` was configured when the entity
         was constructed.
 
@@ -86,7 +86,7 @@ class Sensor(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this sensor's ``cmps`` config entry for the discovery payload."""

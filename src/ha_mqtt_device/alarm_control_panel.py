@@ -90,8 +90,8 @@ class AlarmControlPanel(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved command topic for this bound entity."""
+        return self.command_topic_for()
 
     async def set_state(self, state: str) -> None:
         """Publish a documented alarm state when it differs from the last value."""
@@ -105,8 +105,7 @@ class AlarmControlPanel(Entity):
         """Register a callback for commands received from Home Assistant."""
         device = self._require_device()
         if not self._subscribed:
-            topic = device.info.resolve_topic(self.command_topic)
-            await device.provider.subscribe(topic, self._dispatch)
+            await device.provider.subscribe(self.command_topic, self._dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 
@@ -144,14 +143,17 @@ class AlarmControlPanel(Entity):
         return commands.get(payload)
 
     @property
-    def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+    def state_topic(self) -> str | None:
+        """Return the resolved state topic, or ``None`` when state is disabled."""
+        if self._state_value is None:
+            return None
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this panel's device discovery component configuration."""
         config = super().discovery_config()
         config["cmd_t"] = self.command_topic
-        if self.state_enabled:
+        if self._state_value is not None:
             config["stat_t"] = self.state_topic
         if self.payload_arm_away != DEFAULT_PAYLOAD_ARM_AWAY:
             config["pl_arm_away"] = self.payload_arm_away

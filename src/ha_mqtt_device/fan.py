@@ -78,12 +78,10 @@ class Fan(Entity):
     """A fan belonging to a device.
 
     A fan has paired state and command topics. The device publishes its on/off
-    state to the state topic (``~/<unique_id>/state``) with :meth:`set_state`,
-    and optional percentage, preset-mode, oscillation, and direction features
-    publish to their own state topics when enabled. It receives commands from
-    Home Assistant on the command topic (``~/<unique_id>/command``) and on
-    each enabled feature's command topic. Registering an async callback with
-    :meth:`on_event` subscribes to every enabled command topic and delivers
+    state and enabled feature states to their resolved output topics. It
+    receives commands from Home Assistant on the resolved main command topic
+    and each enabled feature's resolved command topic. Registering a callback
+    with :meth:`on_event` subscribes to every enabled command topic and delivers
     each message as an :class:`~ha_mqtt_device.event.Event`::
 
         fan = Fan(
@@ -231,54 +229,62 @@ class Fan(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved command topic for this bound entity."""
+        return self.command_topic_for()
 
     @property
-    def percentage_state_topic(self) -> str:
-        """Percentage state topic as ``~`` shorthand, ``~/<unique_id>/percentage_state``."""
-        return Entity.state_topic_for(self.unique_id, "percentage")
+    def percentage_state_topic(self) -> str | None:
+        """Return the resolved percentage state topic when enabled."""
+        if self._percentage_value is None:
+            return None
+        return self._percentage_value.topic().topic
 
     @property
     def percentage_command_topic(self) -> str:
-        """Percentage command topic, ``~/<unique_id>/percentage_command``."""
-        return Entity.command_topic_for(self.unique_id, "percentage")
+        """Return the resolved percentage command topic."""
+        return self.command_topic_for("percentage")
 
     @property
-    def preset_mode_state_topic(self) -> str:
-        """Preset-mode state topic, ``~/<unique_id>/preset_mode_state``."""
-        return Entity.state_topic_for(self.unique_id, "preset_mode")
+    def preset_mode_state_topic(self) -> str | None:
+        """Return the resolved preset-mode state topic when enabled."""
+        if self._preset_mode_value is None:
+            return None
+        return self._preset_mode_value.topic().topic
 
     @property
     def preset_mode_command_topic(self) -> str:
-        """Preset-mode command topic, ``~/<unique_id>/preset_mode_command``."""
-        return Entity.command_topic_for(self.unique_id, "preset_mode")
+        """Return the resolved preset-mode command topic."""
+        return self.command_topic_for("preset_mode")
 
     @property
-    def oscillation_state_topic(self) -> str:
-        """Oscillation state topic, ``~/<unique_id>/oscillation_state``."""
-        return Entity.state_topic_for(self.unique_id, "oscillation")
+    def oscillation_state_topic(self) -> str | None:
+        """Return the resolved oscillation state topic when enabled."""
+        if self._oscillation_value is None:
+            return None
+        return self._oscillation_value.topic().topic
 
     @property
     def oscillation_command_topic(self) -> str:
-        """Oscillation command topic, ``~/<unique_id>/oscillation_command``."""
-        return Entity.command_topic_for(self.unique_id, "oscillation")
+        """Return the resolved oscillation command topic."""
+        return self.command_topic_for("oscillation")
 
     @property
-    def direction_state_topic(self) -> str:
-        """Direction state topic, ``~/<unique_id>/direction_state``."""
-        return Entity.state_topic_for(self.unique_id, "direction")
+    def direction_state_topic(self) -> str | None:
+        """Return the resolved direction state topic when enabled."""
+        if self._direction_value is None:
+            return None
+        return self._direction_value.topic().topic
 
     @property
     def direction_command_topic(self) -> str:
-        """Direction command topic, ``~/<unique_id>/direction_command``."""
-        return Entity.command_topic_for(self.unique_id, "direction")
+        """Return the resolved direction command topic."""
+        return self.command_topic_for("direction")
 
     async def set_state(self, state: bool) -> None:
         """Publish the fan's on/off state.
 
         ``True`` publishes :attr:`payload_on` and ``False`` publishes
-        :attr:`payload_off` to the state topic (``~/<unique_id>/state``).
+        :attr:`payload_off` to the resolved state topic.
         Publishing does not trigger callbacks registered with
         :meth:`on_event`; only messages received on the command topics do.
 
@@ -291,8 +297,8 @@ class Fan(Entity):
     async def set_percentage(self, percentage: int) -> None:
         """Publish the fan's speed as a percentage.
 
-        ``percentage`` is converted to a string and published to the
-        percentage state topic (``~/<unique_id>/percentage_state``), for
+        ``percentage`` is converted to a string and published to the resolved
+        percentage state topic; for
         example ``60`` is published as ``"60"``.
 
         Raises:
@@ -311,8 +317,8 @@ class Fan(Entity):
 
         ``preset_mode`` must be in :attr:`preset_modes`; ``None`` publishes
         :attr:`payload_reset_percentage` (``pl_rst_pct``) to signal percentage
-        control. The payload is published to the preset-mode state topic
-        (``~/<unique_id>/preset_mode_state``).
+        control. The payload is published to the resolved preset-mode state
+        topic.
 
         Raises:
             RuntimeError: If the fan is not bound to a device.
@@ -338,8 +344,8 @@ class Fan(Entity):
         """Publish the fan's oscillation state.
 
         ``True`` publishes :attr:`payload_oscillation_on` and ``False``
-        publishes :attr:`payload_oscillation_off` to the oscillation state
-        topic (``~/<unique_id>/oscillation_state``).
+        publishes :attr:`payload_oscillation_off` to the resolved oscillation
+        state topic.
 
         Raises:
             RuntimeError: If the fan is not bound to a device.
@@ -355,8 +361,7 @@ class Fan(Entity):
         """Publish the fan's direction.
 
         ``direction`` must be ``"forward"`` or ``"reverse"``; it is published
-        verbatim to the direction state topic
-        (``~/<unique_id>/direction_state``).
+        verbatim to the resolved direction state topic.
 
         Raises:
             RuntimeError: If the fan is not bound to a device.
@@ -374,9 +379,9 @@ class Fan(Entity):
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.
 
-        Appends ``callback`` and, on first use, subscribes to the command
-        topic (``~/<unique_id>/command``) plus every enabled feature's command
-        topic. Every message is awaited as an
+        Appends ``callback`` and, on first use, subscribes to the resolved main
+        command topic plus every enabled feature's resolved command topic.
+        Every message is awaited as an
         :class:`~ha_mqtt_device.event.Event`:
 
         - On the command topic, ``event_type`` is ``"command"``,
@@ -411,27 +416,25 @@ class Fan(Entity):
         """
         device = self._require_device()
         if not self._subscribed:
-            await device.provider.subscribe(
-                device.info.resolve_topic(self.command_topic), self._dispatch_command
-            )
+            await device.provider.subscribe(self.command_topic, self._dispatch_command)
             if self.percentage_enabled:
                 await device.provider.subscribe(
-                    device.info.resolve_topic(self.percentage_command_topic),
+                    self.percentage_command_topic,
                     self._dispatch_percentage,
                 )
             if self.preset_mode_enabled:
                 await device.provider.subscribe(
-                    device.info.resolve_topic(self.preset_mode_command_topic),
+                    self.preset_mode_command_topic,
                     self._dispatch_preset_mode,
                 )
             if self.oscillation_enabled:
                 await device.provider.subscribe(
-                    device.info.resolve_topic(self.oscillation_command_topic),
+                    self.oscillation_command_topic,
                     self._dispatch_oscillation,
                 )
             if self.direction_enabled:
                 await device.provider.subscribe(
-                    device.info.resolve_topic(self.direction_command_topic),
+                    self.direction_command_topic,
                     self._dispatch_direction,
                 )
             self._subscribed = True
@@ -592,7 +595,8 @@ class Fan(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        """Return the resolved state topic for this bound entity."""
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this fan's ``cmps`` config entry for the discovery payload."""

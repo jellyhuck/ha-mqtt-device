@@ -55,6 +55,9 @@ async def test_state_publishes_documented_json_fields() -> None:
 
 async def test_discovery_defaults_and_optional_configuration() -> None:
     _, defaults = bound(RecordingProvider(), unique_id="firmware")
+    assert defaults.state_topic == "homeassistant/device/dev-1/firmware/state"
+    assert defaults.command_topic == "homeassistant/device/dev-1/firmware/command"
+    assert defaults.latest_version_topic is None
     assert defaults.discovery_config() == {
         "uniq_id": "firmware",
         "p": "update",
@@ -74,6 +77,10 @@ async def test_discovery_defaults_and_optional_configuration() -> None:
         latest_version_enabled=True,
         latest_version_template="{{ value_json.latest_version }}",
         payload_install="update_fw",
+    )
+    assert (
+        configured.latest_version_topic
+        == "homeassistant/device/dev-1/firmware/state/latest"
     )
     assert configured.discovery_config() == {
         "uniq_id": "firmware",

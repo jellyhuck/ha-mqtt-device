@@ -57,7 +57,7 @@ async def main(
 
             await emitter.on_event(on_ir_command)
 
-            command_topic = info.resolve_topic(emitter.command_topic)
+            command_topic = emitter.command_topic
             logger.info("Publishing an IR command to %s", command_topic)
             await provider.publish(
                 command_topic,

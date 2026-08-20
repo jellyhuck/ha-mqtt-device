@@ -21,8 +21,14 @@ def bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, Light]:
 async def test_topics_and_publish() -> None:
     provider = RecordingProvider()
     _, light = bound(provider, unique_id="lamp", brightness_enabled=True)
-    assert light.command_topic == "~/lamp/command/power"
-    assert light.brightness_state_topic == "~/lamp/state/brightness"
+    assert light.command_topic == "homeassistant/device/dev-1/lamp/command/power"
+    assert light.power_state_topic == light._power_value.topic().topic
+    assert (
+        light.brightness_state_topic
+        == "homeassistant/device/dev-1/lamp/state/brightness"
+    )
+    assert light._brightness_value is not None
+    assert light.brightness_state_topic == light._brightness_value.topic().topic
     await light.set_state(True)
     await light.set_brightness(50)
     assert provider.published == [
@@ -70,6 +76,14 @@ async def test_retained_feature_values_suppress_unchanged_updates() -> None:
 async def test_removal_ignores_disabled_optional_state_topics() -> None:
     provider = RecordingProvider()
     _, light = bound(provider, unique_id="lamp")
+
+    assert light.brightness_state_topic is None
+    assert light.color_temp_state_topic is None
+    assert light.rgb_state_topic is None
+    assert light.hs_state_topic is None
+    assert light.xy_state_topic is None
+    assert light.effect_state_topic is None
+    assert light.white_state_topic is None
 
     await light._on_remove()
 

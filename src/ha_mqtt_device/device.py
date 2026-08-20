@@ -46,6 +46,12 @@ class Device:
         for entity in self.entities:
             entity.bind(self)
 
+    def topic_prefix(self) -> str:
+        """Return the resolved MQTT topic prefix for this device."""
+        topic_prefix = self.info.topic_prefix
+        assert topic_prefix is not None  # resolved in DeviceInfo.__post_init__
+        return topic_prefix
+
     async def __aenter__(self) -> Self:
         """Publish the discovery config and announce the device as available.
 

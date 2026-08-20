@@ -22,6 +22,8 @@ async def test_default_discovery_and_json_state() -> None:
     provider = RecordingProvider()
     _, entity = bound(provider, unique_id="cleaner")
 
+    assert entity.state_topic == "homeassistant/device/dev-1/cleaner/state"
+    assert entity.command_topic == "homeassistant/device/dev-1/cleaner/command"
     assert entity.discovery_config() == {
         "uniq_id": "cleaner",
         "p": "vacuum",
@@ -89,6 +91,16 @@ async def test_optional_features_and_payload_mappings() -> None:
         payload_start="go",
     )
 
+    assert (
+        entity.fan_speed_topic == "homeassistant/device/dev-1/cleaner/command/fan_speed"
+    )
+    assert (
+        entity.send_command_topic == "homeassistant/device/dev-1/cleaner/command/send"
+    )
+    assert (
+        entity.clean_segments_topic
+        == "homeassistant/device/dev-1/cleaner/command/clean_segments"
+    )
     assert entity.discovery_config() == {
         "uniq_id": "cleaner",
         "p": "vacuum",

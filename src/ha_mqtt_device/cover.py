@@ -64,13 +64,10 @@ _TOPIC_TYPE_SET_POSITION = "set_position_topic"
 class Cover(Entity):
     """A cover belonging to a device.
 
-    A cover has four MQTT topics. The device publishes the cover's state to
-    the state topic (``~/<unique_id>/state``) with :meth:`set_state` and its
-    position to the position topic (``~/<unique_id>/position``) with
-    :meth:`set_position`. It receives commands from Home Assistant on the
-    command topic (``~/<unique_id>/command``) and position commands on the
-    set-position topic (``~/<unique_id>/set_position``). Registering an async
-    callback with :meth:`on_event` subscribes to both and delivers every
+    A cover has four MQTT topics. The device publishes the cover's state and
+    position to their resolved output topics. It receives commands from Home
+    Assistant on the resolved command and set-position topics. Registering an
+    async callback with :meth:`on_event` subscribes to both and delivers every
     message as an :class:`~ha_mqtt_device.event.Event`::
 
         blinds = Cover(unique_id="blinds", name="Blinds")
@@ -165,25 +162,25 @@ class Cover(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved command topic for this bound entity."""
+        return self.command_topic_for()
 
     @property
     def position_topic(self) -> str:
-        """Position topic as ``~`` shorthand, ``~/<unique_id>/position``."""
-        return Entity.state_topic_for(self.unique_id, "position")
+        """Return the resolved position state topic."""
+        return self._position_value.topic().topic
 
     @property
     def set_position_topic(self) -> str:
-        """Set-position topic as ``~`` shorthand, ``~/<unique_id>/set_position``."""
-        return Entity.command_topic_for(self.unique_id, "position")
+        """Return the resolved set-position command topic."""
+        return self.command_topic_for("position")
 
     async def set_state(self, state: str) -> None:
         """Publish the cover's state.
 
         ``state`` must be one of ``"open"``, ``"opening"``, ``"closed"``,
-        ``"closing"``, or ``"stopped"``; the payload published to the state
-        topic (``~/<unique_id>/state``) is the matching :attr:`state_open`/
+        ``"closing"``, or ``"stopped"``; the payload published to the resolved
+        state topic is the matching :attr:`state_open`/
         :attr:`state_opening`/:attr:`state_closed`/:attr:`state_closing`/
         :attr:`state_stopped` value (or the Home Assistant default when the
         corresponding field is unset). Publishing does not trigger callbacks
@@ -202,8 +199,8 @@ class Cover(Entity):
     async def set_position(self, position: int) -> None:
         """Publish the cover's position.
 
-        ``position`` is converted to a string and published to the position
-        topic (``~/<unique_id>/position``), for example ``75`` is published
+        ``position`` is converted to a string and published to the resolved
+        position state topic; for example, ``75`` is published
         as ``"75"``. Publishing does not trigger callbacks registered with
         :meth:`on_event`; only messages received on the command and
         set-position topics do. Consecutive unchanged positions are not
@@ -219,9 +216,8 @@ class Cover(Entity):
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.
 
-        Appends ``callback`` and, on first use, subscribes to the command
-        topic (``~/<unique_id>/command``) and the set-position topic
-        (``~/<unique_id>/set_position``). Every message on the command topic
+        Appends ``callback`` and, on first use, subscribes to the resolved
+        command and set-position topics. Every message on the command topic
         is awaited as an :class:`~ha_mqtt_device.event.Event` with
         ``event_type`` ``"command"``, ``topic_type`` ``"command_topic"``, and
         ``state`` ``"open"``, ``"close"``, or ``"stop"`` derived from the
@@ -243,11 +239,9 @@ class Cover(Entity):
         """
         device = self._require_device()
         if not self._subscribed:
-            command_topic = device.info.resolve_topic(self.command_topic)
-            await device.provider.subscribe(command_topic, self._dispatch_command)
-            set_position_topic = device.info.resolve_topic(self.set_position_topic)
+            await device.provider.subscribe(self.command_topic, self._dispatch_command)
             await device.provider.subscribe(
-                set_position_topic, self._dispatch_set_position
+                self.set_position_topic, self._dispatch_set_position
             )
             self._subscribed = True
         self._event_callbacks.append(callback)
@@ -356,7 +350,8 @@ class Cover(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        """Return the resolved state topic for this bound entity."""
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this cover's ``cmps`` config entry for the discovery payload."""

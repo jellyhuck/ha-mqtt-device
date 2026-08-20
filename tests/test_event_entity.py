@@ -43,6 +43,16 @@ async def test_set_event_publishes_to_state_topic() -> None:
     ]
 
 
+async def test_state_topic_is_resolved() -> None:
+    _, doorbell = make_bound(
+        RecordingProvider(),
+        unique_id="doorbell",
+        event_types=["doorbell_pressed"],
+    )
+
+    assert doorbell.state_topic == "homeassistant/device/dev-1/doorbell/state"
+
+
 async def test_set_event_republishes_identical_events() -> None:
     provider = RecordingProvider()
     _, doorbell = make_bound(

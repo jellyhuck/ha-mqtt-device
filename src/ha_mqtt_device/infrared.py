@@ -58,10 +58,11 @@ class InfraredEmitter(Entity):
 
     An infrared emitter is triggered by Home Assistant rather than reported by
     the device: Home Assistant publishes an IR signal payload to the emitter's
-    command topic (``~/<unique_id>/command``). The emitter has no state topic —
-    the device never publishes anything for it. Registering an async callback
-    with :meth:`on_event` subscribes to the command topic and delivers every
-    command as an :class:`~ha_mqtt_device.event.Event`::
+    command topic (``<device topic prefix>/<unique_id>/command``). The emitter
+    has no state topic — the device never publishes anything for it.
+    Registering an async callback with :meth:`on_event` subscribes to the
+    command topic and delivers every command as an
+    :class:`~ha_mqtt_device.event.Event`::
 
         emitter = InfraredEmitter(unique_id="tv_power", name="TV power")
         device = Device(provider, info, entities=[emitter])
@@ -90,14 +91,15 @@ class InfraredEmitter(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved MQTT command topic."""
+        return self.command_topic_for()
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.
 
         Appends ``callback`` and, on first use, subscribes to the command
-        topic (``~/<unique_id>/command``). Every command is awaited as an
+        topic (``<device topic prefix>/<unique_id>/command``). Every command
+        is awaited as an
         :class:`~ha_mqtt_device.event.Event` with ``event_type`` ``"command"``,
         ``topic_type`` ``"command_topic"``, ``message`` the raw JSON payload,
         and ``state`` the parsed signal dict (``{"timings": [...], "modulation": 38000,
@@ -114,8 +116,7 @@ class InfraredEmitter(Entity):
         """
         device = self._require_device()
         if not self._subscribed:
-            topic = device.info.resolve_topic(self.command_topic)
-            await device.provider.subscribe(topic, self._dispatch)
+            await device.provider.subscribe(self.command_topic, self._dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 
@@ -204,7 +205,8 @@ class InfraredReceiver(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        """Return the resolved MQTT topic used for received signals."""
+        return self._signal_value.topic().topic
 
     async def set_state(self, signal: dict[str, Any]) -> None:
         """Publish a received IR signal to Home Assistant.
@@ -212,8 +214,8 @@ class InfraredReceiver(Entity):
         ``signal`` must be a dict with a required ``timings`` key (list of ints
         representing on/off microseconds) and an optional ``modulation`` key
         (int, typically 38000). The JSON payload is published to the state topic
-        (``~/<unique_id>/state``). Received signals are transient, so repeated
-        calls with the same signal each publish.
+        (``<device topic prefix>/<unique_id>/state``). Received signals are
+        transient, so repeated calls with the same signal each publish.
 
         Raises:
             RuntimeError: If the receiver is not bound to a device.

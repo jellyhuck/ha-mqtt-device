@@ -34,11 +34,11 @@ class DateTime(Entity):
     """A datetime belonging to a device.
 
     A datetime has two MQTT topics. The device publishes the current value to
-    the state topic (``~/<unique_id>/state``) with :meth:`set_state`, and it
-    receives new values from Home Assistant on the command topic
-    (``~/<unique_id>/command``). Values are ``YYYY-MM-DD HH:MM:SS`` datetimes,
+    the resolved state topic with :meth:`set_state`, and it receives new values
+    from Home Assistant on the resolved command topic. Values are
+    ``YYYY-MM-DD HH:MM:SS`` datetimes,
     for example ``"2024-02-14 10:30:00"``. Registering an async callback with
-    :meth:`on_event` subscribes to the command topic and delivers every
+    :meth:`on_event` subscribes to the resolved command topic and delivers every
     command as an :class:`~ha_mqtt_device.event.Event`::
 
         alarm = DateTime(unique_id="alarm", name="Morning alarm")
@@ -88,14 +88,14 @@ class DateTime(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved command topic for this bound entity."""
+        return self.command_topic_for()
 
     async def set_state(self, value: datetime | str) -> None:
         """Publish the datetime's value.
 
         ``value`` is converted to a ``YYYY-MM-DD HH:MM:SS`` payload and
-        published to the state topic (``~/<unique_id>/state``), for example
+        published to the resolved state topic; for example,
         ``datetime(2024, 2, 14, 10, 30)`` is published as
         ``"2024-02-14 10:30:00"``. A timezone-aware datetime is published with
         its wall-clock components verbatim — no timezone conversion is
@@ -117,8 +117,8 @@ class DateTime(Entity):
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.
 
-        Appends ``callback`` and, on first use, subscribes to the command
-        topic (``~/<unique_id>/command``). Every command message is awaited as
+        Appends ``callback`` and, on first use, subscribes to the resolved
+        command topic. Every command message is awaited as
         an :class:`~ha_mqtt_device.event.Event` with ``event_type``
         ``"command"``, ``topic_type`` ``"command_topic"``, and ``state`` equal
         to the payload when it is a ``YYYY-MM-DD HH:MM:SS`` datetime (for
@@ -136,8 +136,7 @@ class DateTime(Entity):
         """
         device = self._require_device()
         if not self._subscribed:
-            topic = device.info.resolve_topic(self.command_topic)
-            await device.provider.subscribe(topic, self._dispatch)
+            await device.provider.subscribe(self.command_topic, self._dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 
@@ -223,7 +222,8 @@ class DateTime(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        """Return the resolved state topic for this bound entity."""
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this datetime's ``cmps`` config entry for the discovery payload."""

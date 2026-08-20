@@ -71,7 +71,7 @@ async def main(
 
             await fan.on_event(on_fan_event)
 
-            command_topic = info.resolve_topic(fan.command_topic)
+            command_topic = fan.command_topic
             logger.info("Publishing ON command to %s", command_topic)
             await provider.publish(command_topic, fan.payload_on)
 

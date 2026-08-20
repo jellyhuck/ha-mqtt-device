@@ -43,9 +43,10 @@ class Number(Entity):
     """A number belonging to a device.
 
     A number has two MQTT topics. The device publishes the current value to
-    the state topic (``~/<unique_id>/state``) with :meth:`set_state`, and it
-    receives new values from Home Assistant on the command topic
-    (``~/<unique_id>/command``). Registering an async callback with
+    the state topic (``<device topic prefix>/<unique_id>/state``) with
+    :meth:`set_state`, and it receives new values from Home Assistant on the
+    command topic (``<device topic prefix>/<unique_id>/command``). Registering
+    an async callback with
     :meth:`on_event` subscribes to the command topic and delivers every
     command as an :class:`~ha_mqtt_device.event.Event`::
 
@@ -131,15 +132,15 @@ class Number(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved MQTT command topic."""
+        return self.command_topic_for()
 
     async def set_state(self, value: float) -> None:
         """Publish the number's value.
 
         ``value`` is converted to a string and published to the state topic
-        (``~/<unique_id>/state``), for example ``75.0`` is published as
-        ``"75.0"``. Publishing does not trigger callbacks registered with
+        (``<device topic prefix>/<unique_id>/state``), for example ``75.0`` is
+        published as ``"75.0"``. Publishing does not trigger callbacks registered with
         :meth:`on_event`; only messages received on the command topic do.
         Unchanged values are suppressed unless ``force_update`` or
         ``expire_after`` was configured when the entity was constructed.
@@ -155,7 +156,8 @@ class Number(Entity):
         """Register ``callback`` for every command received from Home Assistant.
 
         Appends ``callback`` and, on first use, subscribes to the command
-        topic (``~/<unique_id>/command``). Every command message is awaited as
+        topic (``<device topic prefix>/<unique_id>/command``). Every command
+        message is awaited as
         an :class:`~ha_mqtt_device.event.Event` with ``event_type``
         ``"command"``, ``topic_type`` ``"command_topic"``, and ``state`` equal
         to the payload when it parses as a number (for example ``"75"``). An
@@ -173,8 +175,7 @@ class Number(Entity):
         """
         device = self._require_device()
         if not self._subscribed:
-            topic = device.info.resolve_topic(self.command_topic)
-            await device.provider.subscribe(topic, self._dispatch)
+            await device.provider.subscribe(self.command_topic, self._dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 
@@ -227,7 +228,7 @@ class Number(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this number's ``cmps`` config entry for the discovery payload."""

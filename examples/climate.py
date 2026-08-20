@@ -76,16 +76,14 @@ async def main(
 
             await thermostat.on_event(on_climate_event)
 
-            temperature_command_topic = info.resolve_topic(
-                thermostat.temperature_command_topic
-            )
+            temperature_command_topic = thermostat.temperature_command_topic
             logger.info(
                 "Publishing temperature command 21.5 to %s",
                 temperature_command_topic,
             )
             await provider.publish(temperature_command_topic, "21.5")
 
-            mode_command_topic = info.resolve_topic(thermostat.mode_command_topic)
+            mode_command_topic = thermostat.mode_command_topic
             logger.info("Publishing mode command heat to %s", mode_command_topic)
             await provider.publish(mode_command_topic, "heat")
 

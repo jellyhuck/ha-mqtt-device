@@ -27,11 +27,13 @@ The project is managed with [uv](https://docs.astral.sh/uv/). Always use `uv`-pr
 - **Format after editing**: `uv format` keeps style consistent. Run it on any touched files.
 - **Keep the library thin**: avoid adding heavy dependencies or framework-like abstractions. Prefer small, focused public APIs that model a device and its entities.
 - **Tests belong in `tests/`**: add or update tests alongside any behavior change. Use pytest-style tests.
-- Entity topics use the canonical `~/<unique_id>/state[/<suffix>]` and
-  `~/<unique_id>/command[/<suffix>]` schemas. Use `Entity.state_topic_for()` and
-  `Entity.command_topic_for()` for topic construction; an empty or `None`
-  suffix produces the base state or command topic. Tests and examples should
-  follow this schema when asserting or documenting topics.
+- Entity topics use the canonical
+  `<device topic prefix>/<unique_id>/state[/<suffix>]` and
+  `<device topic prefix>/<unique_id>/command[/<suffix>]` schemas. State topics
+  come from their owning `StateValue`; use the bound entity's
+  `command_topic_for()` method for command topics. An empty or `None` command
+  suffix produces the base command topic. Tests and examples should assert and
+  document fully resolved topics.
 - MQTT discovery, device availability, and durable entity state or snapshot
   publications use retained messages so Home Assistant can recover after a
   restart. Commands and transient payloads such as events, scans, camera

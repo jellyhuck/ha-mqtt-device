@@ -106,8 +106,8 @@ class Valve(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~/<unique_id>/command``."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved command topic for this bound entity."""
+        return self.command_topic_for()
 
     async def set_state(self, state: str) -> None:
         """Publish a valve state to the state topic."""
@@ -156,9 +156,7 @@ class Valve(Entity):
         """Subscribe once to commands and deliver them to ``callback``."""
         device = self._require_device()
         if not self._subscribed:
-            await device.provider.subscribe(
-                device.info.resolve_topic(self.command_topic), self._dispatch
-            )
+            await device.provider.subscribe(self.command_topic, self._dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 
@@ -238,7 +236,8 @@ class Valve(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        """Return the resolved valve state topic for this bound entity."""
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this valve's compact MQTT discovery configuration."""

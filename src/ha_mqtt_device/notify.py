@@ -46,15 +46,14 @@ class Notify(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved command topic for this bound entity."""
+        return self.command_topic_for()
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register a callback for notification messages from Home Assistant."""
         device = self._require_device()
         if not self._subscribed:
-            topic = device.info.resolve_topic(self.command_topic)
-            await device.provider.subscribe(topic, self._dispatch)
+            await device.provider.subscribe(self.command_topic, self._dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 

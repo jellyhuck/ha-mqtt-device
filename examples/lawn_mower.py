@@ -56,7 +56,7 @@ async def main(
 
             await mower.on_event(on_mower_command)
 
-            command_topic = info.resolve_topic(mower.command_topic)
+            command_topic = mower.command_topic
 
             logger.info("Publishing start_mowing command to %s", command_topic)
             await provider.publish(command_topic, mower.payload_start_mowing)

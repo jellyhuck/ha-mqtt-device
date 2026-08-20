@@ -33,6 +33,8 @@ async def test_default_discovery_and_state_commands() -> None:
     provider = RecordingProvider()
     _, valve = bound(provider, unique_id="valve")
 
+    assert valve.state_topic == "homeassistant/device/dev-1/valve/state"
+    assert valve.command_topic == "homeassistant/device/dev-1/valve/command"
     assert valve.discovery_config() == {
         "uniq_id": "valve",
         "p": "valve",

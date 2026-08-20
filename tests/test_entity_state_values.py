@@ -43,7 +43,7 @@ from ha_mqtt_device import (
     WaterHeater,
 )
 
-PUBLISHING_ENTITIES: tuple[tuple[Callable[[], Entity], int], ...] = (
+STATE_VALUE_ENTITIES: tuple[tuple[Callable[[], Entity], int], ...] = (
     (lambda: AlarmControlPanel("alarm"), 1),
     (lambda: BinarySensor("binary"), 1),
     (lambda: Camera("camera"), 1),
@@ -86,7 +86,6 @@ PUBLISHING_ENTITIES: tuple[tuple[Callable[[], Entity], int], ...] = (
     (lambda: Sensor("sensor"), 1),
     (lambda: Siren("siren"), 2),
     (lambda: Switch("switch"), 1),
-    (lambda: TagScanner("scanner", topic="~/tags"), 1),
     (lambda: Text("text"), 1),
     (lambda: Time("time"), 1),
     (lambda: Update("update", latest_version_enabled=True), 3),
@@ -115,8 +114,8 @@ PUBLISHING_ENTITIES: tuple[tuple[Callable[[], Entity], int], ...] = (
 )
 
 
-@pytest.mark.parametrize(("factory", "expected_count"), PUBLISHING_ENTITIES)
-def test_publishers_store_state_values_as_private_dataclass_fields(
+@pytest.mark.parametrize(("factory", "expected_count"), STATE_VALUE_ENTITIES)
+def test_entities_store_state_values_as_private_dataclass_fields(
     factory: Callable[[], Entity], expected_count: int
 ) -> None:
     entity = factory()
@@ -137,9 +136,16 @@ def test_publishers_store_state_values_as_private_dataclass_fields(
 
 @pytest.mark.parametrize(
     "entity",
-    [Button("button"), InfraredEmitter("emitter"), Notify("notify")],
+    [
+        Button("button"),
+        InfraredEmitter("emitter"),
+        Notify("notify"),
+        TagScanner("scanner", topic="~/tags"),
+    ],
 )
-def test_receive_only_entities_do_not_store_state_values(entity: Entity) -> None:
+def test_entities_without_state_values_do_not_store_state_values(
+    entity: Entity,
+) -> None:
     assert not any(
         isinstance(value, Entity.StateValue) for value in vars(entity).values()
     )

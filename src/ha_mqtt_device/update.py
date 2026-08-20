@@ -84,13 +84,15 @@ class Update(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Install command topic as ``~`` shorthand."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved install command topic for this bound entity."""
+        return self.command_topic_for()
 
     @property
-    def latest_version_topic(self) -> str:
-        """Latest-version topic as ``~`` shorthand."""
-        return Entity.state_topic_for(self.unique_id, "latest")
+    def latest_version_topic(self) -> str | None:
+        """Return the resolved latest-version topic when it is enabled."""
+        if self._latest_version_value is None:
+            return None
+        return self._latest_version_value.topic().topic
 
     async def set_state(
         self,
@@ -149,9 +151,7 @@ class Update(Entity):
         if not self.install_enabled:
             raise ValueError("install command is disabled")
         if not self._subscribed:
-            await device.provider.subscribe(
-                device.info.resolve_topic(self.command_topic), self._dispatch
-            )
+            await device.provider.subscribe(self.command_topic, self._dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 
@@ -229,7 +229,8 @@ class Update(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        """Return the resolved update state topic for this bound entity."""
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this update entity's abbreviated discovery configuration."""
@@ -237,8 +238,9 @@ class Update(Entity):
         config["stat_t"] = self.state_topic
         if self.install_enabled:
             config["cmd_t"] = self.command_topic
-        if self.latest_version_enabled:
-            config["l_ver_t"] = self.latest_version_topic
+        latest_version_topic = self.latest_version_topic
+        if latest_version_topic is not None:
+            config["l_ver_t"] = latest_version_topic
         if self.payload_install != DEFAULT_INSTALL_PAYLOAD:
             config["pl_inst"] = self.payload_install
         if self.title is not None:

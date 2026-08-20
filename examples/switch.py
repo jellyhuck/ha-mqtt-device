@@ -53,7 +53,7 @@ async def main(
 
             await relay.on_event(on_relay_command)
 
-            command_topic = info.resolve_topic(relay.command_topic)
+            command_topic = relay.command_topic
             logger.info("Publishing ON command to %s", command_topic)
             await provider.publish(command_topic, relay.payload_on)
 

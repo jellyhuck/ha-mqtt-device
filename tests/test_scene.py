@@ -43,6 +43,7 @@ async def test_activate_republishes_identical_commands() -> None:
 async def test_discovery_is_command_only_and_omits_defaults() -> None:
     _, scene = bound(RecordingProvider(), unique_id="party", name="Party")
 
+    assert scene.command_topic == "homeassistant/device/dev-1/party/command"
     assert scene.discovery_config() == {
         "uniq_id": "party",
         "p": "scene",

@@ -26,10 +26,11 @@ def make_bound(
     return device, image
 
 
-async def test_image_topic_shorthand() -> None:
+async def test_image_topic_is_resolved_from_state_value() -> None:
     _, image = make_bound(RecordingProvider(), unique_id="camera")
 
-    assert image.image_topic == "~/camera/image"
+    assert image.image_topic == "homeassistant/device/dev-1/camera/image"
+    assert image.image_topic == image._image_value.topic().topic
 
 
 async def test_set_image_publishes_payload_verbatim() -> None:

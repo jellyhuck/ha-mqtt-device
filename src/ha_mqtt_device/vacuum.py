@@ -146,23 +146,23 @@ class Vacuum(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Basic command topic as ``~`` shorthand."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved basic command topic for this bound entity."""
+        return self.command_topic_for()
 
     @property
     def fan_speed_topic(self) -> str:
-        """Fan speed command topic as ``~`` shorthand."""
-        return Entity.command_topic_for(self.unique_id, "fan_speed")
+        """Return the resolved fan-speed command topic."""
+        return self.command_topic_for("fan_speed")
 
     @property
     def send_command_topic(self) -> str:
-        """Custom command topic as ``~`` shorthand."""
-        return Entity.command_topic_for(self.unique_id, "send")
+        """Return the resolved custom-command topic."""
+        return self.command_topic_for("send")
 
     @property
     def clean_segments_topic(self) -> str:
-        """Clean-segments command topic as ``~`` shorthand."""
-        return Entity.command_topic_for(self.unique_id, "clean_segments")
+        """Return the resolved clean-segments command topic."""
+        return self.command_topic_for("clean_segments")
 
     async def set_state(
         self,
@@ -262,10 +262,9 @@ class Vacuum(Entity):
         if not topics:
             raise ValueError("vacuum has no enabled command features")
         for topic in topics:
-            resolved_topic = device.info.resolve_topic(topic)
-            if resolved_topic not in self._subscribed_topics:
-                await device.provider.subscribe(resolved_topic, self._dispatch)
-                self._subscribed_topics.add(resolved_topic)
+            if topic not in self._subscribed_topics:
+                await device.provider.subscribe(topic, self._dispatch)
+                self._subscribed_topics.add(topic)
         self._event_callbacks.append(callback)
 
     async def _dispatch(self, message: Message) -> None:
@@ -318,26 +317,22 @@ class Vacuum(Entity):
     def _event_mapping(
         self, topic: str, payload: str
     ) -> tuple[str, str | dict[str, Any] | None]:
-        device = self._require_device()
-        subscriptions = {
-            device.info.resolve_topic(subscribed): field
-            for subscribed, field in self._command_subscriptions().items()
-        }
+        subscriptions = self._command_subscriptions()
         topic_type = subscriptions.get(topic, "command_topic")
-        if topic == device.info.resolve_topic(self.command_topic):
+        if topic == self.command_topic:
             for feature in DEFAULT_PAYLOADS:
                 if feature in self._features and payload == self._payload_for(feature):
                     return topic_type, feature
             return topic_type, None
-        if topic == device.info.resolve_topic(self.fan_speed_topic):
+        if topic == self.fan_speed_topic:
             return topic_type, payload if payload in self._fan_speeds else None
-        if topic == device.info.resolve_topic(self.send_command_topic):
+        if topic == self.send_command_topic:
             try:
                 decoded = json.loads(payload)
             except json.JSONDecodeError:
                 return topic_type, payload
             return topic_type, decoded if isinstance(decoded, dict) else None
-        if topic == device.info.resolve_topic(self.clean_segments_topic):
+        if topic == self.clean_segments_topic:
             try:
                 decoded = json.loads(payload)
             except json.JSONDecodeError:
@@ -386,7 +381,8 @@ class Vacuum(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        """Return the resolved vacuum state topic for this bound entity."""
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this vacuum's abbreviated discovery configuration."""

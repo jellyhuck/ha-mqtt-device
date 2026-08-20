@@ -65,11 +65,14 @@ async def test_discovery_config_defaults() -> None:
     _, sensor = make_bound(RecordingProvider(), unique_id="is_led_on")
 
     # pl_on/pl_off are omitted because they match the discovery defaults.
-    assert sensor.discovery_config() == {
+    config = sensor.discovery_config()
+    assert config == {
         "uniq_id": "is_led_on",
         "p": "binary_sensor",
         "stat_t": "homeassistant/device/dev-1/is_led_on/state",
     }
+    assert sensor.state_topic == sensor._state_value.topic().topic
+    assert config["stat_t"] == sensor._state_value.topic().topic
 
 
 async def test_discovery_config_includes_name_and_device_class() -> None:

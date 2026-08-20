@@ -5,10 +5,10 @@ An entity is a pure configuration object until it is bound to a
 entity is passed to the device constructor. Once bound, the entity can publish
 state changes through the device's MQTT provider.
 
-Topics follow the convention ``~/<unique_id>/<topic>`` internally: the
-device's topic prefix is followed by the entity's ``unique_id`` and then the
-per-entity topic, for example the state topic ``~/is_led_on/state``. Discovery
-configs contain the fully resolved MQTT topics.
+Topics follow the convention ``<device topic prefix>/<unique_id>/<topic>``.
+For example, an entity named ``is_led_on`` uses the state topic
+``homeassistant/device/<device_id>/is_led_on/state`` with the default device
+prefix. Topic properties and discovery configs contain fully resolved topics.
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ __all__ = ["Entity"]
 T = TypeVar("T")
 
 #: Allowed characters for the entity unique id, which becomes a topic segment
-#: (``~/<unique_id>/...``) and the ``cmps`` object id in the discovery payload.
+#: and the ``cmps`` object id in the discovery payload.
 _UNIQUE_ID_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
@@ -40,9 +40,9 @@ class Entity:
     Attributes:
         unique_id: Globally unique id of the entity. Used as the ``uniq_id``
             in the discovery config and as the topic segment of every entity
-            topic (for example ``~/<unique_id>/state``). Must consist of
-        ``[a-zA-Z0-9_-]`` characters. Entity subclasses that publish state
-        expose a ``state_topic`` property; command-only entities do not.
+            topic. Must consist of ``[a-zA-Z0-9_-]`` characters. Entity
+            subclasses that publish state expose a ``state_topic`` property;
+            command-only entities do not.
         name: Name of the entity as shown in Home Assistant. Omitted from the
             discovery config when unset.
     """
@@ -64,28 +64,27 @@ class Entity:
 
         The owning entity is held weakly so a state value does not extend the
         entity's lifetime. Use :meth:`Entity._make_momentary_state` or
-        :meth:`Entity._make_persistent_state` for entity-relative topics, or
-        :meth:`Entity._make_state_for_topic` for an exact configured topic.
+        :meth:`Entity._make_persistent_state` to construct instances.
         """
 
         __slots__ = (
             "_entity",
             "_force_update",
             "_retain",
-            "_topic",
+            "_topic_suffix",
             "_value",
         )
 
         def __init__(
             self,
             value: Value[T],
-            topic: str,
+            topic_suffix: str,
             retain: bool,
             force_update: bool,
             entity: Entity,
         ) -> None:
             self._value = value
-            self._topic = topic
+            self._topic_suffix = topic_suffix
             self._retain = retain
             self._force_update = force_update
             self._entity: weakref.ReferenceType[Entity] = weakref.ref(entity)
@@ -97,14 +96,13 @@ class Entity:
             entity = self._entity()
             if entity is None:
                 raise RuntimeError("the owning Entity no longer exists")
-            device = entity._require_device()
             return PublishTopic(
-                device.info.resolve_topic(self._topic),
+                f"{entity.topic_prefix()}/{self._topic_suffix}",
                 self._retain,
             )
 
         async def set_value(self, new_value: T) -> None:
-            """Publish ``new_value`` using this state's topic and retention."""
+            """Publish ``new_value`` using this value's topic and retention."""
             entity = self._entity()
             if entity is None:
                 raise RuntimeError("the owning Entity no longer exists")
@@ -121,16 +119,13 @@ class Entity:
                 f"characters, got {self.unique_id!r}"
             )
 
-    @staticmethod
-    def command_topic_for(unique_id: str, suffix: str | None = None) -> str:
-        """Build a command topic for ``unique_id`` and an optional suffix."""
-        topic = f"~/{unique_id}/command"
-        return f"{topic}/{suffix}" if suffix else topic
+    def topic_prefix(self) -> str:
+        """Return this entity's resolved MQTT topic prefix."""
+        return f"{self._require_device().topic_prefix()}/{self.unique_id}"
 
-    @staticmethod
-    def state_topic_for(unique_id: str, suffix: str | None = None) -> str:
-        """Build a state topic for ``unique_id`` and an optional suffix."""
-        topic = f"~/{unique_id}/state"
+    def command_topic_for(self, suffix: str | None = None) -> str:
+        """Return this entity's command topic with an optional suffix."""
+        topic = f"{self.topic_prefix()}/command"
         return f"{topic}/{suffix}" if suffix else topic
 
     def bind(self, device: Device) -> None:
@@ -168,23 +163,7 @@ class Entity:
         force_update: bool = False,
     ) -> Entity.StateValue[T]:
         """Create a state value with independent publication policies."""
-        return self._make_state_for_topic(
-            value,
-            f"~/{self.unique_id}/{topic_suffix}",
-            retain=retain,
-            force_update=force_update,
-        )
-
-    def _make_state_for_topic(
-        self,
-        value: Value[T],
-        topic: str,
-        *,
-        retain: bool,
-        force_update: bool,
-    ) -> Entity.StateValue[T]:
-        """Create a state value for an exact unresolved MQTT topic."""
-        return Entity.StateValue(value, topic, retain, force_update, self)
+        return Entity.StateValue(value, topic_suffix, retain, force_update, self)
 
     def _register_retained_value(self, value: StateValue[Any]) -> None:
         self._retained_values.append(value)

@@ -147,28 +147,30 @@ async def test_dispatch_rejects_position_outside_documented_range() -> None:
     assert received[0].state is None
 
 
-async def test_state_topic_shorthand() -> None:
+async def test_state_topic_is_resolved() -> None:
     _, cover = make_bound(RecordingProvider(), unique_id="blinds")
 
-    assert cover.state_topic == "~/blinds/state"
+    assert cover.state_topic == "homeassistant/device/dev-1/blinds/state"
 
 
-async def test_command_topic_shorthand() -> None:
+async def test_command_topic_is_resolved() -> None:
     _, cover = make_bound(RecordingProvider(), unique_id="blinds")
 
-    assert cover.command_topic == "~/blinds/command"
+    assert cover.command_topic == "homeassistant/device/dev-1/blinds/command"
 
 
-async def test_position_topic_shorthand() -> None:
+async def test_position_topic_is_resolved() -> None:
     _, cover = make_bound(RecordingProvider(), unique_id="blinds")
 
-    assert cover.position_topic == "~/blinds/state/position"
+    assert cover.position_topic == "homeassistant/device/dev-1/blinds/state/position"
 
 
-async def test_set_position_topic_shorthand() -> None:
+async def test_set_position_topic_is_resolved() -> None:
     _, cover = make_bound(RecordingProvider(), unique_id="blinds")
 
-    assert cover.set_position_topic == "~/blinds/command/position"
+    assert (
+        cover.set_position_topic == "homeassistant/device/dev-1/blinds/command/position"
+    )
 
 
 async def test_on_event_subscribes_to_resolved_command_and_set_position_topics() -> (

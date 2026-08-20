@@ -79,11 +79,11 @@ async def main(
 
             await blinds.on_event(on_cover_event)
 
-            command_topic = info.resolve_topic(blinds.command_topic)
+            command_topic = blinds.command_topic
             logger.info("Publishing OPEN command to %s", command_topic)
             await provider.publish(command_topic, blinds.payload_open)
 
-            set_position_topic = info.resolve_topic(blinds.set_position_topic)
+            set_position_topic = blinds.set_position_topic
             logger.info("Publishing position 50 to %s", set_position_topic)
             await provider.publish(set_position_topic, "50")
 

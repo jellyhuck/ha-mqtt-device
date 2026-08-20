@@ -60,7 +60,7 @@ async def main(
 
             await dimmer.on_event(on_dimmer_command)
 
-            command_topic = info.resolve_topic(dimmer.command_topic)
+            command_topic = dimmer.command_topic
             logger.info("Publishing 75 command to %s", command_topic)
             await provider.publish(command_topic, "75")
 

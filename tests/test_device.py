@@ -39,6 +39,16 @@ def make_device(provider: Any, **info_kwargs: Any) -> Device:
     return Device(provider, DeviceInfo(**kwargs))
 
 
+def test_topic_prefix_returns_resolved_device_prefix() -> None:
+    provider = RecordingProvider()
+
+    assert make_device(provider).topic_prefix() == "homeassistant/device/dev-1"
+    assert (
+        make_device(provider, topic_prefix="custom/<device_id>/mqtt").topic_prefix()
+        == "custom/dev-1/mqtt"
+    )
+
+
 async def test_configure_publishes_discovery_payload() -> None:
     provider = RecordingProvider()
     device = make_device(provider)

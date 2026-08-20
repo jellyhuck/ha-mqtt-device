@@ -30,10 +30,10 @@ class Button(Entity):
 
     A button is triggered by Home Assistant rather than reported by the
     device: Home Assistant shows the button and, when it is pressed, publishes
-    :attr:`payload_press` to the button's command topic
-    (``~/<unique_id>/command``). The button has no state topic — the device
-    never publishes anything for it. Registering an async callback with
-    :meth:`on_event` subscribes to the command topic and delivers every press
+    :attr:`payload_press` to the button's resolved command topic. The button
+    has no state topic — the device never publishes anything for it.
+    Registering an async callback with :meth:`on_event` subscribes to the
+    resolved command topic and delivers every press
     as an :class:`~ha_mqtt_device.event.Event`::
 
         button = Button(unique_id="restart", name="Restart")
@@ -69,14 +69,14 @@ class Button(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved command topic for this bound entity."""
+        return self.command_topic_for()
 
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every press received from Home Assistant.
 
-        Appends ``callback`` and, on first use, subscribes to the command
-        topic (``~/<unique_id>/command``). Every press is awaited as an
+        Appends ``callback`` and, on first use, subscribes to the resolved
+        command topic. Every press is awaited as an
         :class:`~ha_mqtt_device.event.Event` with ``event_type`` ``"press"``,
         ``topic_type`` ``"command_topic"``, and ``state`` ``"press"`` when the
         payload equals :attr:`payload_press`. An unknown payload is still
@@ -93,8 +93,7 @@ class Button(Entity):
         """
         device = self._require_device()
         if not self._subscribed:
-            topic = device.info.resolve_topic(self.command_topic)
-            await device.provider.subscribe(topic, self._dispatch)
+            await device.provider.subscribe(self.command_topic, self._dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 

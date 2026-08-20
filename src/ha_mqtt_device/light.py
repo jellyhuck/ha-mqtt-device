@@ -28,9 +28,10 @@ DEFAULT_PAYLOAD_OFF = "OFF"
 class Light(Entity):
     """An MQTT light with optional brightness and color controls.
 
-    State topics are grouped below ``~/state`` and command topics below
-    ``~/command``. Feature command messages are delivered to ``on_event``;
-    applications acknowledge them by publishing the corresponding state.
+    State topics are grouped below ``<entity topic prefix>/state`` and command
+    topics below ``<entity topic prefix>/command``. Feature command messages
+    are delivered to ``on_event``; applications acknowledge them by publishing
+    the corresponding state.
     """
 
     component = "light"
@@ -112,72 +113,79 @@ class Light(Entity):
 
     @property
     def power_state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id, "power")
+        return self._power_value.topic().topic
 
     @property
     def command_topic(self) -> str:
-        return Entity.command_topic_for(self.unique_id, "power")
+        return self.command_topic_for("power")
 
-    def _topic(self, name: str, command: bool = False) -> str:
-        return (Entity.command_topic_for if command else Entity.state_topic_for)(
-            self.unique_id, name
+    @property
+    def brightness_state_topic(self) -> str | None:
+        return (
+            self._brightness_value.topic().topic
+            if self._brightness_value is not None
+            else None
         )
 
     @property
-    def brightness_state_topic(self) -> str:
-        return self._topic("brightness")
-
-    @property
     def brightness_command_topic(self) -> str:
-        return self._topic("brightness", True)
+        return self.command_topic_for("brightness")
 
     @property
-    def color_temp_state_topic(self) -> str:
-        return self._topic("color_temp")
+    def color_temp_state_topic(self) -> str | None:
+        return (
+            self._color_temp_value.topic().topic
+            if self._color_temp_value is not None
+            else None
+        )
 
     @property
     def color_temp_command_topic(self) -> str:
-        return self._topic("color_temp", True)
+        return self.command_topic_for("color_temp")
 
     @property
-    def rgb_state_topic(self) -> str:
-        return self._topic("rgb")
+    def rgb_state_topic(self) -> str | None:
+        return self._rgb_value.topic().topic if self._rgb_value is not None else None
 
     @property
     def rgb_command_topic(self) -> str:
-        return self._topic("rgb", True)
+        return self.command_topic_for("rgb")
 
     @property
-    def hs_state_topic(self) -> str:
-        return self._topic("hs")
+    def hs_state_topic(self) -> str | None:
+        return self._hs_value.topic().topic if self._hs_value is not None else None
 
     @property
     def hs_command_topic(self) -> str:
-        return self._topic("hs", True)
+        return self.command_topic_for("hs")
 
     @property
-    def xy_state_topic(self) -> str:
-        return self._topic("xy")
+    def xy_state_topic(self) -> str | None:
+        return self._xy_value.topic().topic if self._xy_value is not None else None
 
     @property
     def xy_command_topic(self) -> str:
-        return self._topic("xy", True)
+        return self.command_topic_for("xy")
 
     @property
-    def effect_state_topic(self) -> str:
-        return self._topic("effect")
+    def effect_state_topic(self) -> str | None:
+        return (
+            self._effect_value.topic().topic if self._effect_value is not None else None
+        )
 
     @property
     def effect_command_topic(self) -> str:
-        return self._topic("effect", True)
+        return self.command_topic_for("effect")
 
     @property
-    def white_state_topic(self) -> str:
-        return self._topic("white")
+    def white_state_topic(self) -> str | None:
+        return (
+            self._white_value.topic().topic if self._white_value is not None else None
+        )
 
     @property
     def white_command_topic(self) -> str:
-        return self._topic("white", True)
+        return self.command_topic_for("white")
 
     async def set_state(self, state: bool) -> None:
         await self._power_value.set_value(state)
@@ -246,7 +254,7 @@ class Light(Entity):
             for name, enabled in features:
                 if enabled:
                     topics.append(
-                        (self._topic(name, True), name, f"{name}_command_topic")
+                        (self.command_topic_for(name), name, f"{name}_command_topic")
                     )
             for topic, event_type, topic_type in topics:
 
@@ -255,9 +263,7 @@ class Light(Entity):
                 ) -> None:
                     await self._dispatch(message, et, tt)
 
-                await device.provider.subscribe(
-                    device.info.resolve_topic(topic), dispatch
-                )
+                await device.provider.subscribe(topic, dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 

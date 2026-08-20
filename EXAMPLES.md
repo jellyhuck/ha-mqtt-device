@@ -89,16 +89,17 @@ device = Device(provider, info, entities=[temperature])
 
 async with provider:
     async with device:
-        await temperature.set_state(21.5)  # ~/temperature/state
+        # Publishes to homeassistant/device/my_device/temperature/state.
+        await temperature.set_state(21.5)
     await device.remove()
 ```
 
 ## Entities
 
-All entity classes are exported from `ha_mqtt_device`. Runtime entity topics
-use the `~/` prefix resolved by the device; discovery configs contain the
-fully resolved topic names, and entity-level availability is inherited from
-the device. Entities remember the last value successfully published on each
+All entity classes are exported from `ha_mqtt_device`. Bound entity topic
+properties and discovery configs contain fully resolved topic names based on
+the device topic prefix; entity-level availability is inherited from the
+device. Entities remember the last value successfully published on each
 outgoing topic. Durable state setters skip an unchanged value unless their
 `force_update` option is enabled (or an expiry timer must be refreshed), while
 commands and transient updates such as events, scans, and frames publish on

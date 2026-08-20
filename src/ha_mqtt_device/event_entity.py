@@ -15,10 +15,10 @@ class EventEntity(Entity):
     """An event entity belonging to a device.
 
     An event entity fires transient events to Home Assistant; events have no
-    state. The device publishes an event type to the state topic
-    (``~/<unique_id>/state``) with :meth:`set_event`, and Home Assistant fires
-    an HA event whose ``event_type`` is the published payload. The entity has
-    no command topic — events flow from the device to Home Assistant only.
+    state. The device publishes an event type to the resolved state topic with
+    :meth:`set_event`, and Home Assistant fires an HA event whose ``event_type``
+    is the published payload. The entity has no command topic — events flow
+    from the device to Home Assistant only.
     Create it with a unique id and at least one event type::
 
         doorbell = EventEntity(
@@ -70,7 +70,7 @@ class EventEntity(Entity):
         """Publish ``event_type`` as an event to Home Assistant.
 
         ``event_type`` must be one of :attr:`event_types`; it is published to
-        the state topic (``~/<unique_id>/state``). Events are transient, so
+        the resolved state topic. Events are transient, so
         repeated calls with the same event type each publish.
 
         Raises:
@@ -86,7 +86,8 @@ class EventEntity(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        """Return the resolved event topic for this bound entity."""
+        return self._event_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this entity's ``cmps`` config entry for the discovery payload."""

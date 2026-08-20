@@ -59,7 +59,7 @@ class BinarySensor(Entity):
         """Publish the sensor's state.
 
         ``True`` publishes :attr:`payload_on` and ``False`` publishes
-        :attr:`payload_off` to the state topic (``~/<unique_id>/state``).
+        :attr:`payload_off` to the resolved state topic.
         Repeating the current state is suppressed. The payload mapping is
         captured when the entity is constructed.
 
@@ -71,7 +71,8 @@ class BinarySensor(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        """Return the resolved state topic for this bound entity."""
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this sensor's ``cmps`` config entry for the discovery payload."""

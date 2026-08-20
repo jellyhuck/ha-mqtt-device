@@ -36,10 +36,10 @@ def collector(received: list[Event]) -> EventCallback:
     return collect
 
 
-async def test_command_topic_shorthand() -> None:
+async def test_command_topic_is_resolved() -> None:
     _, button = make_bound(RecordingProvider(), unique_id="restart_1")
 
-    assert button.command_topic == "~/restart_1/command"
+    assert button.command_topic == "homeassistant/device/dev-1/restart_1/command"
 
 
 async def test_on_event_subscribes_to_resolved_command_topic() -> None:

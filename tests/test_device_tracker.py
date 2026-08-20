@@ -39,6 +39,12 @@ async def test_set_state_publishes_payloads_to_state_topic() -> None:
     ]
 
 
+async def test_state_topic_is_resolved() -> None:
+    _, tracker = make_bound(RecordingProvider(), unique_id="phone")
+
+    assert tracker.state_topic == "homeassistant/device/dev-1/phone/state"
+
+
 async def test_set_state_uses_custom_payloads() -> None:
     provider = RecordingProvider()
     _, tracker = make_bound(

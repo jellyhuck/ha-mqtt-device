@@ -84,6 +84,9 @@ async def test_discovery_options_and_device_configuration() -> None:
         command_template="{{ value }}",
         value_template="{{ value_json.time }}",
     )
+    assert entity.command_topic == "homeassistant/device/dev-1/alarm/command"
+    assert entity._state_value is not None
+    assert entity.state_topic == entity._state_value.topic().topic
     assert entity.discovery_config() == {
         "uniq_id": "alarm",
         "p": "time",
@@ -107,6 +110,7 @@ async def test_unbound_and_disabled_state_errors() -> None:
 
     provider = RecordingProvider()
     _, disabled = bound(provider, unique_id="alarm", state_enabled=False)
+    assert disabled.state_topic is None
     assert disabled.discovery_config() == {
         "uniq_id": "alarm",
         "p": "time",

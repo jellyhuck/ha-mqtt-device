@@ -45,8 +45,8 @@ class SelectEntity(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved MQTT command topic."""
+        return self.command_topic_for()
 
     async def set_state(self, option: str) -> None:
         """Publish a selected option when it differs from the last value."""
@@ -59,9 +59,7 @@ class SelectEntity(Entity):
         """Register a callback for options selected by Home Assistant."""
         device = self._require_device()
         if not self._subscribed:
-            await device.provider.subscribe(
-                device.info.resolve_topic(self.command_topic), self._dispatch
-            )
+            await device.provider.subscribe(self.command_topic, self._dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 
@@ -91,8 +89,11 @@ class SelectEntity(Entity):
             raise ValueError(f"option {option!r} must be one of {self.options!r}")
 
     @property
-    def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+    def state_topic(self) -> str | None:
+        """Return the resolved state topic, or ``None`` when disabled."""
+        return (
+            self._state_value.topic().topic if self._state_value is not None else None
+        )
 
     def discovery_config(self) -> dict[str, object]:
         """Return this select's abbreviated MQTT discovery configuration."""

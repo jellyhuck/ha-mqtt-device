@@ -49,11 +49,9 @@ class Humidifier(Entity):
 
     A humidifier has an on/off state and command topic, plus an optional
     target-humidity state and command topic. The device publishes its on/off
-    state to the state topic (``~/<unique_id>/state``) with :meth:`set_state`;
-    when target-humidity control is enabled, it publishes humidity to
-    ``~/<unique_id>/target_humidity`` with :meth:`set_target_humidity`. It
-    receives commands from Home Assistant on the corresponding command
-    topics. Registering an async callback with :meth:`on_event` subscribes to
+    state and target humidity to their resolved output topics. It receives
+    commands from Home Assistant on the corresponding resolved command topics.
+    Registering an async callback with :meth:`on_event` subscribes to
     the enabled topics and delivers every message as an
     :class:`~ha_mqtt_device.event.Event`::
 
@@ -131,24 +129,26 @@ class Humidifier(Entity):
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand, ``~/<unique_id>/command``."""
-        return Entity.command_topic_for(self.unique_id)
+        """Return the resolved command topic for this bound entity."""
+        return self.command_topic_for()
 
     @property
-    def target_humidity_state_topic(self) -> str:
-        """Target-humidity state topic, ``~/<unique_id>/target_humidity``."""
-        return Entity.state_topic_for(self.unique_id, "target_humidity")
+    def target_humidity_state_topic(self) -> str | None:
+        """Return the resolved target-humidity state topic when enabled."""
+        if self._target_humidity_value is None:
+            return None
+        return self._target_humidity_value.topic().topic
 
     @property
     def target_humidity_command_topic(self) -> str:
-        """Target-humidity command topic, ``~/<unique_id>/target_humidity_command``."""
-        return Entity.command_topic_for(self.unique_id, "target_humidity")
+        """Return the resolved target-humidity command topic."""
+        return self.command_topic_for("target_humidity")
 
     async def set_state(self, state: bool) -> None:
         """Publish the humidifier's on/off state.
 
         ``True`` publishes :attr:`payload_on` and ``False`` publishes
-        :attr:`payload_off` to the state topic (``~/<unique_id>/state``).
+        :attr:`payload_off` to the resolved state topic.
         Publishing does not trigger callbacks registered with
         :meth:`on_event`; only messages received on the command topics do.
 
@@ -161,8 +161,8 @@ class Humidifier(Entity):
     async def set_target_humidity(self, humidity: float) -> None:
         """Publish the target humidity.
 
-        ``humidity`` is converted to a string and published to the
-        target-humidity state topic (``~/<unique_id>/target_humidity``), for
+        ``humidity`` is converted to a string and published to the resolved
+        target-humidity state topic; for
         example ``50`` is published as ``"50"``. Publishing does not trigger
         callbacks registered with :meth:`on_event`; only messages received on
         the command topics do.
@@ -182,9 +182,9 @@ class Humidifier(Entity):
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.
 
-        Appends ``callback`` and, on first use, subscribes to the command
-        topic (``~/<unique_id>/command``) and, when enabled, the target-
-        humidity command topic (``~/<unique_id>/target_humidity_command``).
+        Appends ``callback`` and, on first use, subscribes to the resolved main
+        command topic and, when enabled, the resolved target-humidity command
+        topic.
         Every message is awaited as an :class:`~ha_mqtt_device.event.Event`:
 
         - On the command topic, ``event_type`` is ``"command"``,
@@ -209,12 +209,10 @@ class Humidifier(Entity):
         """
         device = self._require_device()
         if not self._subscribed:
-            await device.provider.subscribe(
-                device.info.resolve_topic(self.command_topic), self._dispatch_command
-            )
+            await device.provider.subscribe(self.command_topic, self._dispatch_command)
             if self.target_humidity_enabled:
                 await device.provider.subscribe(
-                    device.info.resolve_topic(self.target_humidity_command_topic),
+                    self.target_humidity_command_topic,
                     self._dispatch_target_humidity,
                 )
             self._subscribed = True
@@ -305,7 +303,8 @@ class Humidifier(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        """Return the resolved state topic for this bound entity."""
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this humidifier's ``cmps`` config entry for the discovery payload."""

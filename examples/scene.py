@@ -42,7 +42,8 @@ async def main(
     async with provider:
         async with device:
             await scene.on_event(on_scene_command)
-            await scene.activate()  # publishes ON to ~/party/command
+            # Publishes ON to homeassistant/device/scene_example/party/command.
+            await scene.activate()
         await device.remove()
 
 

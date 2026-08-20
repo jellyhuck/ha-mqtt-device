@@ -8,21 +8,38 @@ from recording_provider import RecordingProvider
 from ha_mqtt_device.device import Device
 from ha_mqtt_device.device_info import DeviceInfo
 from ha_mqtt_device.entity import Entity
+from ha_mqtt_device.publish_topic import PublishTopic
 from ha_mqtt_device.values.str_value import StrValue
 
 
 def test_command_topic_for_builds_base_and_nested_topics() -> None:
-    assert Entity.command_topic_for("relay") == "~/relay/command"
-    assert Entity.command_topic_for("relay", "power") == "~/relay/command/power"
-    assert Entity.command_topic_for("relay", "") == "~/relay/command"
-    assert Entity.command_topic_for("relay", None) == "~/relay/command"
+    entity = Entity("relay")
+    Device(
+        RecordingProvider(),
+        DeviceInfo(device_id="dev-1", name="Device", topic_prefix="custom/mqtt"),
+        [entity],
+    )
+
+    assert entity.command_topic_for() == "custom/mqtt/relay/command"
+    assert entity.command_topic_for("power") == "custom/mqtt/relay/command/power"
+    assert entity.command_topic_for("") == "custom/mqtt/relay/command"
+    assert entity.command_topic_for(None) == "custom/mqtt/relay/command"
 
 
-def test_state_topic_for_builds_base_and_nested_topics() -> None:
-    assert Entity.state_topic_for("relay") == "~/relay/state"
-    assert Entity.state_topic_for("relay", "power") == "~/relay/state/power"
-    assert Entity.state_topic_for("relay", "") == "~/relay/state"
-    assert Entity.state_topic_for("relay", None) == "~/relay/state"
+def test_topic_prefix_requires_a_bound_entity() -> None:
+    with pytest.raises(RuntimeError, match="bound to a Device"):
+        Entity("relay").topic_prefix()
+
+
+def test_topic_prefix_includes_the_entity_unique_id() -> None:
+    entity = Entity("relay")
+    Device(
+        RecordingProvider(),
+        DeviceInfo(device_id="dev-1", name="Device", topic_prefix="custom/mqtt"),
+        [entity],
+    )
+
+    assert entity.topic_prefix() == "custom/mqtt/relay"
 
 
 async def test_persistent_state_publishes_resolved_retained_topic() -> None:
@@ -117,19 +134,18 @@ async def test_state_value_force_update_is_independent_of_retention() -> None:
     ]
 
 
-async def test_state_value_supports_an_exact_unresolved_topic() -> None:
-    provider = RecordingProvider()
+def test_state_value_topic_uses_entity_prefix_and_suffix() -> None:
     entity = Entity("relay")
-    Device(provider, DeviceInfo(device_id="dev-1", name="Device"), [entity])
-    state = entity._make_state_for_topic(
-        StrValue(), "~/shared/state", retain=True, force_update=False
+    Device(
+        RecordingProvider(),
+        DeviceInfo(device_id="dev-1", name="Device", topic_prefix="custom/mqtt"),
+        [entity],
+    )
+    state = entity._make_state(
+        StrValue(), "state/power", retain=True, force_update=False
     )
 
-    await state.set_value("ON")
-
-    assert provider.published == [
-        ("homeassistant/device/dev-1/shared/state", "ON", True),
-    ]
+    assert state.topic() == PublishTopic("custom/mqtt/relay/state/power", True)
 
 
 async def test_retained_state_cleanup_deduplicates_topics() -> None:

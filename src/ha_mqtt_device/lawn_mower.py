@@ -44,10 +44,12 @@ VALID_ACTIVITIES = ("mowing", "paused", "docked", "error")
 class LawnMower(Entity):
     """A lawn mower belonging to a device.
 
-    A lawn mower has one state topic (``~/<unique_id>/state``) and one command
-    topic (``~/<unique_id>/set``) that receives all commands. Registering an
-    async callback with :meth:`on_event` subscribes to the command topic and
-    delivers every command as an :class:`~ha_mqtt_device.event.Event`::
+    A lawn mower has one state topic
+    (``<device topic prefix>/<unique_id>/state``) and one command topic
+    (``<device topic prefix>/<unique_id>/command``) that receives all commands.
+    Registering an async callback with :meth:`on_event` subscribes to the
+    command topic and delivers every command as an
+    :class:`~ha_mqtt_device.event.Event`::
 
         mower = LawnMower(unique_id="mower_1", name="Lawn Mower")
         device = Device(provider, info, entities=[mower])
@@ -121,26 +123,26 @@ class LawnMower(Entity):
 
     @property
     def state_topic(self) -> str:
-        """State topic as ``~`` shorthand, ``~/<unique_id>/state``."""
-        return Entity.state_topic_for(self.unique_id)
+        """Return the resolved MQTT activity state topic."""
+        return self._state_value.topic().topic
 
     @property
     def command_topic(self) -> str:
-        """Command topic as ``~`` shorthand, ``~/<unique_id>/set``.
+        """Return the resolved MQTT command topic.
 
         All three command types (start_mowing, pause, dock) use this same topic.
         Home Assistant distinguishes them via different payload templates.
         """
-        return Entity.command_topic_for(self.unique_id)
+        return self.command_topic_for()
 
     async def set_state(self, activity: str) -> None:
         """Publish the lawn mower's activity state.
 
         Publishes the configured activity payload to the state topic
-        (``~/<unique_id>/state``). The default payloads are the plain activity
-        values documented by Home Assistant (``mowing``, ``paused``,
-        ``docked``, and ``error``). Repeating the current activity is
-        suppressed. Configured payloads are captured at construction.
+        (``<device topic prefix>/<unique_id>/state``). The default payloads are
+        the plain activity values documented by Home Assistant (``mowing``,
+        ``paused``, ``docked``, and ``error``). Repeating the current activity
+        is suppressed. Configured payloads are captured at construction.
 
         Args:
             activity: The activity state to publish (e.g., "mowing", "paused",
@@ -157,7 +159,8 @@ class LawnMower(Entity):
         """Register ``callback`` for every command received from Home Assistant.
 
         Appends ``callback`` and, on first use, subscribes to the command
-        topic (``~/<unique_id>/set``). Every command message is awaited as an
+        topic (``<device topic prefix>/<unique_id>/command``). Every command
+        message is awaited as an
         :class:`~ha_mqtt_device.event.Event` with ``event_type`` ``"command"``,
         ``topic_type`` indicating which command topic (``"start_mowing_command_topic"``,
         ``"pause_command_topic"``, or ``"dock_command_topic"``), and ``state``
@@ -176,8 +179,7 @@ class LawnMower(Entity):
         """
         device = self._require_device()
         if not self._subscribed:
-            topic = device.info.resolve_topic(self.command_topic)
-            await device.provider.subscribe(topic, self._dispatch)
+            await device.provider.subscribe(self.command_topic, self._dispatch)
             self._subscribed = True
         self._event_callbacks.append(callback)
 

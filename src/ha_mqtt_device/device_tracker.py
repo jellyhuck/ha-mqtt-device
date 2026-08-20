@@ -89,9 +89,8 @@ class DeviceTracker(Entity):
         """Publish the tracker's home/not-home state.
 
         ``True`` publishes :attr:`payload_home` and ``False`` publishes
-        :attr:`payload_not_home` to the state topic
-        (``~/<unique_id>/state``). A consecutive unchanged payload is not
-        republished.
+        :attr:`payload_not_home` to the resolved state topic. A consecutive
+        unchanged payload is not republished.
 
         Raises:
             RuntimeError: If the tracker is not bound to a device.
@@ -111,7 +110,7 @@ class DeviceTracker(Entity):
         """Publish a GPS position report.
 
         Publishes a JSON payload with ``latitude`` and ``longitude`` to the
-        state topic (``~/<unique_id>/state``), plus ``gps_accuracy``,
+        resolved state topic, plus ``gps_accuracy``,
         ``battery_level``, and ``source_type`` when set. Optional arguments
         left as ``None`` fall back to the matching
         :attr:`gps_accuracy`, :attr:`battery_level`, and :attr:`source_type`
@@ -143,7 +142,8 @@ class DeviceTracker(Entity):
 
     @property
     def state_topic(self) -> str:
-        return Entity.state_topic_for(self.unique_id)
+        """Return the resolved state topic for this bound entity."""
+        return self._state_value.topic().topic
 
     def discovery_config(self) -> dict[str, object]:
         """Return this tracker's ``cmps`` config entry for the discovery payload."""

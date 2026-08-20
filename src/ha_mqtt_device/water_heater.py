@@ -126,33 +126,33 @@ class WaterHeater(Entity):
 
     @property
     def current_temperature_topic(self) -> str:
-        """Current-temperature state topic."""
-        return Entity.state_topic_for(self.unique_id, "current_temperature")
+        """Return the resolved current-temperature state topic."""
+        return self._current_temperature_value.topic().topic
 
     @property
     def temperature_state_topic(self) -> str:
-        """Target-temperature state topic."""
-        return Entity.state_topic_for(self.unique_id, "temperature")
+        """Return the resolved target-temperature state topic."""
+        return self._target_temperature_value.topic().topic
 
     @property
     def temperature_command_topic(self) -> str:
-        """Target-temperature command topic."""
-        return Entity.command_topic_for(self.unique_id, "temperature")
+        """Return the resolved target-temperature command topic."""
+        return self.command_topic_for("temperature")
 
     @property
     def mode_state_topic(self) -> str:
-        """Operation-mode state topic."""
-        return Entity.state_topic_for(self.unique_id, "mode")
+        """Return the resolved operation-mode state topic."""
+        return self._mode_value.topic().topic
 
     @property
     def mode_command_topic(self) -> str:
-        """Operation-mode command topic."""
-        return Entity.command_topic_for(self.unique_id, "mode")
+        """Return the resolved operation-mode command topic."""
+        return self.command_topic_for("mode")
 
     @property
     def power_command_topic(self) -> str:
-        """Optional power command topic."""
-        return Entity.command_topic_for(self.unique_id, "power")
+        """Return the resolved optional power command topic."""
+        return self.command_topic_for("power")
 
     async def set_current_temperature(self, temperature: float) -> None:
         """Publish the current water temperature."""
@@ -182,15 +182,15 @@ class WaterHeater(Entity):
         device = self._require_device()
         if not self._subscribed:
             await device.provider.subscribe(
-                device.info.resolve_topic(self.temperature_command_topic),
+                self.temperature_command_topic,
                 self._dispatch_temperature,
             )
             await device.provider.subscribe(
-                device.info.resolve_topic(self.mode_command_topic), self._dispatch_mode
+                self.mode_command_topic, self._dispatch_mode
             )
             if self.power_enabled:
                 await device.provider.subscribe(
-                    device.info.resolve_topic(self.power_command_topic),
+                    self.power_command_topic,
                     self._dispatch_power,
                 )
             self._subscribed = True

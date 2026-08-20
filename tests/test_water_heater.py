@@ -32,6 +32,23 @@ def collector(events: list[Event]) -> EventCallback:
 
 async def test_default_discovery_and_state_topics() -> None:
     _, heater = bound(RecordingProvider(), unique_id="boiler")
+    assert (
+        heater.current_temperature_topic
+        == "homeassistant/device/dev-1/boiler/state/current_temperature"
+    )
+    assert (
+        heater.temperature_state_topic
+        == "homeassistant/device/dev-1/boiler/state/temperature"
+    )
+    assert (
+        heater.temperature_command_topic
+        == "homeassistant/device/dev-1/boiler/command/temperature"
+    )
+    assert heater.mode_state_topic == "homeassistant/device/dev-1/boiler/state/mode"
+    assert heater.mode_command_topic == "homeassistant/device/dev-1/boiler/command/mode"
+    assert (
+        heater.power_command_topic == "homeassistant/device/dev-1/boiler/command/power"
+    )
     assert heater.discovery_config() == {
         "uniq_id": "boiler",
         "p": "water_heater",

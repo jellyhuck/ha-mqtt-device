@@ -95,10 +95,11 @@ async def test_set_state_does_not_subscribe() -> None:
     assert provider.subscriptions == {}
 
 
-async def test_command_topic_shorthand() -> None:
+async def test_topics_are_resolved() -> None:
     _, entity = make_bound(RecordingProvider(), unique_id="vacation")
 
-    assert entity.command_topic == "~/vacation/command"
+    assert entity.command_topic == "homeassistant/device/dev-1/vacation/command"
+    assert entity.state_topic == "homeassistant/device/dev-1/vacation/state"
 
 
 async def test_on_event_subscribes_to_resolved_command_topic() -> None:

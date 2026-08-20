@@ -20,6 +20,7 @@ def make_bound(provider: RecordingProvider, **kwargs: Any) -> tuple[Device, Noti
 async def test_discovery_is_command_only() -> None:
     _, notify = make_bound(RecordingProvider(), unique_id="alerts")
 
+    assert notify.command_topic == "homeassistant/device/dev-1/alerts/command"
     assert notify.discovery_config() == {
         "uniq_id": "alerts",
         "p": "notify",

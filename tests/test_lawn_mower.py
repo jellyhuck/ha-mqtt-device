@@ -88,11 +88,12 @@ async def test_set_state_does_not_subscribe() -> None:
     assert provider.subscriptions == {}
 
 
-async def test_state_and_command_topic_shorthand() -> None:
+async def test_state_and_command_topics_are_resolved() -> None:
     _, mower = make_bound(RecordingProvider(), unique_id="mower_1")
 
-    assert mower.state_topic == "~/mower_1/state"
-    assert mower.command_topic == "~/mower_1/command"
+    assert mower.state_topic == "homeassistant/device/dev-1/mower_1/state"
+    assert mower.state_topic == mower._state_value.topic().topic
+    assert mower.command_topic == "homeassistant/device/dev-1/mower_1/command"
 
 
 async def test_on_event_subscribes_to_resolved_command_topic() -> None:

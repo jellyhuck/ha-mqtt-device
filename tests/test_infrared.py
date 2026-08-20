@@ -39,10 +39,10 @@ def collector(received: list[Event]) -> EventCallback:
 # --- InfraredEmitter --------------------------------------------------------
 
 
-async def test_command_topic_shorthand() -> None:
+async def test_command_topic_is_resolved() -> None:
     _, emitter = make_bound(RecordingProvider(), InfraredEmitter, unique_id="tv_power")
 
-    assert emitter.command_topic == "~/tv_power/command"
+    assert emitter.command_topic == "homeassistant/device/dev-1/tv_power/command"
 
 
 async def test_on_event_subscribes_to_resolved_command_topic() -> None:
@@ -229,6 +229,7 @@ async def test_set_state_publishes_json_to_state_topic() -> None:
     _, receiver = make_bound(provider, InfraredReceiver, unique_id="living_room_ir")
 
     signal = {"timings": [9000, -4500, 562, -1687], "modulation": 38000}
+    assert receiver.state_topic == receiver._signal_value.topic().topic
     await receiver.set_state(signal)
 
     assert provider.published == [

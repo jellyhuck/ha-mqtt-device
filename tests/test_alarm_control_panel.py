@@ -36,6 +36,20 @@ async def test_state_and_discovery_defaults() -> None:
     }
 
 
+async def test_topics_are_resolved_for_bound_panel() -> None:
+    _, panel = make_bound(RecordingProvider(), unique_id="alarm")
+
+    assert panel.command_topic == "homeassistant/device/dev-1/alarm/command"
+    assert panel.state_topic == "homeassistant/device/dev-1/alarm/state"
+
+
+async def test_state_topic_is_none_when_state_reporting_is_disabled() -> None:
+    _, panel = make_bound(RecordingProvider(), unique_id="alarm", state_enabled=False)
+
+    assert panel.state_topic is None
+    assert "stat_t" not in panel.discovery_config()
+
+
 async def test_discovery_custom_payloads_codes_and_templates() -> None:
     _, panel = make_bound(
         RecordingProvider(),

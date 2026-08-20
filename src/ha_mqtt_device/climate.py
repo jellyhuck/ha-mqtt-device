@@ -35,15 +35,9 @@ class Climate(Entity):
     """A climate entity (thermostat) belonging to a device.
 
     A climate entity has six MQTT topics. The device publishes the current
-    temperature to the current-temperature topic (``~/<unique_id>/current_temperature``)
-    with :meth:`set_current_temperature`, the target temperature to the state
-    topic (``~/<unique_id>/temperature``) with :meth:`set_target_temperature`,
-    the HVAC mode to the mode state topic (``~/<unique_id>/mode``) with
-    :meth:`set_mode`, and the current action to the action topic
-    (``~/<unique_id>/action``) with :meth:`set_action`. It receives commands
-    from Home Assistant on the temperature command topic
-    (``~/<unique_id>/temperature_command``) and the mode command topic
-    (``~/<unique_id>/mode_command``). Registering an async callback with
+    temperature, target temperature, HVAC mode, and current action to their
+    resolved output topics. It receives commands from Home Assistant on the
+    resolved temperature and mode command topics. Registering a callback with
     :meth:`on_event` subscribes to both and delivers every message as an
     :class:`~ha_mqtt_device.event.Event`::
 
@@ -136,39 +130,39 @@ class Climate(Entity):
 
     @property
     def current_temperature_topic(self) -> str:
-        """Current-temperature topic, ``~/<unique_id>/current_temperature``."""
-        return Entity.state_topic_for(self.unique_id, "current_temperature")
+        """Return the resolved current-temperature topic."""
+        return self._current_temperature_value.topic().topic
 
     @property
     def temperature_state_topic(self) -> str:
-        """Target-temperature state topic, ``~/<unique_id>/temperature``."""
-        return Entity.state_topic_for(self.unique_id, "temperature")
+        """Return the resolved target-temperature state topic."""
+        return self._target_temperature_value.topic().topic
 
     @property
     def temperature_command_topic(self) -> str:
-        """Target-temperature command topic, ``~/<unique_id>/temperature_command``."""
-        return Entity.command_topic_for(self.unique_id, "temperature")
+        """Return the resolved target-temperature command topic."""
+        return self.command_topic_for("temperature")
 
     @property
     def mode_state_topic(self) -> str:
-        """Mode state topic, ``~/<unique_id>/mode``."""
-        return Entity.state_topic_for(self.unique_id, "mode")
+        """Return the resolved mode state topic."""
+        return self._mode_value.topic().topic
 
     @property
     def mode_command_topic(self) -> str:
-        """Mode command topic, ``~/<unique_id>/mode_command``."""
-        return Entity.command_topic_for(self.unique_id, "mode")
+        """Return the resolved mode command topic."""
+        return self.command_topic_for("mode")
 
     @property
     def action_topic(self) -> str:
-        """Action topic, ``~/<unique_id>/action``."""
-        return Entity.state_topic_for(self.unique_id, "action")
+        """Return the resolved action topic."""
+        return self._action_value.topic().topic
 
     async def set_current_temperature(self, temperature: float) -> None:
         """Publish the current temperature.
 
-        ``temperature`` is converted to a string and published to the
-        current-temperature topic (``~/<unique_id>/current_temperature``).
+        ``temperature`` is converted to a string and published to the resolved
+        current-temperature topic.
         Consecutive unchanged temperatures are not republished.
         Publishing does not trigger callbacks registered with
         :meth:`on_event`; only messages received on the command topics do.
@@ -183,8 +177,8 @@ class Climate(Entity):
     async def set_target_temperature(self, temperature: float) -> None:
         """Publish the target temperature.
 
-        ``temperature`` is converted to a string and published to the state
-        topic (``~/<unique_id>/temperature``), for example ``21.5`` is
+        ``temperature`` is converted to a string and published to the resolved
+        temperature state topic; for example, ``21.5`` is
         published as ``"21.5"``. Consecutive unchanged temperatures are not
         republished. Publishing does not trigger callbacks
         registered with :meth:`on_event`; only messages received on the command
@@ -201,7 +195,7 @@ class Climate(Entity):
         """Publish the HVAC mode.
 
         ``mode`` must be one of :attr:`modes` when :attr:`modes` is set; it is
-        published verbatim to the mode state topic (``~/<unique_id>/mode``).
+        published verbatim to the resolved mode state topic.
         Consecutive unchanged modes are not republished.
         Publishing does not trigger callbacks registered with :meth:`on_event`;
         only messages received on the command topics do.
@@ -218,8 +212,8 @@ class Climate(Entity):
     async def set_action(self, action: str) -> None:
         """Publish the current action.
 
-        ``action`` is published verbatim to the action topic
-        (``~/<unique_id>/action``). The Home Assistant climate actions are
+        ``action`` is published verbatim to the resolved action topic. The
+        Home Assistant climate actions are
         ``"off"``, ``"heating"``, ``"cooling"``, ``"drying"``, ``"idle"``,
         and ``"fan"``; no validation is performed. Publishing does not trigger
         callbacks registered with :meth:`on_event`; only messages received on
@@ -234,9 +228,8 @@ class Climate(Entity):
     async def on_event(self, callback: EventCallback) -> None:
         """Register ``callback`` for every command received from Home Assistant.
 
-        Appends ``callback`` and, on first use, subscribes to the temperature
-        command topic (``~/<unique_id>/temperature_command``) and the mode
-        command topic (``~/<unique_id>/mode_command``). Every message on the
+        Appends ``callback`` and, on first use, subscribes to the resolved
+        temperature and mode command topics. Every message on the
         temperature command topic is awaited as an
         :class:`~ha_mqtt_device.event.Event` with ``event_type``
         ``"temperature"``, ``topic_type`` ``"temperature_command_topic"``, and
@@ -257,14 +250,12 @@ class Climate(Entity):
         """
         device = self._require_device()
         if not self._subscribed:
-            temperature_topic = device.info.resolve_topic(
-                self.temperature_command_topic
+            await device.provider.subscribe(
+                self.temperature_command_topic, self._dispatch_temperature
             )
             await device.provider.subscribe(
-                temperature_topic, self._dispatch_temperature
+                self.mode_command_topic, self._dispatch_mode
             )
-            mode_topic = device.info.resolve_topic(self.mode_command_topic)
-            await device.provider.subscribe(mode_topic, self._dispatch_mode)
             self._subscribed = True
         self._event_callbacks.append(callback)
 

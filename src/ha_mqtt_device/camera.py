@@ -64,14 +64,14 @@ class Camera(Entity):
 
     @property
     def image_topic(self) -> str:
-        """Image topic as ``~`` shorthand, ``~/<unique_id>/image``."""
-        return f"~/{self.unique_id}/image"
+        """Return the resolved image topic for this bound entity."""
+        return self._image_value.topic().topic
 
     async def set_image(self, payload: bytes) -> None:
         """Publish an image frame to Home Assistant.
 
-        ``payload`` is published verbatim to the image topic
-        (``~/<unique_id>/image``); this entity does not transform it. With
+        ``payload`` is published verbatim to the resolved image topic; this
+        entity does not transform it. With
         :attr:`encoding` omitted, Home Assistant expects raw image bytes. Set
         it to ``"b64"`` and pass base64-encoded bytes — for example
         ``base64.b64encode(raw_image_bytes)``. Frames are transient, so every

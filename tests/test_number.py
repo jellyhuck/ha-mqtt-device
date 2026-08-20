@@ -105,10 +105,11 @@ async def test_set_state_does_not_subscribe() -> None:
     assert provider.subscriptions == {}
 
 
-async def test_command_topic_shorthand() -> None:
+async def test_state_and_command_topics_are_resolved() -> None:
     _, number = make_bound(RecordingProvider(), unique_id="dimmer")
 
-    assert number.command_topic == "~/dimmer/command"
+    assert number.state_topic == number._state_value.topic().topic
+    assert number.command_topic == "homeassistant/device/dev-1/dimmer/command"
 
 
 async def test_on_event_subscribes_to_resolved_command_topic() -> None:

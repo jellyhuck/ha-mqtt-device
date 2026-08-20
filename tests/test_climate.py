@@ -145,15 +145,16 @@ async def test_set_mode_requires_binding() -> None:
         await climate.set_mode("heat")
 
 
-async def test_topics_shorthand() -> None:
+async def test_topics_are_resolved() -> None:
     _, climate = make_bound(RecordingProvider(), unique_id="thermostat")
 
-    assert climate.current_temperature_topic == "~/thermostat/state/current_temperature"
-    assert climate.temperature_state_topic == "~/thermostat/state/temperature"
-    assert climate.temperature_command_topic == "~/thermostat/command/temperature"
-    assert climate.mode_state_topic == "~/thermostat/state/mode"
-    assert climate.mode_command_topic == "~/thermostat/command/mode"
-    assert climate.action_topic == "~/thermostat/state/action"
+    prefix = "homeassistant/device/dev-1/thermostat"
+    assert climate.current_temperature_topic == f"{prefix}/state/current_temperature"
+    assert climate.temperature_state_topic == f"{prefix}/state/temperature"
+    assert climate.temperature_command_topic == f"{prefix}/command/temperature"
+    assert climate.mode_state_topic == f"{prefix}/state/mode"
+    assert climate.mode_command_topic == f"{prefix}/command/mode"
+    assert climate.action_topic == f"{prefix}/state/action"
 
 
 async def test_publish_methods_do_not_subscribe() -> None:

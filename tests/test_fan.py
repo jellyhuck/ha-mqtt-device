@@ -304,38 +304,84 @@ async def test_set_state_does_not_subscribe() -> None:
     assert provider.subscriptions == {}
 
 
-async def test_command_topic_shorthand() -> None:
+async def test_command_topic_is_resolved() -> None:
     _, fan = make_bound(RecordingProvider(), unique_id="ceiling_fan")
 
-    assert fan.command_topic == "~/ceiling_fan/command"
+    assert fan.command_topic == "homeassistant/device/dev-1/ceiling_fan/command"
 
 
-async def test_percentage_topic_shorthands() -> None:
+async def test_percentage_topics_are_resolved() -> None:
     _, fan = make_bound(RecordingProvider(), unique_id="ceiling_fan")
 
-    assert fan.percentage_state_topic == "~/ceiling_fan/state/percentage"
-    assert fan.percentage_command_topic == "~/ceiling_fan/command/percentage"
+    assert (
+        fan.percentage_state_topic
+        == "homeassistant/device/dev-1/ceiling_fan/state/percentage"
+    )
+    assert (
+        fan.percentage_command_topic
+        == "homeassistant/device/dev-1/ceiling_fan/command/percentage"
+    )
 
 
-async def test_preset_mode_topic_shorthands() -> None:
-    _, fan = make_bound(RecordingProvider(), unique_id="ceiling_fan")
+async def test_preset_mode_topics_are_resolved() -> None:
+    _, fan = make_bound(
+        RecordingProvider(), unique_id="ceiling_fan", preset_mode_enabled=True
+    )
 
-    assert fan.preset_mode_state_topic == "~/ceiling_fan/state/preset_mode"
-    assert fan.preset_mode_command_topic == "~/ceiling_fan/command/preset_mode"
+    assert (
+        fan.preset_mode_state_topic
+        == "homeassistant/device/dev-1/ceiling_fan/state/preset_mode"
+    )
+    assert (
+        fan.preset_mode_command_topic
+        == "homeassistant/device/dev-1/ceiling_fan/command/preset_mode"
+    )
 
 
-async def test_oscillation_topic_shorthands() -> None:
-    _, fan = make_bound(RecordingProvider(), unique_id="ceiling_fan")
+async def test_oscillation_topics_are_resolved() -> None:
+    _, fan = make_bound(
+        RecordingProvider(), unique_id="ceiling_fan", oscillation_enabled=True
+    )
 
-    assert fan.oscillation_state_topic == "~/ceiling_fan/state/oscillation"
-    assert fan.oscillation_command_topic == "~/ceiling_fan/command/oscillation"
+    assert (
+        fan.oscillation_state_topic
+        == "homeassistant/device/dev-1/ceiling_fan/state/oscillation"
+    )
+    assert (
+        fan.oscillation_command_topic
+        == "homeassistant/device/dev-1/ceiling_fan/command/oscillation"
+    )
 
 
-async def test_direction_topic_shorthands() -> None:
-    _, fan = make_bound(RecordingProvider(), unique_id="ceiling_fan")
+async def test_direction_topics_are_resolved() -> None:
+    _, fan = make_bound(
+        RecordingProvider(), unique_id="ceiling_fan", direction_enabled=True
+    )
 
-    assert fan.direction_state_topic == "~/ceiling_fan/state/direction"
-    assert fan.direction_command_topic == "~/ceiling_fan/command/direction"
+    assert (
+        fan.direction_state_topic
+        == "homeassistant/device/dev-1/ceiling_fan/state/direction"
+    )
+    assert (
+        fan.direction_command_topic
+        == "homeassistant/device/dev-1/ceiling_fan/command/direction"
+    )
+
+
+async def test_disabled_feature_state_topics_are_none() -> None:
+    _, fan = make_bound(
+        RecordingProvider(),
+        unique_id="ceiling_fan",
+        percentage_enabled=False,
+        preset_mode_enabled=False,
+        oscillation_enabled=False,
+        direction_enabled=False,
+    )
+
+    assert fan.percentage_state_topic is None
+    assert fan.preset_mode_state_topic is None
+    assert fan.oscillation_state_topic is None
+    assert fan.direction_state_topic is None
 
 
 async def test_on_event_subscribes_to_command_and_enabled_feature_topics() -> None:

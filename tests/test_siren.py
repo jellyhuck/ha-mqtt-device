@@ -79,6 +79,8 @@ async def test_state_deduplicates_but_repeated_commands_are_published() -> None:
 async def test_discovery_defaults_omit_documented_defaults() -> None:
     _, siren = bound(RecordingProvider(), unique_id="alarm")
 
+    assert siren.state_topic == "homeassistant/device/dev-1/alarm/state"
+    assert siren.command_topic == "homeassistant/device/dev-1/alarm/command"
     assert siren.discovery_config() == {
         "uniq_id": "alarm",
         "p": "siren",
@@ -179,6 +181,10 @@ async def test_siren_validation_and_disabled_features() -> None:
         await siren.set_volume(0.5)
     with pytest.raises(ValueError, match="between 0 and 1"):
         await Siren(unique_id="other").set_volume(2.0)
+
+    _, disabled = bound(RecordingProvider(), unique_id="silent", state_enabled=False)
+    assert disabled.state_topic is None
+    assert "stat_t" not in disabled.discovery_config()
 
 
 async def test_unbound_operations_and_device_configuration() -> None:

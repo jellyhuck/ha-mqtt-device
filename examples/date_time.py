@@ -58,7 +58,7 @@ async def main(
 
             await alarm_time.on_event(on_datetime_command)
 
-            command_topic = info.resolve_topic(alarm_time.command_topic)
+            command_topic = alarm_time.command_topic
             logger.info("Publishing 2024-02-14 10:30:00 command to %s", command_topic)
             await provider.publish(command_topic, "2024-02-14 10:30:00")
 

@@ -67,13 +67,11 @@ async def main(
 
             await humidifier.on_event(on_humidifier_command)
 
-            command_topic = info.resolve_topic(humidifier.command_topic)
+            command_topic = humidifier.command_topic
             logger.info("Publishing ON command to %s", command_topic)
             await provider.publish(command_topic, humidifier.payload_on)
 
-            humidity_topic = info.resolve_topic(
-                humidifier.target_humidity_command_topic
-            )
+            humidity_topic = humidifier.target_humidity_command_topic
             logger.info("Publishing 60 command to %s", humidity_topic)
             await provider.publish(humidity_topic, "60")
 

@@ -80,10 +80,11 @@ async def test_set_state_does_not_subscribe() -> None:
     assert provider.subscriptions == {}
 
 
-async def test_command_topic_shorthand() -> None:
+async def test_state_and_command_topics_are_resolved() -> None:
     _, switch = make_bound(RecordingProvider(), unique_id="relay_1")
 
-    assert switch.command_topic == "~/relay_1/command"
+    assert switch.state_topic == switch._state_value.topic().topic
+    assert switch.command_topic == "homeassistant/device/dev-1/relay_1/command"
 
 
 async def test_on_event_subscribes_to_resolved_command_topic() -> None:

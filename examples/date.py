@@ -56,7 +56,7 @@ async def main(
 
             await target_date.on_event(on_date_command)
 
-            command_topic = info.resolve_topic(target_date.command_topic)
+            command_topic = target_date.command_topic
             logger.info("Publishing 2024-02-14 command to %s", command_topic)
             await provider.publish(command_topic, "2024-02-14")
 

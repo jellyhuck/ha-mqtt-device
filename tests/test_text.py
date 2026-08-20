@@ -33,6 +33,9 @@ async def test_set_state_validates_and_publishes_text() -> None:
 
 async def test_discovery_defaults_and_options() -> None:
     _, defaults = bound(RecordingProvider(), unique_id="label")
+    assert defaults.command_topic == "homeassistant/device/dev-1/label/command"
+    assert defaults._state_value is not None
+    assert defaults.state_topic == defaults._state_value.topic().topic
     assert defaults.discovery_config() == {
         "uniq_id": "label",
         "p": "text",
@@ -105,6 +108,7 @@ async def test_configuration_validation_and_state_can_be_disabled() -> None:
 
     provider = RecordingProvider()
     _, text = bound(provider, unique_id="label", state_enabled=False, min_length=0)
+    assert text.state_topic is None
     assert text.discovery_config() == {
         "uniq_id": "label",
         "p": "text",
