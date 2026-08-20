@@ -14,15 +14,19 @@ configs contain the fully resolved MQTT topics.
 from __future__ import annotations
 
 import re
+import weakref
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
 from ha_mqtt_device.publish_topic import PublishTopic
+from ha_mqtt_device.values.value import Value
 
 if TYPE_CHECKING:
     from ha_mqtt_device.device import Device
 
 __all__ = ["Entity"]
+
+T = TypeVar("T")
 
 #: Allowed characters for the entity unique id, which becomes a topic segment
 #: (``~/<unique_id>/...``) and the ``cmps`` object id in the discovery payload.
@@ -54,6 +58,42 @@ class Entity:
 
     #: Home Assistant MQTT component name, e.g. ``"binary_sensor"``.
     component: ClassVar[str] = ""
+
+    class StateValue(Generic[T]):
+        """A typed value published through an owning entity's state topic.
+
+        The owning entity is held weakly so a state value does not extend the
+        entity's lifetime. Use :meth:`Entity._make_momentary_state` or
+        :meth:`Entity._make_persistent_state` to construct instances.
+        """
+
+        __slots__ = ("_entity", "_persistent", "_topic", "_value")
+
+        def __init__(
+            self,
+            value: Value[T],
+            topic: str,
+            persistent: bool,
+            entity: Entity,
+        ) -> None:
+            self._value = value
+            self._topic = topic
+            self._persistent = persistent
+            self._entity: weakref.ReferenceType[Entity] = weakref.ref(entity)
+
+        async def set_value(self, new_value: T) -> None:
+            """Publish ``new_value`` using this state's topic and retention."""
+            entity = self._entity()
+            if entity is None:
+                raise RuntimeError("the owning Entity no longer exists")
+
+            async def update(payload: str | bytes) -> None:
+                topic = entity._register_publish_topic(
+                    self._topic, retain=self._persistent
+                )
+                await entity._publish(topic, payload)
+
+            await self._value.set_value(new_value, update)
 
     def __post_init__(self) -> None:
         if not _UNIQUE_ID_RE.fullmatch(self.unique_id):
@@ -88,6 +128,18 @@ class Entity:
                 f"{type(self).__name__} {self.unique_id!r} is already bound to a Device"
             )
         self.device = device
+
+    def _make_momentary_state(
+        self, value: Value[T], topic: str
+    ) -> Entity.StateValue[T]:
+        """Create a state value whose publications are not retained."""
+        return Entity.StateValue(value, topic, False, self)
+
+    def _make_persistent_state(
+        self, value: Value[T], topic: str
+    ) -> Entity.StateValue[T]:
+        """Create a state value whose publications are retained."""
+        return Entity.StateValue(value, topic, True, self)
 
     def _register_publish_topic(self, topic: str, *, retain: bool) -> PublishTopic:
         """Register and return a resolved topic descriptor.
