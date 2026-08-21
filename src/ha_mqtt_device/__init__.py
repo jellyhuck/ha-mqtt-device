@@ -20,6 +20,7 @@ from ha_mqtt_device.event_entity import EventEntity
 from ha_mqtt_device.fan import Fan
 from ha_mqtt_device.humidifier import Humidifier
 from ha_mqtt_device.image import Image
+from ha_mqtt_device.image_url import ImageUrl
 from ha_mqtt_device.infrared import InfraredEmitter, InfraredReceiver
 from ha_mqtt_device.lawn_mower import LawnMower
 from ha_mqtt_device.light import Light
@@ -72,6 +73,7 @@ __all__ = [
     "FloatValue",
     "Humidifier",
     "Image",
+    "ImageUrl",
     "InfraredEmitter",
     "InfraredReceiver",
     "IntValue",

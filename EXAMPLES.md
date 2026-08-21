@@ -356,6 +356,17 @@ snapshot = Image(unique_id="camera", name="Camera", encoding="b64")
 await snapshot.set_image(base64.b64encode(jpeg_bytes))
 ```
 
+[`ImageUrl`](src/ha_mqtt_device/image_url.py) publishes an image URL without
+an image payload topic or command topic. Home Assistant downloads the image
+from the URL. See [`examples/image_url.py`](examples/image_url.py).
+
+```python
+from ha_mqtt_device import ImageUrl
+
+snapshot = ImageUrl(unique_id="camera", name="Camera")
+await snapshot.set_url("https://example.com/images/camera.jpg")
+```
+
 ### Infrared
 
 HA Integration: [MQTT Infrared](https://www.home-assistant.io/integrations/infrared.mqtt/).
